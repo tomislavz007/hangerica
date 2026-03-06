@@ -1807,8 +1807,17 @@ function getProjects(){ return _projectCache || []; }
 // Check if a person is in project's persons list (supports multi-person)
 function personIncludes(p, name){
   if(!name) return false;
-  if(p.persons) return p.persons.split(',').map(s=>s.trim()).includes(name);
-  return p.person===name;
+  var nm = String(name).trim();
+  // Check persons field (comma-separated list)
+  if(p.persons && String(p.persons).trim()){
+    var list = String(p.persons).split(',').map(function(s){ return s.trim(); });
+    for(var i=0;i<list.length;i++){ if(list[i]===nm) return true; }
+  }
+  // Fallback to person field
+  if(p.person && String(p.person).trim()===nm) return true;
+  // Also check createdBy via currentUser
+  if(p.createdBy && currentUser && p.createdBy===currentUser.id) return true;
+  return false;
 }
 
 function fmtEur(n){
@@ -1872,10 +1881,11 @@ function renderProjects(){
   const personF=document.getElementById('projFilterPerson')?.value||'';
 
   let projs=getProjects();
-  // Employees see only their own projects
+  // Employees see only their own projects; approvers see everything
   if(currentUser.role==='employee'){
-    projs=projs.filter(p=>personIncludes(p,currentUser.name));
+    projs=projs.filter(function(p){ return personIncludes(p, currentUser.name); });
   }
+  // approvers: no filter — see all
   if(monthF) projs=projs.filter(p=>p.date===monthF);
   if(personF) projs=projs.filter(p=>p.person===personF);
 
@@ -1920,9 +1930,9 @@ let _selectedYear = new Date().getFullYear();
 
 function renderProjStats(projs){
   // Employees see only their own; approvers see all
-  const allProjs = currentUser.role==='approver'
+  var allProjs = currentUser.role==='approver'
     ? getProjects()
-    : getProjects().filter(p=>personIncludes(p, currentUser.name));
+    : getProjects().filter(function(p){ return personIncludes(p, currentUser.name); });
 
   // KPI — current year
   const yearProjs = allProjs.filter(p=>(p.date||'').startsWith(String(_selectedYear)));
@@ -1947,8 +1957,8 @@ function renderProjStats(projs){
   // Monthly table — approvers only
   const monthlyTableEl = document.getElementById('monthlyTable');
   const monthlyCard = monthlyTableEl ? monthlyTableEl.closest('.list-card') : null;
-  if(monthlyCard) monthlyCard.style.display = currentUser.role==='approver' ? 'block' : 'none';
-  if(currentUser.role==='approver') renderMonthlyTable(allProjs, _selectedYear);
+  if(monthlyCard) monthlyCard.style.display = 'block'; // everyone sees their own monthly table
+  renderMonthlyTable(allProjs, _selectedYear);
 }
 
 function selectYear(y){
@@ -2650,8 +2660,17 @@ function getProjects(){ return _projectCache || []; }
 // Check if a person is in project's persons list (supports multi-person)
 function personIncludes(p, name){
   if(!name) return false;
-  if(p.persons) return p.persons.split(',').map(s=>s.trim()).includes(name);
-  return p.person===name;
+  var nm = String(name).trim();
+  // Check persons field (comma-separated list)
+  if(p.persons && String(p.persons).trim()){
+    var list = String(p.persons).split(',').map(function(s){ return s.trim(); });
+    for(var i=0;i<list.length;i++){ if(list[i]===nm) return true; }
+  }
+  // Fallback to person field
+  if(p.person && String(p.person).trim()===nm) return true;
+  // Also check createdBy via currentUser
+  if(p.createdBy && currentUser && p.createdBy===currentUser.id) return true;
+  return false;
 }
 
 function fmtEur(n){
@@ -2715,10 +2734,11 @@ function renderProjects(){
   const personF=document.getElementById('projFilterPerson')?.value||'';
 
   let projs=getProjects();
-  // Employees see only their own projects
+  // Employees see only their own projects; approvers see everything
   if(currentUser.role==='employee'){
-    projs=projs.filter(p=>personIncludes(p,currentUser.name));
+    projs=projs.filter(function(p){ return personIncludes(p, currentUser.name); });
   }
+  // approvers: no filter — see all
   if(monthF) projs=projs.filter(p=>p.date===monthF);
   if(personF) projs=projs.filter(p=>p.person===personF);
 
@@ -2763,9 +2783,9 @@ function renderProjects(){
 
 function renderProjStats(projs){
   // Employees see only their own; approvers see all
-  const allProjs = currentUser.role==='approver'
+  var allProjs = currentUser.role==='approver'
     ? getProjects()
-    : getProjects().filter(p=>personIncludes(p, currentUser.name));
+    : getProjects().filter(function(p){ return personIncludes(p, currentUser.name); });
 
   // KPI — current year
   const yearProjs = allProjs.filter(p=>(p.date||'').startsWith(String(_selectedYear)));
@@ -2790,8 +2810,8 @@ function renderProjStats(projs){
   // Monthly table — approvers only
   const monthlyTableEl = document.getElementById('monthlyTable');
   const monthlyCard = monthlyTableEl ? monthlyTableEl.closest('.list-card') : null;
-  if(monthlyCard) monthlyCard.style.display = currentUser.role==='approver' ? 'block' : 'none';
-  if(currentUser.role==='approver') renderMonthlyTable(allProjs, _selectedYear);
+  if(monthlyCard) monthlyCard.style.display = 'block'; // everyone sees their own monthly table
+  renderMonthlyTable(allProjs, _selectedYear);
 }
 
 function selectYear(y){
