@@ -2072,7 +2072,14 @@ function openProjForm(projId=null){
     addCostRow();
   }
   calcProjTotal();
+  // Remove focus from any active element before opening modal
+  if(document.activeElement) document.activeElement.blur();
   document.getElementById('projFormOverlay').classList.add('open');
+  // Focus first input after modal opens
+  setTimeout(()=>{
+    const first = document.querySelector('#projFormOverlay input, #projFormOverlay select');
+    if(first) first.focus();
+  }, 50);
 }
 
 function closeProjForm(e){
@@ -2209,6 +2216,7 @@ function openProjDetail(projId){
     (currentUser.role==='approver'?`<button class="btn-sm btn-reject" style="flex:.6;padding:.6rem" onclick="deleteProj('${p.id}')">Obriši</button>`:'')+ 
     `<button class="btn-modal-close" style="flex:.6;padding:.6rem" onclick="closeProjDetailBtn()">Zatvori</button>`;
 
+  if(document.activeElement) document.activeElement.blur();
   document.getElementById('projDetailOverlay').classList.add('open');
 }
 
