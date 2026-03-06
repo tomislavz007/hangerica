@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!-- v2026-03-06c -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -1945,8 +1945,8 @@ function renderProjStats(projs){
     <button class="year-tab${y==_selectedYear?' active':''}" onclick="selectYear(${y})">${y}</button>`).join('');
 
   // Monthly table — approvers only
-  const monthlyCard = document.querySelector('.list-card:has(#monthlyTable)') ||
-    document.getElementById('monthlyTable')?.closest('.list-card');
+  const monthlyTableEl = document.getElementById('monthlyTable');
+  const monthlyCard = monthlyTableEl ? monthlyTableEl.closest('.list-card') : null;
   if(monthlyCard) monthlyCard.style.display = currentUser.role==='approver' ? 'block' : 'none';
   if(currentUser.role==='approver') renderMonthlyTable(allProjs, _selectedYear);
 }
