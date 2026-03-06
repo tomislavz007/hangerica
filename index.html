@@ -87,7 +87,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:60
 
 /* TAB CONTENT */
 .tab-content{display:none;} .tab-content.active{display:block;}
-.page{max-width:1100px;margin:0 auto;padding:1.2rem 1.5rem;}
+.page{max-width:1100px;margin:0 auto;padding:.8rem 1.5rem;}
 .two-col{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start;}
 @media(max-width:820px){.two-col{grid-template-columns:1fr;}}
 
@@ -626,7 +626,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 
   <!-- TAB: Project review -->
   <div class="main-content" id="main-project" style="display:none">
-    <div class="page" style="padding-top:.8rem">
+    <div class="page" style="padding-top:0">
       <!-- Financial dashboard (approver only) -->
       <div id="projStatsWrap" style="display:none;margin-bottom:0">
 
@@ -691,9 +691,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
       <h3 id="projFormTitle">Novi projekt</h3>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-bottom:.9rem">
-        <div class="fg">
-          <label>Odgovorna osoba</label>
-          <select id="pPerson"></select>
+        <div class="fg" style="grid-column:1/-1">
+          <label>Odgovorne osobe (može ih biti više)</label>
+          <div id="pPersons" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.6rem .85rem;display:flex;flex-wrap:wrap;gap:.4rem .8rem"></div>
         </div>
         <div class="fg">
           <label>Klijent</label>
@@ -1008,9 +1008,10 @@ function initApp(){
   const mainTabsEl=document.getElementById('mainTabs');
   mainTabsEl.innerHTML='';
 
+  const canAccessProjects = PROJECT_PERSONS.includes(currentUser.name);
   const MAIN_TABS=[
     { id:'moji-dani', label:'📋 Moji dani' },
-    { id:'project',   label:'📊 Project review' },
+    ...(canAccessProjects ? [{ id:'project', label:'📊 Project review' }] : []),
   ];
 
   // Sub-tabs per role
@@ -1133,10 +1134,10 @@ function switchMainTab(mainId, btn){
     subWrap.classList.remove('visible');
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
     if(projEl) projEl.style.display='block';
-    // Force immediate render — show stats wrap first for approvers
+    // Force immediate render
     const sw=document.getElementById('projStatsWrap');
-    if(sw&&currentUser.role==='approver') sw.style.display='block';
-    renderProjects();
+    if(sw) sw.style.display='block';
+    setTimeout(()=>renderProjects(), 0);
   }
 }
 
@@ -1802,6 +1803,13 @@ const PROJECT_PERSONS = ['Bruno Sušak','Magdalena Tenčić','Tomislava Obrč','
 
 function getProjects(){ return _projectCache || []; }
 
+// Check if a person is in project's persons list (supports multi-person)
+function personIncludes(p, name){
+  if(!name) return false;
+  if(p.persons) return p.persons.split(',').map(s=>s.trim()).includes(name);
+  return p.person===name;
+}
+
 function fmtEur(n){
   const num = Number(n);
   if(isNaN(num)) return '€0.00';
@@ -1861,9 +1869,9 @@ function renderProjects(){
   const personF=document.getElementById('projFilterPerson')?.value||'';
 
   let projs=getProjects();
-  // Employees see only their own
+  // Employees see only their own projects
   if(currentUser.role==='employee'){
-    projs=projs.filter(p=>p.person===currentUser.name);
+    projs=projs.filter(p=>personIncludes(p,currentUser.name));
   }
   if(monthF) projs=projs.filter(p=>p.date===monthF);
   if(personF) projs=projs.filter(p=>p.person===personF);
@@ -1871,10 +1879,10 @@ function renderProjects(){
   // Sort by date desc
   projs.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 
-  // Stats for approver
+  // Stats
   const statsWrap=document.getElementById('projStatsWrap');
-  if(statsWrap) statsWrap.style.display=currentUser.role==='approver'?'block':'none';
-  if(currentUser.role==='approver') renderProjStats(getProjects()); // always use full dataset for stats
+  if(statsWrap) statsWrap.style.display='block';
+  renderProjStats(getProjects());
 
   const el=document.getElementById('projList');
   if(!projs.length){
@@ -1892,7 +1900,7 @@ function renderProjects(){
     const canEdit=currentUser.role==='approver'||p.person===currentUser.name;
     return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
-      <div style="font-size:.82rem">${p.person||'—'}</div>
+      <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
       <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(p.date)}</div>
       <div class="proj-eur">${fmtEur(invoiced)}</div>
       <div class="proj-eur red">${fmtEur(totalCost)}</div>
@@ -1908,8 +1916,10 @@ function renderProjects(){
 let _selectedYear = new Date().getFullYear();
 
 function renderProjStats(projs){
-  // Use ALL projects for stats (ignore month/person filter for dashboard)
-  const allProjs = currentUser.role==='approver' ? getProjects() : getProjects().filter(p=>p.person===currentUser.name);
+  // Employees see only their own; approvers see all
+  const allProjs = currentUser.role==='approver'
+    ? getProjects()
+    : getProjects().filter(p=>personIncludes(p, currentUser.name));
 
   // KPI — current year
   const yearProjs = allProjs.filter(p=>(p.date||'').startsWith(String(_selectedYear)));
@@ -1931,8 +1941,11 @@ function renderProjStats(projs){
   ytEl.innerHTML = years.map(y=>`
     <button class="year-tab${y==_selectedYear?' active':''}" onclick="selectYear(${y})">${y}</button>`).join('');
 
-  // Monthly breakdown for selected year
-  renderMonthlyTable(allProjs, _selectedYear);
+  // Monthly table — approvers only
+  const monthlyCard = document.querySelector('.list-card:has(#monthlyTable)') ||
+    document.getElementById('monthlyTable')?.closest('.list-card');
+  if(monthlyCard) monthlyCard.style.display = currentUser.role==='approver' ? 'block' : 'none';
+  if(currentUser.role==='approver') renderMonthlyTable(allProjs, _selectedYear);
 }
 
 function selectYear(y){
@@ -2009,14 +2022,19 @@ function openProjForm(projId=null){
   document.getElementById('projFormTitle').textContent = projId ? 'Uredi projekt' : 'Novi projekt';
   document.getElementById('projFormErr').textContent='';
 
-  // Fill person dropdown
-  const psel=document.getElementById('pPerson');
-  psel.innerHTML='';
+  // Fill persons checkboxes
+  const pwrap=document.getElementById('pPersons');
+  pwrap.innerHTML='';
+  const existingPersons = projId
+    ? (getProjects().find(p=>p.id===projId)?.persons||'').split(',').map(s=>s.trim()).filter(Boolean)
+    : [currentUser.name];
   PROJECT_PERSONS.forEach(p=>{
-    const o=document.createElement('option');
-    o.value=p; o.textContent=p;
-    if(p===currentUser.name) o.selected=true;
-    psel.appendChild(o);
+    const id='pp_'+p.replace(/\s/g,'_');
+    const checked = existingPersons.includes(p);
+    pwrap.innerHTML+=`<label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="${id}" value="${p}" ${checked?'checked':''} style="accent-color:var(--gold);width:14px;height:14px">
+      ${p.split(' ')[0]}
+    </label>`;
   });
 
   // Set default date to current month
@@ -2085,7 +2103,9 @@ function calcProjTotal(){
 }
 
 function saveProjForm(){
-  const person=document.getElementById('pPerson').value;
+  const checkedPersons=[...document.querySelectorAll('#pPersons input[type=checkbox]:checked')].map(cb=>cb.value);
+  const person=checkedPersons[0]||currentUser.name; // primary person (first checked)
+  const persons=checkedPersons.join(', ');
   const client=document.getElementById('pClient').value;
   const name=document.getElementById('pName').value.trim();
   const date=document.getElementById('pDate').value;
@@ -2109,7 +2129,7 @@ function saveProjForm(){
 
   const proj={
     id: editingProjId||Date.now(),
-    person, client, name, date,
+    person, persons, client, name, date,
     invoiced, costs: JSON.stringify(costs),
     createdBy: currentUser.id,
     createdAt: new Date().toISOString()
@@ -2146,7 +2166,7 @@ function openProjDetail(projId){
   document.getElementById('projDetailContent').innerHTML=`
     <div class="modal-info" style="margin-bottom:1rem">
       <div class="modal-row"><span>Klijent</span><span>${p.client||'—'}</span></div>
-      <div class="modal-row"><span>Odgovorna osoba</span><span>${p.person||'—'}</span></div>
+      <div class="modal-row"><span>Odgovorne osobe</span><span>${p.persons||p.person||'—'}</span></div>
       <div class="modal-row"><span>Datum</span><span>${projMonthLabel(p.date)}</span></div>
       <div class="modal-row"><span>Fakturirano</span><span><b>${fmtEur(invoiced)}</b></span></div>
     </div>
