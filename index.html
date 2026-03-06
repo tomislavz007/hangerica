@@ -1032,10 +1032,10 @@ function renderMyDashboard(){
     }
   }
 
-  // Show/hide slobodni tab based on whether user has free days
+  // Always show slobodni tab
   const slobodniSubTab = document.querySelector('.sub-tab[data-id="slobodni"]');
   if(slobodniSubTab){
-    slobodniSubTab.style.display = totalFree>0 ? 'block' : 'none';
+    slobodniSubTab.style.display = 'block';
   }
 }
 
