@@ -762,7 +762,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 
       <div style="display:flex;gap:.8rem">
         <button class="btn-primary" style="flex:1" onclick="saveProjForm()">Spremi projekt</button>
-        <button class="btn-modal-close" style="flex:.5" onclick="closeProjForm()">Odustani</button>
+        <button class="btn-modal-close" style="flex:.5" onclick="closeProjFormBtn()">Odustani</button>
       </div>
       <div id="projFormErr" style="color:var(--red);font-size:.78rem;margin-top:.6rem;text-align:center"></div>
     </div>
@@ -1134,10 +1134,11 @@ function switchMainTab(mainId, btn){
     subWrap.classList.remove('visible');
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
     if(projEl) projEl.style.display='block';
-    // Force immediate render
+    // Show project div FIRST, then render
     const sw=document.getElementById('projStatsWrap');
     if(sw) sw.style.display='block';
-    setTimeout(()=>renderProjects(), 0);
+    // Use setTimeout to allow DOM to update display before renderProjects checks it
+    requestAnimationFrame(()=>{ setTimeout(()=>renderProjects(), 10); });
   }
 }
 
@@ -1862,7 +1863,9 @@ function initProjFilters(){
 
 // ── Render project list ──
 function renderProjects(){
-  if(!document.getElementById('main-project') || document.getElementById('main-project').style.display==='none') return;
+  const projEl = document.getElementById('main-project');
+  if(!projEl) return;
+  // Don't bail out based on display — it may have just been set to block
   initProjFilters();
 
   const monthF=document.getElementById('projFilterMonth')?.value||'';
@@ -2022,19 +2025,25 @@ function openProjForm(projId=null){
   document.getElementById('projFormTitle').textContent = projId ? 'Uredi projekt' : 'Novi projekt';
   document.getElementById('projFormErr').textContent='';
 
-  // Fill persons checkboxes
+  // Fill persons checkboxes safely using DOM API
   const pwrap=document.getElementById('pPersons');
   pwrap.innerHTML='';
   const existingPersons = projId
-    ? (getProjects().find(p=>p.id===projId)?.persons||'').split(',').map(s=>s.trim()).filter(Boolean)
+    ? (getProjects().find(p=>String(p.id)===String(projId))?.persons||'').split(',').map(s=>s.trim()).filter(Boolean)
     : [currentUser.name];
-  PROJECT_PERSONS.forEach(p=>{
-    const id='pp_'+p.replace(/\s/g,'_');
-    const checked = existingPersons.includes(p);
-    pwrap.innerHTML+=`<label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer;white-space:nowrap">
-      <input type="checkbox" id="${id}" value="${p}" ${checked?'checked':''} style="accent-color:var(--gold);width:14px;height:14px">
-      ${p.split(' ')[0]}
-    </label>`;
+  PROJECT_PERSONS.forEach(function(personName){
+    const lbl = document.createElement('label');
+    lbl.style.cssText='display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer;white-space:nowrap';
+    const cb = document.createElement('input');
+    cb.type='checkbox';
+    cb.value=personName;
+    cb.style.cssText='accent-color:var(--gold);width:14px;height:14px';
+    cb.checked = existingPersons.includes(personName);
+    const span = document.createElement('span');
+    span.textContent = personName.split(' ')[0];
+    lbl.appendChild(cb);
+    lbl.appendChild(span);
+    pwrap.appendChild(lbl);
   });
 
   // Set default date to current month
@@ -2067,7 +2076,13 @@ function openProjForm(projId=null){
 }
 
 function closeProjForm(e){
-  if(e&&e.target!==document.getElementById('projFormOverlay')) return;
+  // Called from overlay background click
+  if(e && e.target!==document.getElementById('projFormOverlay')) return;
+  document.getElementById('projFormOverlay').classList.remove('open');
+  editingProjId=null;
+}
+function closeProjFormBtn(){
+  // Called from button click — always close
   document.getElementById('projFormOverlay').classList.remove('open');
   editingProjId=null;
 }
@@ -2146,8 +2161,7 @@ function saveProjForm(){
     toast('Projekt spremljen!');
   }
 
-  document.getElementById('projFormOverlay').classList.remove('open');
-  editingProjId=null;
+  closeProjFormBtn();
   renderProjects();
 }
 
@@ -2193,13 +2207,16 @@ function openProjDetail(projId){
   document.getElementById('projDetailActions').innerHTML=
     (canEdit?`<button class="btn-primary" style="flex:1" onclick="closeProjDetail();openProjForm('${p.id}')">✏️ Uredi</button>`:'')+
     (currentUser.role==='approver'?`<button class="btn-sm btn-reject" style="flex:.6;padding:.6rem" onclick="deleteProj('${p.id}')">Obriši</button>`:'')+ 
-    `<button class="btn-modal-close" style="flex:.6;padding:.6rem" onclick="closeProjDetail()">Zatvori</button>`;
+    `<button class="btn-modal-close" style="flex:.6;padding:.6rem" onclick="closeProjDetailBtn()">Zatvori</button>`;
 
   document.getElementById('projDetailOverlay').classList.add('open');
 }
 
 function closeProjDetail(e){
   if(e&&e.target!==document.getElementById('projDetailOverlay')) return;
+  document.getElementById('projDetailOverlay').classList.remove('open');
+}
+function closeProjDetailBtn(){
   document.getElementById('projDetailOverlay').classList.remove('open');
 }
 
