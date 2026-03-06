@@ -2020,66 +2020,925 @@ function parseCosts(costsStr){
 // ── Project form ──
 let editingProjId = null;
 
-function openProjForm(projId=null){
+function openProjForm(projId){
+  projId = projId || null;
   editingProjId = projId;
-  document.getElementById('projFormTitle').textContent = projId ? 'Uredi projekt' : 'Novi projekt';
-  document.getElementById('projFormErr').textContent='';
 
-  // Fill persons checkboxes safely using DOM API
-  const pwrap=document.getElementById('pPersons');
-  pwrap.innerHTML='';
-  const existingPersons = projId
-    ? (getProjects().find(p=>String(p.id)===String(projId))?.persons||'').split(',').map(s=>s.trim()).filter(Boolean)
-    : [currentUser.name];
-  PROJECT_PERSONS.forEach(function(personName){
-    const lbl = document.createElement('label');
-    lbl.style.cssText='display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer;white-space:nowrap';
-    const cb = document.createElement('input');
-    cb.type='checkbox';
-    cb.value=personName;
-    cb.style.cssText='accent-color:var(--gold);width:14px;height:14px';
-    cb.checked = existingPersons.includes(personName);
-    const span = document.createElement('span');
+  var titleEl = document.getElementById('projFormTitle');
+  var errEl = document.getElementById('projFormErr');
+  if(titleEl) titleEl.textContent = projId ? 'Uredi projekt' : 'Novi projekt';
+  if(errEl) errEl.textContent = '';
+
+  // Fill persons checkboxes
+  var pwrap = document.getElementById('pPersons');
+  if(!pwrap){ alert('Greška: forma nije pronađena'); return; }
+  pwrap.innerHTML = '';
+
+  var existingPersons = [];
+  if(projId){
+    var existing = getProjects().filter(function(p){ return String(p.id)===String(projId); })[0];
+    if(existing && existing.persons){
+      existingPersons = existing.persons.split(',').map(function(s){ return s.trim(); });
+    }
+  } else {
+    existingPersons = [currentUser.name];
+  }
+
+  for(var i=0; i<PROJECT_PERSONS.length; i++){
+    var personName = PROJECT_PERSONS[i];
+    var lbl = document.createElement('label');
+    lbl.style.display = 'flex';
+    lbl.style.alignItems = 'center';
+    lbl.style.gap = '.35rem';
+    lbl.style.fontSize = '.82rem';
+    lbl.style.cursor = 'pointer';
+    lbl.style.whiteSpace = 'nowrap';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = personName;
+    cb.style.accentColor = 'var(--gold)';
+    cb.style.width = '14px';
+    cb.style.height = '14px';
+    cb.checked = existingPersons.indexOf(personName) >= 0;
+    var span = document.createElement('span');
     span.textContent = personName.split(' ')[0];
     lbl.appendChild(cb);
     lbl.appendChild(span);
     pwrap.appendChild(lbl);
-  });
+  }
 
-  // Set default date to current month
-  const now=new Date();
-  const defaultDate=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  // Fill other fields
+  var now = new Date();
+  var defaultDate = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
 
   if(projId){
-    const proj=getProjects().find(p=>p.id===projId);
+    var proj = getProjects().filter(function(p){ return String(p.id)===String(projId); })[0];
     if(proj){
-      document.getElementById('pPerson').value=proj.person||'';
-      document.getElementById('pClient').value=proj.client||'';
-      document.getElementById('pName').value=proj.name||'';
-      document.getElementById('pDate').value=proj.date||defaultDate;
-      document.getElementById('pInvoiced').value=proj.invoiced||'';
-      // Rebuild cost rows
-      document.getElementById('costRows').innerHTML='';
-      parseCosts(proj.costs).forEach(c=>addCostRow(c.name,c.amount));
+      document.getElementById('pClient').value = proj.client || '';
+      document.getElementById('pName').value = proj.name || '';
+      document.getElementById('pDate').value = proj.date || defaultDate;
+      document.getElementById('pInvoiced').value = proj.invoiced || '';
+      document.getElementById('costRows').innerHTML = '';
+      var costs = parseCosts(proj.costs);
+      for(var j=0; j<costs.length; j++) addCostRow(costs[j].name, costs[j].amount);
     }
   } else {
-    document.getElementById('pPerson').value=currentUser.name;
-    document.getElementById('pClient').value='';
-    document.getElementById('pName').value='';
-    document.getElementById('pDate').value=defaultDate;
-    document.getElementById('pInvoiced').value='';
-    document.getElementById('costRows').innerHTML='';
+    document.getElementById('pClient').value = '';
+    document.getElementById('pName').value = '';
+    document.getElementById('pDate').value = defaultDate;
+    document.getElementById('pInvoiced').value = '';
+    document.getElementById('costRows').innerHTML = '';
     addCostRow();
   }
+
   calcProjTotal();
-  // Remove focus from any active element before opening modal
+
   if(document.activeElement) document.activeElement.blur();
-  document.getElementById('projFormOverlay').classList.add('open');
-  // Focus first input after modal opens
-  setTimeout(()=>{
-    const first = document.querySelector('#projFormOverlay input, #projFormOverlay select');
-    if(first) first.focus();
-  }, 50);
+  var overlay = document.getElementById('projFormOverlay');
+  if(overlay) overlay.classList.add('open');
+}
+
+function closeProjForm(e){
+  // Called from overlay background click
+  if(e && e.target!==document.getElementById('projFormOverlay')) return;
+  document.getElementById('projFormOverlay').classList.remove('open');
+  editingProjId=null;
+}
+function closeProjFormBtn(){
+  // Called from button click — always close
+  document.getElementById('projFormOverlay').classList.remove('open');
+  editingProjId=null;
+}
+
+function addCostRow(name='',amount=''){
+  const wrap=document.getElementById('costRows');
+  const div=document.createElement('div');
+  div.className='cost-row-item';
+  div.innerHTML=`
+    <input type="text" placeholder="Naziv dobavljača" value="${name}" oninput="calcProjTotal()">
+    <input type="number" placeholder="0.00" step="0.01" min="0" value="${amount||''}" style="width:110px" oninput="calcProjTotal()">
+    <button class="btn-remove-row" onclick="this.parentElement.remove();calcProjTotal()">✕</button>`;
+  wrap.appendChild(div);
+  calcProjTotal();
+}
+
+function calcProjTotal(){
+  const invoiced=parseFloat(document.getElementById('pInvoiced')?.value)||0;
+  const rows=document.querySelectorAll('#costRows .cost-row-item');
+  let totalCost=0;
+  rows.forEach(row=>{
+    const amt=parseFloat(row.querySelectorAll('input')[1]?.value)||0;
+    totalCost+=amt;
+  });
+  const profit=invoiced-totalCost;
+  const margin=invoiced>0?Math.round(profit/invoiced*100):0;
+  const el=n=>document.getElementById(n);
+  if(el('totalCostsPreview')) el('totalCostsPreview').textContent=fmtEur(totalCost);
+  if(el('prevInvoiced')) el('prevInvoiced').textContent=fmtEur(invoiced);
+  if(el('prevCosts')) el('prevCosts').textContent='- '+fmtEur(totalCost);
+  if(el('prevProfit')){ el('prevProfit').textContent=fmtEur(profit); el('prevProfit').style.color=profit>=0?'var(--green)':'var(--red)'; }
+  if(el('prevMargin')){ el('prevMargin').textContent=margin+'%'; el('prevMargin').style.color=margin>=50?'var(--green)':margin>=25?'var(--amber)':'var(--red)'; }
+}
+
+function saveProjForm(){
+  var checkboxes = document.querySelectorAll('#pPersons input[type=checkbox]:checked');
+  var checkedPersons = [];
+  for(var i=0; i<checkboxes.length; i++) checkedPersons.push(checkboxes[i].value);
+
+  var person = checkedPersons.length > 0 ? checkedPersons[0] : currentUser.name;
+  var persons = checkedPersons.join(', ');
+  var client = document.getElementById('pClient').value;
+  var name = document.getElementById('pName').value.trim();
+  var date = document.getElementById('pDate').value;
+  var invoiced = parseFloat(document.getElementById('pInvoiced').value) || 0;
+  var errEl = document.getElementById('projFormErr');
+
+  if(!client || !name || !date || !invoiced){
+    errEl.textContent = 'Molimo ispunite sva obavezna polja.';
+    return;
+  }
+  errEl.textContent = '';
+
+  // Collect cost rows
+  var rows = document.querySelectorAll('#costRows .cost-row-item');
+  var costs = [];
+  for(var j=0; j<rows.length; j++){
+    var inputs = rows[j].querySelectorAll('input');
+    var n = inputs[0].value.trim();
+    var a = parseFloat(inputs[1].value) || 0;
+    if(n || a) costs.push({name:n, amount:a});
+  }
+
+  var proj = {
+    id: editingProjId || Date.now(),
+    person: person,
+    persons: persons,
+    client: client,
+    name: name,
+    date: date,
+    invoiced: invoiced,
+    costs: JSON.stringify(costs),
+    createdBy: currentUser.id,
+    createdAt: new Date().toISOString()
+  };
+
+  if(editingProjId){
+    var idx2 = _projectCache.findIndex(function(p){ return String(p.id)===String(editingProjId); });
+    if(idx2 >= 0) _projectCache[idx2] = proj;
+    gasCall('updateProject', {data: proj});
+    toast('Projekt ažuriran!');
+  } else {
+    _projectCache.unshift(proj);
+    gasCall('saveProject', {data: proj});
+    toast('Projekt spremljen!');
+  }
+
+  closeProjFormBtn();
+  renderProjects();
+}
+
+function apprCalcDur(){
+  const from=document.getElementById('apprFFrom').value;
+  const to=document.getElementById('apprFTo').value;
+  const prev=document.getElementById('apprDurPreview');
+  const hw=document.getElementById('apprHolWarn');
+  if(from&&to){
+    const{days,hols}=workDays(from,to);
+    if(days>0){
+      prev.textContent='⟶ '+days+' radnih dana';
+      hw.style.display=hols.length?'block':'none';
+      hw.textContent=hols.length?'🇭🇷 Blagdani (nisu uračunati): '+hols.join(', '):'';
+    } else {
+      prev.textContent=days===0?'Nema radnih dana u odabiru':'Datum završetka mora biti nakon početka';
+      hw.style.display='none';
+    }
+  } else { prev.textContent=''; hw.style.display='none'; }
+}
+
+function apprSubmitRequest(){
+  const from=document.getElementById('apprFFrom').value;
+  const to=document.getElementById('apprFTo').value;
+  const type=document.getElementById('apprFType').value;
+  const note=document.getElementById('apprFNote').value.trim();
+  if(!from||!to){toast('Unesite oba datuma','error');return;}
+  const{days}=workDays(from,to);
+  if(days<=0){toast('Nema radnih dana u odabiru','error');return;}
+
+  // Check remaining days
+  const startDays=getUserDays(currentUser.id);
+  const reqs=getRequests();
+  const used=reqs.filter(r=>getReqUserId(r)===currentUser.id&&r.status==='odobreno').reduce((a,r)=>a+r.days,0);
+  const left=startDays-used;
+  if(type==='Godišnji odmor'&&days>left){toast(`Nemate dovoljno dana! Preostalo: ${left}`,'error');return;}
+
+  const newReq={
+    id:Date.now(), userId:currentUser.id,
+    type, from, to, days, note,
+    status:'odobreno', // auto-approved for approvers
+    approvedBy:currentUser.name,
+    approvedAt:new Date().toISOString(),
+    createdAt:new Date().toISOString()
+  };
+
+  document.getElementById('apprFFrom').value='';
+  document.getElementById('apprFTo').value='';
+  document.getElementById('apprFNote').value='';
+  document.getElementById('apprDurPreview').textContent='';
+  document.getElementById('apprHolWarn').style.display='none';
+
+  _reqCache.unshift(newReq);
+  renderAll();
+  toast('Odmor dodan! ✓');
+
+  showLoading(true);
+  gasCall('saveRequest',{data:newReq}).then(()=>showLoading(false));
+}
+
+function apprDeleteReq(id){
+  if(!confirm('Obrisati ovaj odmor?')) return;
+  _reqCache=_reqCache.filter(r=>r.id!==id);
+  toast('Odmor obrisan.');
+  renderAll();
+  gasCall('deleteRequest',{id:id});
+}
+
+// ══════════════════════════════════════════
+// CALENDAR
+// ══════════════════════════════════════════
+function renderCalendar(){
+  const label=document.getElementById('calMonthLabel');
+  label.textContent=HR_MONTHS[calMonth]+' '+calYear;
+
+  const reqs=getRequests();
+  // build a map: dateKey -> [{req, user}]
+  const dayMap={};
+  reqs.forEach(r=>{
+    if(r.status==='odbijeno') return;
+    let c=new Date(cleanDate(r.from));
+    const end=new Date(cleanDate(r.to));
+    while(c<=end){
+      const dw=c.getDay();
+      if(dw!==0&&dw!==6&&!isHoliday(c)){
+        const k=toDateKey(c);
+        if(!dayMap[k]) dayMap[k]=[];
+        dayMap[k].push({req:r,user:getUserById(getReqUserId(r))});
+      }
+      c.setDate(c.getDate()+1);
+    }
+  });
+
+  // build calendar grid
+  const firstDay=new Date(calYear,calMonth,1);
+  const lastDay=new Date(calYear,calMonth+1,0);
+  const todayKey=toDateKey(new Date());
+
+  // start from Monday
+  let startDow=firstDay.getDay(); // 0=Sun
+  startDow=(startDow+6)%7; // Mon=0
+
+  const cells=[];
+  // prev month padding
+  for(let i=0;i<startDow;i++){
+    const d=new Date(calYear,calMonth,1-startDow+i);
+    cells.push({date:d,current:false});
+  }
+  // current month
+  for(let d=1;d<=lastDay.getDate();d++){
+    cells.push({date:new Date(calYear,calMonth,d),current:true});
+  }
+  // next month padding to fill 6 rows
+  const remaining=42-cells.length;
+  for(let i=1;i<=remaining;i++){
+    cells.push({date:new Date(calYear,calMonth+1,i),current:false});
+  }
+
+  const container=document.getElementById('calDays');
+  container.innerHTML=cells.map(cell=>{
+    const k=toDateKey(cell.date);
+    const dw=cell.date.getDay();
+    const isWeekend=dw===0||dw===6;
+    const hol=isHoliday(cell.date);
+    const isToday=k===todayKey;
+    const entries=dayMap[k]||[];
+
+    let cls='cal-day';
+    if(!cell.current) cls+=' other-month';
+    if(isWeekend) cls+=' weekend';
+    if(hol) cls+=' holiday';
+    if(isToday) cls+=' today';
+
+    const chipsHtml=entries.slice(0,3).map(e=>{
+      const chipCls=e.req.status==='odobreno'?'approved-chip':'pending-chip';
+      const name=e.user?e.user.name.split(' ')[0]:'?';
+      return`<div class="cal-chip ${chipCls}" onclick="openModal(${e.req.id},event)" title="${e.user?e.user.name:''}: ${e.req.type}">${name}</div>`;
+    }).join('');
+    const more=entries.length>3?`<div style="font-size:.58rem;color:var(--muted)">+${entries.length-3} više</div>`:'';
+
+    return`<div class="${cls}">
+      <div class="cal-day-num">${cell.date.getDate()}</div>
+      ${hol?`<div class="hol-label">${hol.split(' ')[0]}</div>`:''}
+      <div class="cal-chips">${chipsHtml}${more}</div>
+    </div>`;
+  }).join('');
+}
+
+function calPrev(){
+  calMonth--;
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCalendar();
+}
+function calNext(){
+  calMonth++;
+  if(calMonth>11){calMonth=0;calYear++;}
+  renderCalendar();
+}
+function empCalPrev(){
+  empCalMonth--;
+  if(empCalMonth<0){empCalMonth=11;empCalYear--;}
+  renderEmpCalendar();
+}
+function empCalNext(){
+  empCalMonth++;
+  if(empCalMonth>11){empCalMonth=0;empCalYear++;}
+  renderEmpCalendar();
+}
+
+// ── Employee read-only team calendar ──
+function renderEmpCalendar(){
+  const labelEl=document.getElementById('empCalMonthLabel');
+  if(!labelEl) return;
+  labelEl.textContent=HR_MONTHS[empCalMonth]+' '+empCalYear;
+
+  const reqs=getRequests();
+  // Only show approved requests (read-only view)
+  const dayMap={};
+  reqs.forEach(r=>{
+    if(r.status!=='odobreno') return;
+    let c=new Date(cleanDate(r.from));
+    const end=new Date(cleanDate(r.to));
+    while(c<=end){
+      const dw=c.getDay();
+      if(dw!==0&&dw!==6&&!isHoliday(c)){
+        const k=toDateKey(c);
+        if(!dayMap[k]) dayMap[k]=[];
+        const u=getUserById(getReqUserId(r));
+        // Don't show current user's own entries differently — show all
+        dayMap[k].push({req:r,user:u});
+      }
+      c.setDate(c.getDate()+1);
+    }
+  });
+
+  const firstDay=new Date(empCalYear,empCalMonth,1);
+  const lastDay=new Date(empCalYear,empCalMonth+1,0);
+  const todayKey=toDateKey(new Date());
+  let startDow=firstDay.getDay();
+  startDow=(startDow+6)%7;
+
+  const cells=[];
+  for(let i=0;i<startDow;i++){
+    cells.push({date:new Date(empCalYear,empCalMonth,1-startDow+i),current:false});
+  }
+  for(let d=1;d<=lastDay.getDate();d++){
+    cells.push({date:new Date(empCalYear,empCalMonth,d),current:true});
+  }
+  const rem=42-cells.length;
+  for(let i=1;i<=rem;i++){
+    cells.push({date:new Date(empCalYear,empCalMonth+1,i),current:false});
+  }
+
+  const container=document.getElementById('empCalDays');
+  if(!container) return;
+  container.innerHTML=cells.map(cell=>{
+    const k=toDateKey(cell.date);
+    const dw=cell.date.getDay();
+    const isWeekend=dw===0||dw===6;
+    const hol=isHoliday(cell.date);
+    const isToday=k===todayKey;
+    const entries=dayMap[k]||[];
+    // Highlight current user's own approved days
+    const myEntries=entries.filter(e=>e.req.userId===currentUser.id);
+    const othersEntries=entries.filter(e=>e.req.userId!==currentUser.id);
+
+    let cls='cal-day';
+    if(!cell.current) cls+=' other-month';
+    if(isWeekend) cls+=' weekend';
+    if(hol) cls+=' holiday';
+    if(isToday) cls+=' today';
+    // Subtle highlight if current user is off this day
+    const extraStyle=myEntries.length?'box-shadow:inset 0 0 0 1px rgba(61,184,130,.4);':'';
+
+    const chipsHtml=[...myEntries,...othersEntries].slice(0,3).map(e=>{
+      const isMe=e.req.userId===currentUser.id;
+      const chipStyle=isMe
+        ?'background:rgba(61,184,130,.3);color:#5fd4a0;font-weight:600;'
+        :'background:rgba(74,144,217,.2);color:#7ab8f5;';
+      const name=e.user?(isMe?'Ja':e.user.name.split(' ')[0]):'?';
+      return`<div class="cal-chip" style="${chipStyle}" title="${e.user?e.user.name:''}">${name}</div>`;
+    }).join('');
+    const more=entries.length>3?`<div style="font-size:.58rem;color:var(--muted)">+${entries.length-3}</div>`:'';
+
+    return`<div class="${cls}" style="${extraStyle}">
+      <div class="cal-day-num">${cell.date.getDate()}</div>
+      ${hol?`<div class="hol-label">${hol.split(' ')[0]}</div>`:''}
+      <div class="cal-chips">${chipsHtml}${more}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// MODAL (calendar click)
+// ══════════════════════════════════════════
+function openModal(reqId,event){
+  event.stopPropagation();
+  const req=getRequests().find(r=>r.id===reqId);
+  if(!req) return;
+  modalReqId=reqId;
+  const u=getUserById(req.userId);
+
+  document.getElementById('modalTitle').textContent=(u?u.name:(getReqUserId(r)||'Nepoznato'))+' — '+req.type;
+  document.getElementById('modalInfo').innerHTML=`
+    <div class="modal-row"><span>Zaposlenik</span><span>${u?u.name:(getReqUserId(r)||'Nepoznato')}</span></div>
+    <div class="modal-row"><span>Pozicija</span><span>${u?u.pos:'?'}</span></div>
+    <div class="modal-row"><span>Vrsta</span><span>${req.type}</span></div>
+    <div class="modal-row"><span>Od</span><span>${fmtDate(req.from)}</span></div>
+    <div class="modal-row"><span>Do</span><span>${fmtDate(req.to)}</span></div>
+    <div class="modal-row"><span>Radnih dana</span><span><b>${req.days}</b></span></div>
+    ${req.note?`<div class="modal-row"><span>Napomena</span><span>${req.note}</span></div>`:''}
+    <div class="modal-row"><span>Status</span><span><span class="badge ${req.status}">${statusLbl(req.status)}</span></span></div>`;
+
+  const actions=document.getElementById('modalActions');
+  if(req.status==='na-cekanju'){
+    actions.innerHTML=`
+      <button class="btn-sm btn-approve" style="flex:1;padding:.6rem" onclick="decideModal('odobreno')">✓ Odobri</button>
+      <button class="btn-sm btn-reject" style="flex:1;padding:.6rem" onclick="decideModal('odbijeno')">✗ Odbij</button>
+      <button class="btn-modal-close" style="flex:.6" onclick="closeModal()">Zatvori</button>`;
+  } else if(req.status==='odobreno'){
+    actions.innerHTML=`
+      <button class="btn-sm btn-reject" style="flex:1;padding:.6rem" onclick="decideModal('na-cekanju')">↩ Poništi odobrenje</button>
+      <button class="btn-modal-close" style="flex:1;padding:.6rem" onclick="closeModal()">Zatvori</button>`;
+  } else {
+    actions.innerHTML=`<button class="btn-modal-close" style="width:100%;padding:.6rem" onclick="closeModal()">Zatvori</button>`;
+  }
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function decideModal(newStatus){
+  if(modalReqId) decide(modalReqId,newStatus);
+  closeModal();
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+  modalReqId=null;
+}
+
+// ══════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════
+function calcDur(){
+  const from=document.getElementById('fFrom').value;
+  const to=document.getElementById('fTo').value;
+  const prev=document.getElementById('durPreview');
+  const hw=document.getElementById('holWarn');
+  if(from&&to){
+    const{days,hols}=workDays(from,to);
+    if(days>0){
+      prev.textContent='⟶ '+days+' radnih dana';
+      hw.style.display=hols.length?'block':'none';
+      hw.textContent=hols.length?'🇭🇷 Blagdani (nisu uračunati): '+hols.join(', '):'';
+    } else if(days===0){prev.textContent='Nema radnih dana u odabiru';hw.style.display='none';}
+    else{prev.textContent='Datum završetka mora biti nakon početka';hw.style.display='none';}
+  } else{prev.textContent='';hw.style.display='none';}
+}
+
+function submitRequest(){
+  const from=document.getElementById('fFrom').value;
+  const to=document.getElementById('fTo').value;
+  const type=document.getElementById('fType').value;
+  const note=document.getElementById('fNote').value.trim();
+  if(!from||!to){toast('Unesite oba datuma','error');return;}
+  const{days}=workDays(from,to);
+  if(days<=0){toast('Nema radnih dana u odabiru','error');return;}
+
+  // check remaining days
+  const startDays=getUserDays(currentUser.id);
+  const reqs=getRequests();
+  const used=reqs.filter(r=>getReqUserId(r)===currentUser.id&&r.status==='odobreno').reduce((a,r)=>a+r.days,0);
+  const left=startDays-used;
+
+  if(type==='Godišnji odmor'&&days>left){
+    toast(`Nemate dovoljno dana godišnjeg! Preostalo: ${left}`,'error');return;
+  }
+  if(type==='Slobodni dan'){
+    const leftFree=getRemainingFreeDays(currentUser.id);
+    if(leftFree<=0){toast('Nemate slobodnih dana za iskoristiti!','error');return;}
+    if(days>leftFree){toast(`Nemate dovoljno slobodnih dana! Preostalo: ${leftFree}`,'error');return;}
+  }
+
+  const newReq = {
+    id:Date.now(),userId:currentUser.id,
+    type,from,to,days,note,status:'na-cekanju',
+    createdAt:new Date().toISOString()
+  };
+
+  document.getElementById('fFrom').value='';
+  document.getElementById('fTo').value='';
+  document.getElementById('fNote').value='';
+  document.getElementById('durPreview').textContent='';
+  document.getElementById('holWarn').style.display='none';
+
+  // Optimistic update
+  _reqCache.unshift(newReq);
+  renderAll();
+  toast('Zahtjev poslan na odobrenje!');
+
+  // Save to Sheets
+  showLoading(true);
+  gasCall('saveRequest', {data: newReq}).then(() => {
+    showLoading(false);
+  });
+}
+
+function deleteReq(id){
+  if(!confirm('Povući ovaj zahtjev?')) return;
+  _reqCache = _reqCache.filter(r=>r.id!==id);
+  toast('Zahtjev povučen.');
+  renderAll();
+  gasCall('deleteRequest', {id: id});
+}
+
+function decide(id,newStatus){
+  const reqs=getRequests();
+  const r=reqs.find(r=>r.id===id);
+  if(!r) return;
+  const u=getUserById(getReqUserId(r));
+
+  if(newStatus==='odobreno'&&r.type==='Godišnji odmor'&&u){
+    const startDays=getUserDays(u.id);
+    const usedNow=reqs.filter(x=>getReqUserId(x)===u.id&&x.status==='odobreno'&&x.id!==id).reduce((a,x)=>a+x.days,0);
+    const leftNow=startDays-usedNow;
+    if(r.days>leftNow){
+      toast(`${u.name} nema dovoljno dana! (preostalo: ${leftNow})`,'error');return;
+    }
+  }
+
+  r.status=newStatus;
+  r.approvedBy=currentUser.name;
+  r.approvedAt=new Date().toISOString();
+
+  // Optimistic update
+  const idx = _reqCache.findIndex(x=>x.id===id);
+  if(idx>=0) _reqCache[idx] = r;
+
+  const msg=newStatus==='odobreno'?'✓ Zahtjev odobren!':newStatus==='odbijeno'?'Zahtjev odbijen.':'Zahtjev vraćen na čekanje.';
+  toast(msg);
+  renderAll();
+
+  // Save to Sheets
+  gasCall('updateRequest', {data: {
+    id: r.id,
+    status: r.status,
+    approvedBy: r.approvedBy,
+    approvedAt: r.approvedAt
+  }});
+}
+
+function myFilter(f,btn){
+  currentMyFilter=f;
+  document.querySelectorAll('#myFilterRow .filt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMyRequests();
+}
+function allFilter(f,btn){
+  currentAllFilter=f;
+  document.querySelectorAll('#allFilterRow .filt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAllRequests();
+}
+
+function statusLbl(s){
+  return s==='odobreno'?'Odobreno':s==='odbijeno'?'Odbijeno':'Na čekanju';
+}
+
+function updatePendingBadge(){
+  const cnt=getRequests().filter(r=>r.status==='na-cekanju').length;
+  document.querySelectorAll('.sub-tab').forEach(t=>{
+    if(t.dataset.id==='cekanje'){
+      t.textContent=cnt>0?`Na čekanju (${cnt})`:'Na čekanju';
+    }
+  });
+}
+
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=(type===''?'✓ ':'')+msg;
+  el.className='show'+(type?' '+type:'');
+  setTimeout(()=>el.className='',2800);
+}
+
+// ══════════════════════════════════════════
+// PROJECT REVIEW
+// ══════════════════════════════════════════
+
+
+
+function getProjects(){ return _projectCache || []; }
+
+// Check if a person is in project's persons list (supports multi-person)
+function personIncludes(p, name){
+  if(!name) return false;
+  if(p.persons) return p.persons.split(',').map(s=>s.trim()).includes(name);
+  return p.person===name;
+}
+
+function fmtEur(n){
+  const num = Number(n);
+  if(isNaN(num)) return '€0.00';
+  return '€' + num.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function projMonthLabel(ym){
+  if(!ym) return '—';
+  const [y,m]=ym.split('-');
+  return HR_MONTHS[parseInt(m)-1]+' '+y;
+}
+
+// ── Init project filters ──
+function initProjFilters(){
+  const sel=document.getElementById('projFilterMonth');
+  if(!sel) return;
+
+  // Save current selection
+  const savedMonth = sel.value;
+
+  // Build month list from ALL projects
+  const allProjs = currentUser.role==='approver' ? getProjects() : getProjects().filter(p=>p.person===currentUser.name);
+  const months=[...new Set(allProjs.map(p=>p.date).filter(Boolean))].sort().reverse();
+  sel.innerHTML='<option value="">Svi mjeseci</option>';
+  months.forEach(m=>{
+    const o=document.createElement('option');
+    o.value=m; o.textContent=projMonthLabel(m);
+    if(m===savedMonth) o.selected=true;
+    sel.appendChild(o);
+  });
+
+  // Person filter — only for approvers
+  const psel=document.getElementById('projFilterPerson');
+  if(psel){
+    if(currentUser.role==='approver'){
+      const savedPerson=psel.value;
+      psel.style.display='block';
+      psel.innerHTML='<option value="">Sve osobe</option>';
+      PROJECT_PERSONS.forEach(p=>{
+        const o=document.createElement('option');
+        o.value=p; o.textContent=p;
+        if(p===savedPerson) o.selected=true;
+        psel.appendChild(o);
+      });
+    } else {
+      psel.style.display='none';
+    }
+  }
+}
+
+// ── Render project list ──
+function renderProjects(){
+  const projEl = document.getElementById('main-project');
+  if(!projEl) return;
+  // Don't bail out based on display — it may have just been set to block
+  initProjFilters();
+
+  const monthF=document.getElementById('projFilterMonth')?.value||'';
+  const personF=document.getElementById('projFilterPerson')?.value||'';
+
+  let projs=getProjects();
+  // Employees see only their own projects
+  if(currentUser.role==='employee'){
+    projs=projs.filter(p=>personIncludes(p,currentUser.name));
+  }
+  if(monthF) projs=projs.filter(p=>p.date===monthF);
+  if(personF) projs=projs.filter(p=>p.person===personF);
+
+  // Sort by date desc
+  projs.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  // Stats
+  const statsWrap=document.getElementById('projStatsWrap');
+  if(statsWrap) statsWrap.style.display='block';
+  renderProjStats(getProjects());
+
+  const el=document.getElementById('projList');
+  if(!projs.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📊</div>Nema unesenih projekata</div>';
+    return;
+  }
+
+  el.innerHTML=projs.map(p=>{
+    const costs=parseCosts(p.costs);
+    const totalCost=costs.reduce((a,c)=>a+c.amount,0);
+    const invoiced=parseFloat(p.invoiced)||0;
+    const profit=invoiced-totalCost;
+    const margin=invoiced>0?Math.round(profit/invoiced*100):0;
+    const mCls=margin>=50?'high':margin>=25?'mid':'low';
+    const canEdit=currentUser.role==='approver'||p.person===currentUser.name;
+    return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
+      <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
+      <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
+      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(p.date)}</div>
+      <div class="proj-eur">${fmtEur(invoiced)}</div>
+      <div class="proj-eur red">${fmtEur(totalCost)}</div>
+      <div class="proj-eur green">${fmtEur(profit)}</div>
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <span class="margin-badge ${mCls}">${margin}%</span>
+        ${canEdit?`<button class="btn-del" onclick="event.stopPropagation();deleteProj('${p.id}')" title="Obriši">✕</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+
+function renderProjStats(projs){
+  // Employees see only their own; approvers see all
+  const allProjs = currentUser.role==='approver'
+    ? getProjects()
+    : getProjects().filter(p=>personIncludes(p, currentUser.name));
+
+  // KPI — current year
+  const yearProjs = allProjs.filter(p=>(p.date||'').startsWith(String(_selectedYear)));
+  const totalInv  = yearProjs.reduce((a,p)=>a+(parseFloat(p.invoiced)||0),0);
+  const totalCost = yearProjs.reduce((a,p)=>a+parseCosts(p.costs).reduce((b,c)=>b+c.amount,0),0);
+  const totalProfit = totalInv - totalCost;
+  const avgMargin = totalInv>0 ? Math.round(totalProfit/totalInv*100) : 0;
+
+  document.getElementById('projStats').innerHTML=`
+    <div class="stat-box"><div class="lbl">Projekata ${_selectedYear}</div><div class="val blue">${yearProjs.length}</div></div>
+    <div class="stat-box"><div class="lbl">Fakturirano ${_selectedYear}</div><div class="val" style="font-size:1.3rem;color:var(--text)">${fmtEur(totalInv)}</div></div>
+    <div class="stat-box"><div class="lbl">Zarada ${_selectedYear}</div><div class="val green" style="font-size:1.3rem">${fmtEur(totalProfit)}</div></div>
+    <div class="stat-box"><div class="lbl">Avg. profitabilnost</div><div class="val" style="color:var(--gold)">${avgMargin}%</div></div>`;
+
+  // Year tabs — build from available years in data
+  const years = [...new Set(allProjs.map(p=>(p.date||'').substring(0,4)).filter(y=>y&&y.length===4))].sort().reverse();
+  if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
+  const ytEl = document.getElementById('yearTabs');
+  ytEl.innerHTML = years.map(y=>`
+    <button class="year-tab${y==_selectedYear?' active':''}" onclick="selectYear(${y})">${y}</button>`).join('');
+
+  // Monthly table — approvers only
+  const monthlyTableEl = document.getElementById('monthlyTable');
+  const monthlyCard = monthlyTableEl ? monthlyTableEl.closest('.list-card') : null;
+  if(monthlyCard) monthlyCard.style.display = currentUser.role==='approver' ? 'block' : 'none';
+  if(currentUser.role==='approver') renderMonthlyTable(allProjs, _selectedYear);
+}
+
+function selectYear(y){
+  _selectedYear = y;
+  renderProjStats(getProjects());
+}
+
+function renderMonthlyTable(allProjs, year){
+  const yearStr = String(year);
+  // Build data per month
+  const months = Array.from({length:12},(_,i)=>({
+    key: yearStr+'-'+String(i+1).padStart(2,'0'),
+    label: HR_MONTHS[i],
+    inv:0, cost:0
+  }));
+
+  allProjs.filter(p=>(p.date||'').startsWith(yearStr)).forEach(p=>{
+    const mIdx = months.findIndex(m=>m.key===p.date);
+    if(mIdx>=0){
+      months[mIdx].inv  += parseFloat(p.invoiced)||0;
+      months[mIdx].cost += parseCosts(p.costs).reduce((a,c)=>a+c.amount,0);
+    }
+  });
+
+  // Only show months with data OR all months if some have data
+  const hasAnyData = months.some(m=>m.inv>0);
+  const maxInv = Math.max(...months.map(m=>m.inv), 1);
+
+  // Totals row
+  const totInv  = months.reduce((a,m)=>a+m.inv,0);
+  const totCost = months.reduce((a,m)=>a+m.cost,0);
+  const totProfit = totInv - totCost;
+  const totMargin = totInv>0 ? Math.round(totProfit/totInv*100) : 0;
+
+  const tbody = document.getElementById('monthlyTableBody');
+  tbody.innerHTML = months.map(m=>{
+    const profit  = m.inv - m.cost;
+    const margin  = m.inv>0 ? Math.round(profit/m.inv*100) : 0;
+    const mCls    = margin>=50?'var(--green)':margin>=25?'var(--amber)':'var(--red)';
+    const barPct  = Math.round(m.inv/maxInv*100);
+    const isEmpty = m.inv===0;
+    return`<tr style="${isEmpty?'opacity:.35':''}">
+      <td style="font-weight:500">${m.label}</td>
+      <td style="text-align:right;font-family:'Playfair Display',serif">${isEmpty?'—':fmtEur(m.inv)}</td>
+      <td style="text-align:right;color:var(--red)">${isEmpty?'—':fmtEur(m.cost)}</td>
+      <td style="text-align:right;color:${isEmpty?'var(--muted)':profit>=0?'var(--green)':'var(--red)'};font-family:'Playfair Display',serif">${isEmpty?'—':fmtEur(profit)}</td>
+      <td style="text-align:right"><span style="font-size:.78rem;font-weight:600;color:${isEmpty?'var(--muted)':mCls}">${isEmpty?'—':margin+'%'}</span></td>
+      <td class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:${isEmpty?0:barPct}%"></div></div></td>
+    </tr>`;
+  }).join('')+`
+    <tr>
+      <td>UKUPNO ${yearStr}</td>
+      <td style="text-align:right;font-family:'Playfair Display',serif;color:var(--gold)">${fmtEur(totInv)}</td>
+      <td style="text-align:right;color:var(--red)">${fmtEur(totCost)}</td>
+      <td style="text-align:right;font-family:'Playfair Display',serif;color:${totProfit>=0?'var(--green)':'var(--red)'}">${fmtEur(totProfit)}</td>
+      <td style="text-align:right"><span style="font-size:.82rem;font-weight:700;color:var(--gold)">${totMargin}%</span></td>
+      <td></td>
+    </tr>`;
+}
+
+function parseCosts(costsStr){
+  if(!costsStr) return [];
+  try {
+    const arr = typeof costsStr==='string' ? JSON.parse(costsStr) : costsStr;
+    return Array.isArray(arr) ? arr.map(c=>({name:c.name||'',amount:parseFloat(c.amount)||0})) : [];
+  } catch(e){ return []; }
+}
+
+// ── Project form ──
+
+
+function openProjForm(projId){
+  projId = projId || null;
+  editingProjId = projId;
+
+  var titleEl = document.getElementById('projFormTitle');
+  var errEl = document.getElementById('projFormErr');
+  if(titleEl) titleEl.textContent = projId ? 'Uredi projekt' : 'Novi projekt';
+  if(errEl) errEl.textContent = '';
+
+  // Fill persons checkboxes
+  var pwrap = document.getElementById('pPersons');
+  if(!pwrap){ alert('Greška: forma nije pronađena'); return; }
+  pwrap.innerHTML = '';
+
+  var existingPersons = [];
+  if(projId){
+    var existing = getProjects().filter(function(p){ return String(p.id)===String(projId); })[0];
+    if(existing && existing.persons){
+      existingPersons = existing.persons.split(',').map(function(s){ return s.trim(); });
+    }
+  } else {
+    existingPersons = [currentUser.name];
+  }
+
+  for(var i=0; i<PROJECT_PERSONS.length; i++){
+    var personName = PROJECT_PERSONS[i];
+    var lbl = document.createElement('label');
+    lbl.style.display = 'flex';
+    lbl.style.alignItems = 'center';
+    lbl.style.gap = '.35rem';
+    lbl.style.fontSize = '.82rem';
+    lbl.style.cursor = 'pointer';
+    lbl.style.whiteSpace = 'nowrap';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = personName;
+    cb.style.accentColor = 'var(--gold)';
+    cb.style.width = '14px';
+    cb.style.height = '14px';
+    cb.checked = existingPersons.indexOf(personName) >= 0;
+    var span = document.createElement('span');
+    span.textContent = personName.split(' ')[0];
+    lbl.appendChild(cb);
+    lbl.appendChild(span);
+    pwrap.appendChild(lbl);
+  }
+
+  // Fill other fields
+  var now = new Date();
+  var defaultDate = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  if(projId){
+    var proj = getProjects().filter(function(p){ return String(p.id)===String(projId); })[0];
+    if(proj){
+      document.getElementById('pClient').value = proj.client || '';
+      document.getElementById('pName').value = proj.name || '';
+      document.getElementById('pDate').value = proj.date || defaultDate;
+      document.getElementById('pInvoiced').value = proj.invoiced || '';
+      document.getElementById('costRows').innerHTML = '';
+      var costs = parseCosts(proj.costs);
+      for(var j=0; j<costs.length; j++) addCostRow(costs[j].name, costs[j].amount);
+    }
+  } else {
+    document.getElementById('pClient').value = '';
+    document.getElementById('pName').value = '';
+    document.getElementById('pDate').value = defaultDate;
+    document.getElementById('pInvoiced').value = '';
+    document.getElementById('costRows').innerHTML = '';
+    addCostRow();
+  }
+
+  calcProjTotal();
+
+  if(document.activeElement) document.activeElement.blur();
+  var overlay = document.getElementById('projFormOverlay');
+  if(overlay) overlay.classList.add('open');
 }
 
 function closeProjForm(e){
