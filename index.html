@@ -699,17 +699,26 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
           <label>Klijent</label>
           <select id=pClient>
             <option value="">— Odaberi klijenta —</option>
-            <option>Atlantic</option>
-            <option>Atlantic/Barcaffe</option>
-            <option>Ledo</option>
-            <option>BŽG/Adris</option>
-            <option>BŽG/Imperial</option>
-            <option>BŽG/Ljubljanske ml.</option>
-            <option>BŽG/BAT Bosna</option>
-            <option>BŽG/HT</option>
-            <option>BŽG/Ostalo</option>
-            <option>TDR Sarajevo</option>
-            <option>TZGZ</option>
+            <option value="Atlantic">Atlantic</option>
+            <option value="Atlantic/Barcaffe">Atlantic/Barcaffe</option>
+            <option value="Atlantic/Cedevita">Atlantic/Cedevita</option>
+            <option value="BŽG/Adris">BŽG/Adris</option>
+            <option value="BŽG/BAT Bosna">BŽG/BAT Bosna</option>
+            <option value="BŽG/HT">BŽG/HT</option>
+            <option value="BŽG/Imperial">BŽG/Imperial</option>
+            <option value="BŽG/Ljubljanske ml.">BŽG/Ljubljanske ml.</option>
+            <option value="BŽG/Ostalo">BŽG/Ostalo</option>
+            <option value="Futura DB">Futura DB</option>
+            <option value="Hrvatska pošta">Hrvatska pošta</option>
+            <option value="Ikea">Ikea</option>
+            <option value="Ledo">Ledo</option>
+            <option value="Mediacom">Mediacom</option>
+            <option value="Ostalo">Ostalo</option>
+            <option value="Rudman">Rudman</option>
+            <option value="TDR Sarajevo">TDR Sarajevo</option>
+            <option value="TECE">TECE</option>
+            <option value="TZGZ">TZGZ</option>
+            <option value="Zagrebačka pivovara">Zagrebačka pivovara</option>
           </select>
         </div>
         <div class="fg">
@@ -1827,9 +1836,14 @@ function fmtEur(n){
 }
 
 function projMonthLabel(ym){
-  if(!ym) return '—';
-  const [y,m]=ym.split('-');
-  return HR_MONTHS[parseInt(m)-1]+' '+y;
+  if(!ym || ym==='undefined' || ym==='null') return '—';
+  var str = String(ym).trim().substring(0,7); // YYYY-MM
+  var parts = str.split('-');
+  if(parts.length < 2) return str;
+  var y = parts[0];
+  var m = parseInt(parts[1]);
+  if(!m || m<1 || m>12) return str;
+  return HR_MONTHS[m-1]+' '+y;
 }
 
 // ── Init project filters ──
@@ -1914,7 +1928,7 @@ function renderProjects(){
     return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
       <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
-      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(p.date)}</div>
+      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
       <div class="proj-eur">${fmtEur(invoiced)}</div>
       <div class="proj-eur red">${fmtEur(totalCost)}</div>
       <div class="proj-eur green">${fmtEur(profit)}</div>
@@ -1930,9 +1944,10 @@ let _selectedYear = new Date().getFullYear();
 
 function renderProjStats(projs){
   // Employees see only their own; approvers see all
+  var rawProjs = getProjects();
   var allProjs = currentUser.role==='approver'
-    ? getProjects()
-    : getProjects().filter(function(p){ return personIncludes(p, currentUser.name); });
+    ? rawProjs
+    : rawProjs.filter(function(p){ return personIncludes(p, currentUser.name); });
 
   // KPI — current year
   const yearProjs = allProjs.filter(p=>(p.date||'').startsWith(String(_selectedYear)));
@@ -1948,17 +1963,18 @@ function renderProjStats(projs){
     <div class="stat-box"><div class="lbl">Avg. profitabilnost</div><div class="val" style="color:var(--gold)">${avgMargin}%</div></div>`;
 
   // Year tabs — build from available years in data
-  const years = [...new Set(allProjs.map(p=>(p.date||'').substring(0,4)).filter(y=>y&&y.length===4))].sort().reverse();
+  const years = [...new Set(allProjs.map(p=>String(p.date||'').substring(0,4)).filter(y=>y&&y.length===4&&!isNaN(y)))].sort().reverse();
   if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
   const ytEl = document.getElementById('yearTabs');
   ytEl.innerHTML = years.map(y=>`
     <button class="year-tab${y==_selectedYear?' active':''}" onclick="selectYear(${y})">${y}</button>`).join('');
 
-  // Monthly table — approvers only
+  // Monthly table — approvers see ALL projects, employees see only their own
   const monthlyTableEl = document.getElementById('monthlyTable');
   const monthlyCard = monthlyTableEl ? monthlyTableEl.closest('.list-card') : null;
-  if(monthlyCard) monthlyCard.style.display = 'block'; // everyone sees their own monthly table
-  renderMonthlyTable(allProjs, _selectedYear);
+  if(monthlyCard) monthlyCard.style.display = 'block';
+  const monthlyProjs = currentUser.role==='approver' ? rawProjs : allProjs;
+  renderMonthlyTable(monthlyProjs, _selectedYear);
 }
 
 function selectYear(y){
@@ -1975,8 +1991,9 @@ function renderMonthlyTable(allProjs, year){
     inv:0, cost:0
   }));
 
-  allProjs.filter(p=>(p.date||'').startsWith(yearStr)).forEach(p=>{
-    const mIdx = months.findIndex(m=>m.key===p.date);
+  allProjs.filter(p=>String(p.date||'').substring(0,4)===yearStr).forEach(p=>{
+    const pDate = String(p.date||'').substring(0,7);
+    const mIdx = months.findIndex(m=>m.key===pDate);
     if(mIdx>=0){
       months[mIdx].inv  += parseFloat(p.invoiced)||0;
       months[mIdx].cost += parseCosts(p.costs).reduce((a,c)=>a+c.amount,0);
@@ -2680,9 +2697,14 @@ function fmtEur(n){
 }
 
 function projMonthLabel(ym){
-  if(!ym) return '—';
-  const [y,m]=ym.split('-');
-  return HR_MONTHS[parseInt(m)-1]+' '+y;
+  if(!ym || ym==='undefined' || ym==='null') return '—';
+  var str = String(ym).trim().substring(0,7); // YYYY-MM
+  var parts = str.split('-');
+  if(parts.length < 2) return str;
+  var y = parts[0];
+  var m = parseInt(parts[1]);
+  if(!m || m<1 || m>12) return str;
+  return HR_MONTHS[m-1]+' '+y;
 }
 
 // ── Init project filters ──
@@ -2767,7 +2789,7 @@ function renderProjects(){
     return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
       <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
-      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(p.date)}</div>
+      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
       <div class="proj-eur">${fmtEur(invoiced)}</div>
       <div class="proj-eur red">${fmtEur(totalCost)}</div>
       <div class="proj-eur green">${fmtEur(profit)}</div>
@@ -2783,9 +2805,10 @@ function renderProjects(){
 
 function renderProjStats(projs){
   // Employees see only their own; approvers see all
+  var rawProjs = getProjects();
   var allProjs = currentUser.role==='approver'
-    ? getProjects()
-    : getProjects().filter(function(p){ return personIncludes(p, currentUser.name); });
+    ? rawProjs
+    : rawProjs.filter(function(p){ return personIncludes(p, currentUser.name); });
 
   // KPI — current year
   const yearProjs = allProjs.filter(p=>(p.date||'').startsWith(String(_selectedYear)));
@@ -2801,17 +2824,18 @@ function renderProjStats(projs){
     <div class="stat-box"><div class="lbl">Avg. profitabilnost</div><div class="val" style="color:var(--gold)">${avgMargin}%</div></div>`;
 
   // Year tabs — build from available years in data
-  const years = [...new Set(allProjs.map(p=>(p.date||'').substring(0,4)).filter(y=>y&&y.length===4))].sort().reverse();
+  const years = [...new Set(allProjs.map(p=>String(p.date||'').substring(0,4)).filter(y=>y&&y.length===4&&!isNaN(y)))].sort().reverse();
   if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
   const ytEl = document.getElementById('yearTabs');
   ytEl.innerHTML = years.map(y=>`
     <button class="year-tab${y==_selectedYear?' active':''}" onclick="selectYear(${y})">${y}</button>`).join('');
 
-  // Monthly table — approvers only
+  // Monthly table — approvers see ALL projects, employees see only their own
   const monthlyTableEl = document.getElementById('monthlyTable');
   const monthlyCard = monthlyTableEl ? monthlyTableEl.closest('.list-card') : null;
-  if(monthlyCard) monthlyCard.style.display = 'block'; // everyone sees their own monthly table
-  renderMonthlyTable(allProjs, _selectedYear);
+  if(monthlyCard) monthlyCard.style.display = 'block';
+  const monthlyProjs = currentUser.role==='approver' ? rawProjs : allProjs;
+  renderMonthlyTable(monthlyProjs, _selectedYear);
 }
 
 function selectYear(y){
@@ -2828,8 +2852,9 @@ function renderMonthlyTable(allProjs, year){
     inv:0, cost:0
   }));
 
-  allProjs.filter(p=>(p.date||'').startsWith(yearStr)).forEach(p=>{
-    const mIdx = months.findIndex(m=>m.key===p.date);
+  allProjs.filter(p=>String(p.date||'').substring(0,4)===yearStr).forEach(p=>{
+    const pDate = String(p.date||'').substring(0,7);
+    const mIdx = months.findIndex(m=>m.key===pDate);
     if(mIdx>=0){
       months[mIdx].inv  += parseFloat(p.invoiced)||0;
       months[mIdx].cost += parseCosts(p.costs).reduce((a,c)=>a+c.amount,0);
