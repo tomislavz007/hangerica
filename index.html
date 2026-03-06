@@ -260,6 +260,29 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   cursor:pointer;transition:all .15s;}
 .btn-modal-close:hover{border-color:var(--muted);}
 
+/* PROJECT LIST */
+.proj-row{display:grid;align-items:center;padding:.85rem 1.2rem;
+  border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer;}
+.proj-row:last-child{border-bottom:none;}
+.proj-row:hover{background:var(--surface2);}
+.proj-row{grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr .5fr;}
+.proj-name{font-weight:500;font-size:.87rem;}
+.proj-client{font-size:.72rem;color:var(--muted);margin-top:.1rem;}
+.proj-eur{font-family:'Playfair Display',serif;font-weight:700;font-size:.95rem;}
+.proj-eur.green{color:var(--green);}
+.proj-eur.red{color:var(--red);}
+.margin-badge{font-size:.72rem;font-weight:600;padding:.15rem .5rem;border-radius:6px;}
+.margin-badge.high{background:rgba(61,184,130,.15);color:var(--green);}
+.margin-badge.mid{background:rgba(201,162,39,.15);color:var(--amber);}
+.margin-badge.low{background:rgba(224,85,85,.12);color:var(--red);}
+.cost-row-item{display:grid;grid-template-columns:1fr auto auto;gap:.5rem;margin-bottom:.4rem;align-items:center;}
+.cost-row-item input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  padding:.45rem .7rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;width:100%;}
+.cost-row-item input:focus{border-color:var(--gold);}
+.btn-remove-row{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;
+  padding:.2rem .4rem;border-radius:4px;transition:all .15s;}
+.btn-remove-row:hover{color:var(--red);}
+
 /* TOAST */
 #toast{position:fixed;bottom:1.8rem;left:50%;transform:translateX(-50%) translateY(60px);
   background:var(--green);color:#fff;padding:.6rem 1.3rem;border-radius:8px;
@@ -584,14 +607,129 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   </div>
 </div>
 
-  <!-- TAB: Project review (placeholder) -->
+  <!-- TAB: Project review -->
   <div class="main-content" id="main-project" style="display:none">
     <div class="page">
-      <div style="display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:1.2rem;text-align:center;">
-        <div style="font-size:3rem">📊</div>
-        <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;">Project Review</div>
-        <div style="color:var(--muted);font-size:.9rem;max-width:340px;line-height:1.6;">Ovaj modul je u pripremi.<br>Uskoro dolazi!</div>
+
+      <!-- Summary stats (approver only) -->
+      <div id="projStatsWrap" style="display:none;margin-bottom:1.8rem">
+        <div class="stats-grid" id="projStats"></div>
       </div>
+
+      <!-- Filter bar + New project button -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <select id="projFilterMonth" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none">
+            <option value="">Svi mjeseci</option>
+          </select>
+          <select id="projFilterPerson" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;display:none" id="projFilterPerson">
+            <option value="">Sve osobe</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="openProjForm()" style="padding:.6rem 1.2rem;font-size:.85rem">+ Novi projekt</button>
+      </div>
+
+      <!-- Project list -->
+      <div class="list-card" id="projListCard">
+        <div class="list-head" id="projListHead" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr .5fr">
+          <span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span>
+          <span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>
+        </div>
+        <div id="projList"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PROJECT FORM MODAL -->
+  <div class="modal-overlay" id="projFormOverlay" onclick="closeProjForm(event)">
+    <div class="modal" style="width:560px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+      <h3 id="projFormTitle">Novi projekt</h3>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-bottom:.9rem">
+        <div class="fg">
+          <label>Odgovorna osoba</label>
+          <select id="pPerson"></select>
+        </div>
+        <div class="fg">
+          <label>Klijent</label>
+          <select id=pClient>
+            <option value="">— Odaberi klijenta —</option>
+            <option>Atlantic</option>
+            <option>Atlantic/Barcaffe</option>
+            <option>Ledo</option>
+            <option>BŽG/Adris</option>
+            <option>BŽG/Imperial</option>
+            <option>BŽG/Ljubljanske ml.</option>
+            <option>BŽG/BAT Bosna</option>
+            <option>BŽG/HT</option>
+            <option>BŽG/Ostalo</option>
+            <option>TDR Sarajevo</option>
+            <option>TZGZ</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Ime projekta</label>
+          <input type="text" id="pName" placeholder="Naziv projekta">
+        </div>
+        <div class="fg">
+          <label>Datum projekta</label>
+          <input type="month" id="pDate">
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:1rem">
+        <label>Fakturirani neto iznos (EUR)</label>
+        <input type="number" id="pInvoiced" placeholder="0.00" step="0.01" min="0" oninput="calcProjTotal()">
+      </div>
+
+      <!-- Cost rows -->
+      <div style="margin-bottom:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+          <label style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Troškovi dobavljača</label>
+          <button onclick="addCostRow()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:.75rem;padding:.2rem .6rem;cursor:pointer;font-family:'DM Sans',sans-serif">+ Dodaj red</button>
+        </div>
+        <div id="costRows"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:.5rem;font-size:.82rem;color:var(--muted)">
+          Ukupni troškovi: <b style="color:var(--red);margin-left:.4rem" id="totalCostsPreview">0,00 €</b>
+        </div>
+      </div>
+
+      <!-- Summary preview -->
+      <div style="background:var(--surface2);border-radius:8px;padding:1rem;margin-bottom:1.2rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.85rem">
+          <span style="color:var(--muted)">Fakturirano</span>
+          <span id="prevInvoiced">0,00 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.85rem">
+          <span style="color:var(--muted)">Troškovi</span>
+          <span style="color:var(--red)" id="prevCosts">- 0,00 €</span>
+        </div>
+        <div style="height:1px;background:var(--border);margin:.5rem 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:.95rem;font-weight:600">
+          <span>Zarada</span>
+          <span style="color:var(--green)" id="prevProfit">0,00 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-top:.3rem">
+          <span style="color:var(--muted)">Profitabilnost</span>
+          <span style="color:var(--gold)" id="prevMargin">0%</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.8rem">
+        <button class="btn-primary" style="flex:1" onclick="saveProjForm()">Spremi projekt</button>
+        <button class="btn-modal-close" style="flex:.5" onclick="closeProjForm()">Odustani</button>
+      </div>
+      <div id="projFormErr" style="color:var(--red);font-size:.78rem;margin-top:.6rem;text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- PROJECT DETAIL MODAL -->
+  <div class="modal-overlay" id="projDetailOverlay" onclick="closeProjDetail(event)">
+    <div class="modal" style="width:520px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+      <h3 id="projDetailTitle">Detalji projekta</h3>
+      <div id="projDetailContent"></div>
+      <div style="margin-top:1.2rem;display:flex;gap:.8rem" id="projDetailActions"></div>
     </div>
   </div>
 
@@ -718,26 +856,22 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbxjFPDCeF_xthJbmVzBYqGm
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
 let _daysCache = {};
+let _projectCache = null;
 let _appReady = false;
 
 async function initData() {
   showLoading(true);
   try {
-    const [reqs, days] = await Promise.all([
+    const [reqs, days, projects] = await Promise.all([
       gasCall('getRequests'),
-      gasCall('getAllUserDays')
+      gasCall('getAllUserDays'),
+      gasCall('getProjects')
     ]);
     _reqCache = Array.isArray(reqs) ? reqs : [];
     _daysCache = days || {};
+    _projectCache = Array.isArray(projects) ? projects : [];
     _appReady = true;
-    // DEBUG — otvori F12 Console da vidiš što dolazi iz Sheetsa
-    if(_reqCache.length > 0) {
-      console.log('=== HANGERICA DEBUG ===');
-      console.log('Primjer zahtjeva iz Sheetsa:', _reqCache[0]);
-      console.log('userId vrijednost:', getReqUserId(_reqCache[0]));console.log('user id (space):', _reqCache[0]['user id']);
-      console.log('userId tip:', typeof _reqCache[0].userId);
-      console.log('USERS id-evi:', USERS.map(u=>u.id));
-    }
+
   } catch(e) {
     console.error('Greška pri učitavanju:', e);
     _reqCache = [];
@@ -955,6 +1089,7 @@ function switchMainTab(mainId, btn){
     subWrap.classList.remove('visible');
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
     if(projEl) projEl.style.display='block';
+    renderProjects();
   }
 }
 
@@ -1611,6 +1746,311 @@ function toast(msg,type=''){
   el.className='show'+(type?' '+type:'');
   setTimeout(()=>el.className='',2800);
 }
+
+// ══════════════════════════════════════════
+// PROJECT REVIEW
+// ══════════════════════════════════════════
+
+const PROJECT_PERSONS = ['Bruno Sušak','Magdalena Tenčić','Tomislava Obrč','Domagoj Bošnjak','Tomislav Zeljko','Dario Oxenham'];
+
+function getProjects(){ return _projectCache || []; }
+
+function fmtEur(n){
+  return Number(n).toLocaleString('hr-HR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+}
+
+function projMonthLabel(ym){
+  if(!ym) return '—';
+  const [y,m]=ym.split('-');
+  return HR_MONTHS[parseInt(m)-1]+' '+y;
+}
+
+// ── Init project filters ──
+function initProjFilters(){
+  const sel=document.getElementById('projFilterMonth');
+  if(!sel) return;
+  // Build month list from existing projects
+  const months=[...new Set(getProjects().map(p=>p.date).filter(Boolean))].sort().reverse();
+  sel.innerHTML='<option value="">Svi mjeseci</option>';
+  months.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=projMonthLabel(m); sel.appendChild(o); });
+
+  // Person filter — only for approvers
+  const psel=document.getElementById('projFilterPerson');
+  if(psel){
+    if(currentUser.role==='approver'){
+      psel.style.display='block';
+      psel.innerHTML='<option value="">Sve osobe</option>';
+      PROJECT_PERSONS.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; psel.appendChild(o); });
+    } else {
+      psel.style.display='none';
+    }
+  }
+}
+
+// ── Render project list ──
+function renderProjects(){
+  if(!document.getElementById('main-project') || document.getElementById('main-project').style.display==='none') return;
+  initProjFilters();
+
+  const monthF=document.getElementById('projFilterMonth')?.value||'';
+  const personF=document.getElementById('projFilterPerson')?.value||'';
+
+  let projs=getProjects();
+  // Employees see only their own
+  if(currentUser.role==='employee'){
+    projs=projs.filter(p=>p.person===currentUser.name);
+  }
+  if(monthF) projs=projs.filter(p=>p.date===monthF);
+  if(personF) projs=projs.filter(p=>p.person===personF);
+
+  // Sort by date desc
+  projs.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  // Stats for approver
+  const statsWrap=document.getElementById('projStatsWrap');
+  if(statsWrap) statsWrap.style.display=currentUser.role==='approver'?'block':'none';
+  if(currentUser.role==='approver') renderProjStats(projs);
+
+  const el=document.getElementById('projList');
+  if(!projs.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📊</div>Nema unesenih projekata</div>';
+    return;
+  }
+
+  el.innerHTML=projs.map(p=>{
+    const costs=parseCosts(p.costs);
+    const totalCost=costs.reduce((a,c)=>a+c.amount,0);
+    const invoiced=parseFloat(p.invoiced)||0;
+    const profit=invoiced-totalCost;
+    const margin=invoiced>0?Math.round(profit/invoiced*100):0;
+    const mCls=margin>=50?'high':margin>=25?'mid':'low';
+    const canEdit=currentUser.role==='approver'||p.person===currentUser.name;
+    return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
+      <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
+      <div style="font-size:.82rem">${p.person||'—'}</div>
+      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(p.date)}</div>
+      <div class="proj-eur">${fmtEur(invoiced)}</div>
+      <div class="proj-eur red">${fmtEur(totalCost)}</div>
+      <div class="proj-eur green">${fmtEur(profit)}</div>
+      <div><span class="margin-badge ${mCls}">${margin}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderProjStats(projs){
+  const totalInv=projs.reduce((a,p)=>a+(parseFloat(p.invoiced)||0),0);
+  const totalCost=projs.reduce((a,p)=>a+parseCosts(p.costs).reduce((b,c)=>b+c.amount,0),0);
+  const totalProfit=totalInv-totalCost;
+  const avgMargin=totalInv>0?Math.round(totalProfit/totalInv*100):0;
+  document.getElementById('projStats').innerHTML=`
+    <div class="stat-box"><div class="lbl">Projekata</div><div class="val blue">${projs.length}</div></div>
+    <div class="stat-box"><div class="lbl">Fakturirano</div><div class="val" style="font-size:1.4rem;color:var(--text)">${fmtEur(totalInv)}</div></div>
+    <div class="stat-box"><div class="lbl">Ukupna zarada</div><div class="val green" style="font-size:1.4rem">${fmtEur(totalProfit)}</div></div>
+    <div class="stat-box"><div class="lbl">Avg. profitabilnost</div><div class="val" style="color:var(--gold)">${avgMargin}%</div></div>`;
+}
+
+function parseCosts(costsStr){
+  if(!costsStr) return [];
+  try {
+    const arr = typeof costsStr==='string' ? JSON.parse(costsStr) : costsStr;
+    return Array.isArray(arr) ? arr.map(c=>({name:c.name||'',amount:parseFloat(c.amount)||0})) : [];
+  } catch(e){ return []; }
+}
+
+// ── Project form ──
+let editingProjId = null;
+
+function openProjForm(projId=null){
+  editingProjId = projId;
+  document.getElementById('projFormTitle').textContent = projId ? 'Uredi projekt' : 'Novi projekt';
+  document.getElementById('projFormErr').textContent='';
+
+  // Fill person dropdown
+  const psel=document.getElementById('pPerson');
+  psel.innerHTML='';
+  PROJECT_PERSONS.forEach(p=>{
+    const o=document.createElement('option');
+    o.value=p; o.textContent=p;
+    if(p===currentUser.name) o.selected=true;
+    psel.appendChild(o);
+  });
+
+  // Set default date to current month
+  const now=new Date();
+  const defaultDate=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  if(projId){
+    const proj=getProjects().find(p=>p.id===projId);
+    if(proj){
+      document.getElementById('pPerson').value=proj.person||'';
+      document.getElementById('pClient').value=proj.client||'';
+      document.getElementById('pName').value=proj.name||'';
+      document.getElementById('pDate').value=proj.date||defaultDate;
+      document.getElementById('pInvoiced').value=proj.invoiced||'';
+      // Rebuild cost rows
+      document.getElementById('costRows').innerHTML='';
+      parseCosts(proj.costs).forEach(c=>addCostRow(c.name,c.amount));
+    }
+  } else {
+    document.getElementById('pPerson').value=currentUser.name;
+    document.getElementById('pClient').value='';
+    document.getElementById('pName').value='';
+    document.getElementById('pDate').value=defaultDate;
+    document.getElementById('pInvoiced').value='';
+    document.getElementById('costRows').innerHTML='';
+    addCostRow();
+  }
+  calcProjTotal();
+  document.getElementById('projFormOverlay').classList.add('open');
+}
+
+function closeProjForm(e){
+  if(e&&e.target!==document.getElementById('projFormOverlay')) return;
+  document.getElementById('projFormOverlay').classList.remove('open');
+  editingProjId=null;
+}
+
+function addCostRow(name='',amount=''){
+  const wrap=document.getElementById('costRows');
+  const div=document.createElement('div');
+  div.className='cost-row-item';
+  div.innerHTML=`
+    <input type="text" placeholder="Naziv dobavljača" value="${name}" oninput="calcProjTotal()">
+    <input type="number" placeholder="0.00" step="0.01" min="0" value="${amount||''}" style="width:110px" oninput="calcProjTotal()">
+    <button class="btn-remove-row" onclick="this.parentElement.remove();calcProjTotal()">✕</button>`;
+  wrap.appendChild(div);
+  calcProjTotal();
+}
+
+function calcProjTotal(){
+  const invoiced=parseFloat(document.getElementById('pInvoiced')?.value)||0;
+  const rows=document.querySelectorAll('#costRows .cost-row-item');
+  let totalCost=0;
+  rows.forEach(row=>{
+    const amt=parseFloat(row.querySelectorAll('input')[1]?.value)||0;
+    totalCost+=amt;
+  });
+  const profit=invoiced-totalCost;
+  const margin=invoiced>0?Math.round(profit/invoiced*100):0;
+  const el=n=>document.getElementById(n);
+  if(el('totalCostsPreview')) el('totalCostsPreview').textContent=fmtEur(totalCost);
+  if(el('prevInvoiced')) el('prevInvoiced').textContent=fmtEur(invoiced);
+  if(el('prevCosts')) el('prevCosts').textContent='- '+fmtEur(totalCost);
+  if(el('prevProfit')){ el('prevProfit').textContent=fmtEur(profit); el('prevProfit').style.color=profit>=0?'var(--green)':'var(--red)'; }
+  if(el('prevMargin')){ el('prevMargin').textContent=margin+'%'; el('prevMargin').style.color=margin>=50?'var(--green)':margin>=25?'var(--amber)':'var(--red)'; }
+}
+
+function saveProjForm(){
+  const person=document.getElementById('pPerson').value;
+  const client=document.getElementById('pClient').value;
+  const name=document.getElementById('pName').value.trim();
+  const date=document.getElementById('pDate').value;
+  const invoiced=parseFloat(document.getElementById('pInvoiced').value)||0;
+  const errEl=document.getElementById('projFormErr');
+
+  if(!client||!name||!date||!invoiced){
+    errEl.textContent='Molimo ispunite sva obavezna polja.'; return;
+  }
+  errEl.textContent='';
+
+  // Collect cost rows
+  const rows=document.querySelectorAll('#costRows .cost-row-item');
+  const costs=[];
+  rows.forEach(row=>{
+    const inputs=row.querySelectorAll('input');
+    const n=inputs[0].value.trim();
+    const a=parseFloat(inputs[1].value)||0;
+    if(n||a) costs.push({name:n,amount:a});
+  });
+
+  const proj={
+    id: editingProjId||Date.now(),
+    person, client, name, date,
+    invoiced, costs: JSON.stringify(costs),
+    createdBy: currentUser.id,
+    createdAt: new Date().toISOString()
+  };
+
+  if(editingProjId){
+    const idx=_projectCache.findIndex(p=>p.id==editingProjId);
+    if(idx>=0) _projectCache[idx]=proj;
+    gasCall('updateProject',{data:proj});
+    toast('Projekt ažuriran!');
+  } else {
+    _projectCache.unshift(proj);
+    gasCall('saveProject',{data:proj});
+    toast('Projekt spremljen!');
+  }
+
+  document.getElementById('projFormOverlay').classList.remove('open');
+  editingProjId=null;
+  renderProjects();
+}
+
+// ── Project detail ──
+function openProjDetail(projId){
+  const p=getProjects().find(x=>x.id==projId);
+  if(!p) return;
+  const costs=parseCosts(p.costs);
+  const totalCost=costs.reduce((a,c)=>a+c.amount,0);
+  const invoiced=parseFloat(p.invoiced)||0;
+  const profit=invoiced-totalCost;
+  const margin=invoiced>0?Math.round(profit/invoiced*100):0;
+  const mCls=margin>=50?'high':margin>=25?'mid':'low';
+
+  document.getElementById('projDetailTitle').textContent=p.name||'Projekt';
+  document.getElementById('projDetailContent').innerHTML=`
+    <div class="modal-info" style="margin-bottom:1rem">
+      <div class="modal-row"><span>Klijent</span><span>${p.client||'—'}</span></div>
+      <div class="modal-row"><span>Odgovorna osoba</span><span>${p.person||'—'}</span></div>
+      <div class="modal-row"><span>Datum</span><span>${projMonthLabel(p.date)}</span></div>
+      <div class="modal-row"><span>Fakturirano</span><span><b>${fmtEur(invoiced)}</b></span></div>
+    </div>
+    ${costs.length?`<div style="margin-bottom:1rem">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem">Troškovi dobavljača</div>
+      ${costs.map(c=>`<div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.84rem">
+        <span>${c.name||'—'}</span><span style="color:var(--red)">${fmtEur(c.amount)}</span>
+      </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:.5rem 0;font-size:.82rem;color:var(--muted)">
+        <span>Ukupni troškovi</span><span style="color:var(--red);font-weight:600">${fmtEur(totalCost)}</span>
+      </div>
+    </div>`:''}
+    <div style="background:var(--surface2);border-radius:8px;padding:1rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.9rem;font-weight:600">
+        <span>Zarada</span><span style="color:${profit>=0?'var(--green)':'var(--red)'}">${fmtEur(profit)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem">
+        <span style="color:var(--muted)">Profitabilnost</span>
+        <span class="margin-badge ${mCls}">${margin}%</span>
+      </div>
+    </div>`;
+
+  const canEdit=currentUser.role==='approver'||p.person===currentUser.name||p.createdBy===currentUser.id;
+  document.getElementById('projDetailActions').innerHTML=
+    (canEdit?`<button class="btn-primary" style="flex:1" onclick="closeProjDetail();openProjForm('${p.id}')">✏️ Uredi</button>`:'')+
+    (currentUser.role==='approver'?`<button class="btn-sm btn-reject" style="flex:.6;padding:.6rem" onclick="deleteProj('${p.id}')">Obriši</button>`:'')+ 
+    `<button class="btn-modal-close" style="flex:.6;padding:.6rem" onclick="closeProjDetail()">Zatvori</button>`;
+
+  document.getElementById('projDetailOverlay').classList.add('open');
+}
+
+function closeProjDetail(e){
+  if(e&&e.target!==document.getElementById('projDetailOverlay')) return;
+  document.getElementById('projDetailOverlay').classList.remove('open');
+}
+
+function deleteProj(projId){
+  if(!confirm('Obrisati ovaj projekt?')) return;
+  _projectCache=_projectCache.filter(p=>p.id!=projId);
+  closeProjDetail();
+  renderProjects();
+  gasCall('deleteProject',{id:projId});
+  toast('Projekt obrisan.');
+}
+
+// ── Hook renderProjects into renderAll / switchMainTab ──
+const _origSwitchMainTab = switchMainTab;
+// Override handled inline below
 
 // ══════════════════════════════════════════
 // BOOT
