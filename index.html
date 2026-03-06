@@ -266,7 +266,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer;}
 .proj-row:last-child{border-bottom:none;}
 .proj-row:hover{background:var(--surface2);}
-.proj-row{grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr .5fr;}
+.proj-row{grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr 1fr;}
 .proj-name{font-weight:500;font-size:.87rem;}
 .proj-client{font-size:.72rem;color:var(--muted);margin-top:.1rem;}
 .proj-eur{font-family:'Playfair Display',serif;font-weight:700;font-size:.95rem;}
@@ -628,10 +628,34 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   <div class="main-content" id="main-project" style="display:none">
     <div class="page" style="padding-top:.8rem">
       <!-- Financial dashboard (approver only) -->
-      <div id="projStatsWrap" style="display:none">
+      <div id="projStatsWrap" style="display:none;margin-bottom:0">
 
         <!-- KPI cards -->
         <div class="stats-grid" id="projStats" style="margin-bottom:1.2rem"></div>
+
+      <!-- Filter bar + New project button -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <select id="projFilterMonth" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none">
+            <option value="">Svi mjeseci</option>
+          </select>
+          <select id="projFilterPerson" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;display:none">
+            <option value="">Sve osobe</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="openProjForm()" style="padding:.6rem 1.2rem;font-size:.85rem">+ Novi projekt</button>
+      </div>
+
+      <!-- Project list -->
+      <div class="list-card" id="projListCard">
+        <div class="list-head" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr 1fr">
+          <span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span>
+          <span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>
+        </div>
+        <div id="projList"></div>
+      </div>
+
+    </div>
 
         <!-- Year selector + monthly table -->
         <div class="list-card" style="margin-bottom:1.8rem">
@@ -658,31 +682,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
           </div>
         </div>
 
-      </div>
 
-      <!-- Filter bar + New project button -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-          <select id="projFilterMonth" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none">
-            <option value="">Svi mjeseci</option>
-          </select>
-          <select id="projFilterPerson" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;display:none" id="projFilterPerson">
-            <option value="">Sve osobe</option>
-          </select>
-        </div>
-        <button class="btn-primary" onclick="openProjForm()" style="padding:.6rem 1.2rem;font-size:.85rem">+ Novi projekt</button>
-      </div>
-
-      <!-- Project list -->
-      <div class="list-card" id="projListCard">
-        <div class="list-head" id="projListHead" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr .5fr">
-          <span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span>
-          <span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>
-        </div>
-        <div id="projList"></div>
-      </div>
-
-    </div>
   </div>
 
   <!-- PROJECT FORM MODAL -->
@@ -1818,18 +1818,34 @@ function projMonthLabel(ym){
 function initProjFilters(){
   const sel=document.getElementById('projFilterMonth');
   if(!sel) return;
-  // Build month list from existing projects
-  const months=[...new Set(getProjects().map(p=>p.date).filter(Boolean))].sort().reverse();
+
+  // Save current selection
+  const savedMonth = sel.value;
+
+  // Build month list from ALL projects
+  const allProjs = currentUser.role==='approver' ? getProjects() : getProjects().filter(p=>p.person===currentUser.name);
+  const months=[...new Set(allProjs.map(p=>p.date).filter(Boolean))].sort().reverse();
   sel.innerHTML='<option value="">Svi mjeseci</option>';
-  months.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=projMonthLabel(m); sel.appendChild(o); });
+  months.forEach(m=>{
+    const o=document.createElement('option');
+    o.value=m; o.textContent=projMonthLabel(m);
+    if(m===savedMonth) o.selected=true;
+    sel.appendChild(o);
+  });
 
   // Person filter — only for approvers
   const psel=document.getElementById('projFilterPerson');
   if(psel){
     if(currentUser.role==='approver'){
+      const savedPerson=psel.value;
       psel.style.display='block';
       psel.innerHTML='<option value="">Sve osobe</option>';
-      PROJECT_PERSONS.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; psel.appendChild(o); });
+      PROJECT_PERSONS.forEach(p=>{
+        const o=document.createElement('option');
+        o.value=p; o.textContent=p;
+        if(p===savedPerson) o.selected=true;
+        psel.appendChild(o);
+      });
     } else {
       psel.style.display='none';
     }
@@ -1881,7 +1897,10 @@ function renderProjects(){
       <div class="proj-eur">${fmtEur(invoiced)}</div>
       <div class="proj-eur red">${fmtEur(totalCost)}</div>
       <div class="proj-eur green">${fmtEur(profit)}</div>
-      <div><span class="margin-badge ${mCls}">${margin}%</span></div>
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <span class="margin-badge ${mCls}">${margin}%</span>
+        ${canEdit?`<button class="btn-del" onclick="event.stopPropagation();deleteProj('${p.id}')" title="Obriši">✕</button>`:''}
+      </div>
     </div>`;
   }).join('');
 }
