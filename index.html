@@ -391,6 +391,69 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
     </div>
   </div>
 
+  <!-- TAB: Moj odmor (approver) -->
+  <div class="tab-content" id="tab-moj-appr">
+    <div class="page">
+      <div class="two-col">
+        <div>
+          <div class="quota-card">
+            <div class="quota-info">
+              <h3 id="apprQuotaName">—</h3>
+              <p id="apprQuotaPos">—</p>
+              <div class="quota-stats">
+                <div class="qstat"><div class="qstat-val green" id="apprQUsed">0</div><div class="qstat-lbl">Iskorišteno</div></div>
+                <div class="qstat"><div class="qstat-val red" id="apprQLeft">0</div><div class="qstat-lbl">Preostalo</div></div>
+              </div>
+            </div>
+            <div class="quota-ring">
+              <div class="ring-wrap">
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#262b3e" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#c9a227" stroke-width="8"
+                    stroke-dasharray="264" stroke-dashoffset="264" id="apprRingCircle" stroke-linecap="round"/>
+                </svg>
+                <div class="ring-center">
+                  <div class="ring-days" id="apprRingDays">0</div>
+                  <div class="ring-label">preostalo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="list-card">
+            <h2><span class="dot"></span> Moji zahtjevi</h2>
+            <div id="apprMyRequestList"></div>
+          </div>
+        </div>
+        <div>
+          <div class="form-card">
+            <div class="card-title"><span class="dot"></span> Novi zahtjev</div>
+            <div class="fg">
+              <label>Vrsta odmora</label>
+              <select id="apprFType">
+                <option value="Godišnji odmor">Godišnji odmor</option>
+                <option value="Slobodni dan">Slobodni dan</option>
+                <option value="Bolovanje">Bolovanje</option>
+                <option value="Roditeljski dopust">Roditeljski dopust</option>
+                <option value="Plaćeni dopust">Plaćeni dopust</option>
+              </select>
+            </div>
+            <div class="form-row2">
+              <div class="fg"><label>Od</label><input type="date" id="apprFFrom" onchange="apprCalcDur()"></div>
+              <div class="fg"><label>Do</label><input type="date" id="apprFTo" onchange="apprCalcDur()"></div>
+            </div>
+            <div class="dur-preview" id="apprDurPreview"></div>
+            <div class="hol-warn" id="apprHolWarn"></div>
+            <div class="fg" style="margin-top:.8rem">
+              <label>Napomena (opcionalno)</label>
+              <textarea id="apprFNote" placeholder="Razlog, napomena..."></textarea>
+            </div>
+            <button class="btn-primary full" onclick="apprSubmitRequest()" style="margin-top:.3rem">Dodaj odmor →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- TAB: Kalendar (approver) -->
   <div class="tab-content" id="tab-calendar">
     <div class="page">
@@ -687,6 +750,7 @@ function initApp(){
   let tabs=currentUser.role==='employee'
     ? [{id:'moj',label:'Moj odmor'},{id:'emp-calendar',label:'📅 Kalendar tima'}]
     : [
+        {id:'moj-appr',label:'Moj odmor'},
         {id:'calendar',label:'📅 Kalendar'},
         {id:'pending',label:'Na čekanju'},
         {id:'all',label:'Svi zahtjevi'},
@@ -710,6 +774,10 @@ function initApp(){
     document.getElementById('fTo').value=today;
     calcDur();
   }
+  if(document.getElementById('apprFFrom')){
+    document.getElementById('apprFFrom').value=today;
+    document.getElementById('apprFTo').value=today;
+  }
   renderAll();
 }
 
@@ -730,6 +798,7 @@ function renderAll(){
     renderMyRequests();
     renderEmpCalendar();
   } else {
+    renderApprDashboard();
     renderCalendar();
     renderPending();
     renderAllRequests();
@@ -854,6 +923,108 @@ function renderTeam(){
         <span>Ostalo: <b style="color:${left>5?'var(--green)':'var(--red)'}">${left}</b></span>
       </div>
     </div>`;}).join('');
+}
+
+// ── Approver own dashboard ──
+function renderApprDashboard(){
+  const u=currentUser;
+  const reqs=getRequests().filter(r=>getReqUserId(r)===u.id);
+  const startDays=getUserDays(u.id);
+  const used=reqs.filter(r=>r.status==='odobreno').reduce((a,r)=>a+r.days,0);
+  const left=Math.max(0,startDays-used);
+
+  const qn=document.getElementById('apprQuotaName');
+  if(!qn) return;
+  qn.textContent=u.name;
+  document.getElementById('apprQuotaPos').textContent=u.pos+' · '+startDays+' dana na raspolaganju';
+  document.getElementById('apprQUsed').textContent=used;
+  document.getElementById('apprQLeft').textContent=left;
+  document.getElementById('apprRingDays').textContent=left;
+
+  const pct=startDays>0?(left/startDays):0;
+  const circ=2*Math.PI*42;
+  document.getElementById('apprRingCircle').style.strokeDashoffset=circ*(1-pct);
+  const col=left>startDays*.5?'#3db882':left>startDays*.2?'#c9a227':'#e05555';
+  document.getElementById('apprRingCircle').style.stroke=col;
+  document.getElementById('apprRingDays').style.color=col;
+
+  // List own requests
+  const el=document.getElementById('apprMyRequestList');
+  if(!reqs.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏖️</div>Nema zahtjeva</div>';return;}
+  el.innerHTML='<div class="list-head lh-emp"><span>Vrsta</span><span>Datum</span><span>Dana</span><span>Status</span><span></span></div>'+
+  reqs.map(r=>`
+    <div class="req-row rr-emp">
+      <div><div class="req-name">${r.type}</div>${r.note?'<div class="req-sub">'+r.note+'</div>':''}</div>
+      <div class="req-date">${fmtDate(r.from)}<br><small style="color:var(--muted)">→ ${fmtDate(r.to)}</small></div>
+      <div class="req-days">${r.days}</div>
+      <div><span class="badge ${r.status}">${statusLbl(r.status)}</span></div>
+      <div><button class="btn-del" onclick="apprDeleteReq(${r.id})" title="Obriši">✕</button></div>
+    </div>`).join('');
+}
+
+function apprCalcDur(){
+  const from=document.getElementById('apprFFrom').value;
+  const to=document.getElementById('apprFTo').value;
+  const prev=document.getElementById('apprDurPreview');
+  const hw=document.getElementById('apprHolWarn');
+  if(from&&to){
+    const{days,hols}=workDays(from,to);
+    if(days>0){
+      prev.textContent='⟶ '+days+' radnih dana';
+      hw.style.display=hols.length?'block':'none';
+      hw.textContent=hols.length?'🇭🇷 Blagdani (nisu uračunati): '+hols.join(', '):'';
+    } else {
+      prev.textContent=days===0?'Nema radnih dana u odabiru':'Datum završetka mora biti nakon početka';
+      hw.style.display='none';
+    }
+  } else { prev.textContent=''; hw.style.display='none'; }
+}
+
+function apprSubmitRequest(){
+  const from=document.getElementById('apprFFrom').value;
+  const to=document.getElementById('apprFTo').value;
+  const type=document.getElementById('apprFType').value;
+  const note=document.getElementById('apprFNote').value.trim();
+  if(!from||!to){toast('Unesite oba datuma','error');return;}
+  const{days}=workDays(from,to);
+  if(days<=0){toast('Nema radnih dana u odabiru','error');return;}
+
+  // Check remaining days
+  const startDays=getUserDays(currentUser.id);
+  const reqs=getRequests();
+  const used=reqs.filter(r=>getReqUserId(r)===currentUser.id&&r.status==='odobreno').reduce((a,r)=>a+r.days,0);
+  const left=startDays-used;
+  if(type==='Godišnji odmor'&&days>left){toast(`Nemate dovoljno dana! Preostalo: ${left}`,'error');return;}
+
+  const newReq={
+    id:Date.now(), userId:currentUser.id,
+    type, from, to, days, note,
+    status:'odobreno', // auto-approved for approvers
+    approvedBy:currentUser.name,
+    approvedAt:new Date().toISOString(),
+    createdAt:new Date().toISOString()
+  };
+
+  document.getElementById('apprFFrom').value='';
+  document.getElementById('apprFTo').value='';
+  document.getElementById('apprFNote').value='';
+  document.getElementById('apprDurPreview').textContent='';
+  document.getElementById('apprHolWarn').style.display='none';
+
+  _reqCache.unshift(newReq);
+  renderAll();
+  toast('Odmor dodan! ✓');
+
+  showLoading(true);
+  gasCall('saveRequest',{data:newReq}).then(()=>showLoading(false));
+}
+
+function apprDeleteReq(id){
+  if(!confirm('Obrisati ovaj odmor?')) return;
+  _reqCache=_reqCache.filter(r=>r.id!==id);
+  toast('Odmor obrisan.');
+  renderAll();
+  gasCall('deleteRequest',{id:id});
 }
 
 // ══════════════════════════════════════════
