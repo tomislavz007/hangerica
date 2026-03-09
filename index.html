@@ -992,13 +992,12 @@ async function doLogin(){
   const uid=document.getElementById('loginUser').value;
   const pass=document.getElementById('loginPass').value;
   const err=document.getElementById('loginErr');
-  const btn=document.querySelector('#loginScreen .btn-primary');
+  const btn=document.querySelector('#loginScreen button') || document.querySelector('.login-box button');
   if(!uid){err.textContent='Molimo odaberite korisnika.';return;}
   if(!pass){err.textContent='Unesite lozinku.';return;}
 
   // Disable button while checking
-  btn.disabled=true;
-  btn.textContent='Provjera...';
+  if(btn){ btn.disabled=true; btn.textContent='Provjera...'; }
   err.textContent='';
 
   try {
@@ -1019,8 +1018,7 @@ async function doLogin(){
   } catch(e) {
     err.textContent = 'Greška pri povezivanju. Pokušajte ponovo.';
   } finally {
-    btn.disabled=false;
-    btn.textContent='Prijava →';
+    if(btn){ btn.disabled=false; btn.textContent='Prijava →'; }
   }
 }
 
