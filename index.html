@@ -802,13 +802,13 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 // USERS  — totalDays su PREOSTALI dani godišnjeg
 // ══════════════════════════════════════════
 const USERS = [
-  { id:'bruno',     name:'Bruno Sušak',      pos:'Account executive', remainingDays:25, freeDays:0,  role:'employee', pass:'1234' },
-  { id:'tomislava', name:'Tomislava Obrč',    pos:'Account manager',   remainingDays:25, freeDays:0,  role:'employee', pass:'5678' },
-  { id:'magdalena', name:'Magdalena Tenčić',  pos:'Account executive', remainingDays:22, freeDays:0,  role:'employee', pass:'1111' },
-  { id:'domagoj',   name:'Domagoj Bošnjak',   pos:'Account executive', remainingDays:24, freeDays:7,  role:'employee', pass:'0000' },
-  { id:'iva',       name:'Iva Žmirak',         pos:'Dizajner',          remainingDays:22, freeDays:0,  role:'employee', pass:'0001' },
-  { id:'dario',     name:'Dario Oxenham',     pos:'Odobravatelj',      remainingDays:24, freeDays:0,  role:'approver', pass:'1408' },
-  { id:'tzeljko',   name:'Tomislav Zeljko',   pos:'Odobravatelj',      remainingDays:24, freeDays:0,  role:'approver', pass:'2311' },
+  { id:'bruno',     name:'Bruno Sušak',      pos:'Account executive', remainingDays:25, freeDays:0,  role:'employee' },
+  { id:'tomislava', name:'Tomislava Obrč',    pos:'Account manager',   remainingDays:25, freeDays:0,  role:'employee' },
+  { id:'magdalena', name:'Magdalena Tenčić',  pos:'Account executive', remainingDays:22, freeDays:0,  role:'employee' },
+  { id:'domagoj',   name:'Domagoj Bošnjak',   pos:'Account executive', remainingDays:24, freeDays:7,  role:'employee' },
+  { id:'iva',       name:'Iva Žmirak',         pos:'Dizajner',          remainingDays:22, freeDays:0,  role:'employee' },
+  { id:'dario',     name:'Dario Oxenham',     pos:'Odobravatelj',      remainingDays:24, freeDays:0,  role:'approver' },
+  { id:'tzeljko',   name:'Tomislav Zeljko',   pos:'Odobravatelj',      remainingDays:24, freeDays:0,  role:'approver' },
 ];
 
 // localStorage key za preostale dane (inicijalizira se iz USERS.remainingDays)
@@ -904,7 +904,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxjFPDCeF_xthJbmVzBYqGmsjRhiJ420gXTdMbK5bgHQtIkcq3dBLssXntnbS2uVdvjog/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxp6oc0LphfrQ5in2wd_09F6w1b4KQeB9KJ5yegvkRuEgLg30sYzwJwABvQzWv5sbDolA/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -937,6 +937,11 @@ async function initData() {
 function gasCall(action, params={}) {
   const url = new URL(GAS_URL);
   url.searchParams.set('action', action);
+  // Attach session token to all requests (except login)
+  if(action !== 'login'){
+    const token = sessionStorage.getItem('hgr_token');
+    if(token) url.searchParams.set('token', token);
+  }
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, typeof v==='object'?JSON.stringify(v):v));
   return fetch(url.toString())
     .then(r => r.json())
@@ -981,21 +986,45 @@ function initLogin(){
   });
 }
 
-function doLogin(){
+async function doLogin(){
   const uid=document.getElementById('loginUser').value;
   const pass=document.getElementById('loginPass').value;
   const err=document.getElementById('loginErr');
+  const btn=document.querySelector('#loginScreen .btn-primary');
   if(!uid){err.textContent='Molimo odaberite korisnika.';return;}
-  const user=getUserById(uid);
-  if(!user||user.pass!==pass){err.textContent='Pogrešna lozinka. Pokušajte ponovo.';return;}
+  if(!pass){err.textContent='Unesite lozinku.';return;}
+
+  // Disable button while checking
+  btn.disabled=true;
+  btn.textContent='Provjera...';
   err.textContent='';
-  currentUser=user;
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
-  initData().then(() => initApp());
+
+  try {
+    const result = await gasCall('login', {userId: uid, pass: pass});
+    if(result && result.success){
+      const user = getUserById(uid);
+      if(!user){ err.textContent='Greška: korisnik nije pronađen.'; return; }
+      currentUser = user;
+      // Store session token
+      sessionStorage.setItem('hgr_token', result.token);
+      sessionStorage.setItem('hgr_uid', uid);
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('appShell').style.display='block';
+      initData().then(() => initApp());
+    } else {
+      err.textContent = result && result.error ? result.error : 'Pogrešna lozinka. Pokušajte ponovo.';
+    }
+  } catch(e) {
+    err.textContent = 'Greška pri povezivanju. Pokušajte ponovo.';
+  } finally {
+    btn.disabled=false;
+    btn.textContent='Prijava →';
+  }
 }
 
 function doLogout(){
+  sessionStorage.removeItem('hgr_token');
+  sessionStorage.removeItem('hgr_uid');
   currentUser=null;
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('appShell').style.display='none';
@@ -3152,12 +3181,36 @@ const LOGO_B64='iVBORw0KGgoAAAANSUhEUgAAB9AAAAN0CAYAAADs+rOSAAABCGlDQ1BJQ0MgUHJv
 document.getElementById('loginLogo').src='data:image/png;base64,'+LOGO_B64;
 document.getElementById('appLogo').src='data:image/png;base64,'+LOGO_B64;
 // Reset stored days if version changed
-const APP_VERSION = '2026-03-06b';
+const APP_VERSION = '2026-03-06c';
 if(localStorage.getItem('hgr_version') !== APP_VERSION){
   USERS.forEach(u => localStorage.removeItem('hgr_days_'+u.id));
   localStorage.setItem('hgr_version', APP_VERSION);
 }
 initLogin();
+
+// Auto-restore session if token exists
+(async function(){
+  const token = sessionStorage.getItem('hgr_token');
+  const uid = sessionStorage.getItem('hgr_uid');
+  if(token && uid){
+    try {
+      const result = await gasCall('validateToken', {token: token, userId: uid});
+      if(result && result.valid){
+        const user = getUserById(uid);
+        if(user){
+          currentUser = user;
+          document.getElementById('loginScreen').style.display='none';
+          document.getElementById('appShell').style.display='block';
+          initData().then(() => initApp());
+          return;
+        }
+      }
+    } catch(e){}
+    // Token invalid — clear session
+    sessionStorage.removeItem('hgr_token');
+    sessionStorage.removeItem('hgr_uid');
+  }
+})();
 </script>
 </body>
 </html>
