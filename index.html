@@ -905,7 +905,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbykOcxZwjpHokr4nCZzPmBlITGdDxTTnYJZta7ld7VsZwwPGFsQK19SMzTJV6oJHMedHg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyt1P4zlbDfQiw1lI9rVKy56fxLeDThUhd_XAV7NA7hCIWNcMwQ7uf-zpfxm7SOGKi7MA/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -936,49 +936,18 @@ async function initData() {
 }
 
 function gasCall(action, params={}) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'hgr_cb_' + Date.now();
-    const url = new URL(GAS_URL);
-    url.searchParams.set('action', action);
-    url.searchParams.set('callback', cbName);
-    // Attach session token to all requests (except login)
-    if(action !== 'login'){
-      const token = sessionStorage.getItem('hgr_token');
-      const uid = sessionStorage.getItem('hgr_uid');
-      if(token) url.searchParams.set('token', token);
-      if(uid) url.searchParams.set('userId', uid);
-    }
-    Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, typeof v==='object'?JSON.stringify(v):v));
-
-    window[cbName] = function(data) {
-      delete window[cbName];
-      document.getElementById('jsonp_'+cbName)?.remove();
-      resolve(data);
-    };
-
-    const script = document.createElement('script');
-    script.id = 'jsonp_' + cbName;
-    script.src = url.toString();
-    script.onerror = () => { delete window[cbName]; reject(new Error('JSONP failed')); };
-    document.head.appendChild(script);
-
-    setTimeout(() => {
-      if(window[cbName]){ delete window[cbName]; reject(new Error('Timeout')); }
-    }, 15000);
-  });
-}
-
-function gasCallOld(action, params={}) {
   const url = new URL(GAS_URL);
   url.searchParams.set('action', action);
   if(action !== 'login'){
     const token = sessionStorage.getItem('hgr_token');
+    const uid = sessionStorage.getItem('hgr_uid');
     if(token) url.searchParams.set('token', token);
+    if(uid) url.searchParams.set('userId', uid);
   }
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, typeof v==='object'?JSON.stringify(v):v));
   return fetch(url.toString())
     .then(r => r.json())
-    .catch(e => { console.error('GAS error:', e); return {error: e.toString()}; });
+    .catch(e => { console.error('gasCall error:', e); throw e; });
 }
 
 function getRequests() { return _reqCache || []; }
