@@ -947,7 +947,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwRo8ToPf1-AvENVOI84dPGpQWjs9Doi1RFk-c3COP9rm5nPp-YLNaitYfksU2FmA9nXg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzuYjSNr9HuKpjTxu1VDdSOoKjy2bix_x-PJ3m7ElpVlaYFea7iuUaAfTY5GwxZLX0R4g/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3345,6 +3345,7 @@ async function renderAdminUsers(){
             Odustani
           </button>
           ${!u.pass ? `<button onclick="resendInvite('${u.id}')" style="font-size:.75rem;padding:.25rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer">📧 Pošalji</button>` : ''}
+          <button onclick="sendResetLink('${u.id}', '${(u.name||'').replace(/'/g,'')}')" style="font-size:.75rem;padding:.25rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--gold);cursor:pointer">🔑 Reset lozinke</button>
         </td>`;
       tbody.appendChild(tr);
     });
@@ -3421,6 +3422,13 @@ async function resendInvite(userId){
   const result = await gasCall('resendInvite', {userId});
   if(result && result.success) toast('Pozivnica ponovno poslana!');
   else toast('Greška pri slanju pozivnice.');
+}
+
+async function sendResetLink(userId, userName){
+  if(!confirm(`Poslati link za reset lozinke korisniku ${userName}?`)) return;
+  const result = await gasCall('sendPasswordReset', {userId});
+  if(result && result.success) toast(`✓ Reset link poslan na email od ${userName}`);
+  else toast(result.error || 'Greška pri slanju.');
 }
 
 // Registration flow — called on page load if ?token= in URL
