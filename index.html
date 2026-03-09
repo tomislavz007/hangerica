@@ -947,7 +947,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxGy4hVrpymuHtGDKpbcX6ZGK5dxA4flwEjZUfl30Oaa4PJN7Gl2QbnmcwXBSgOmwnEKg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwRo8ToPf1-AvENVOI84dPGpQWjs9Doi1RFk-c3COP9rm5nPp-YLNaitYfksU2FmA9nXg/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3323,9 +3323,13 @@ async function renderAdminUsers(){
             style="display:none;width:60px;background:var(--surface2);border:1px solid var(--gold);border-radius:6px;padding:.25rem .4rem;color:var(--text);text-align:center;font-size:.85rem">
         </td>
         <td style="padding:.6rem .8rem">
-          <span style="padding:.2rem .6rem;border-radius:20px;font-size:.75rem;background:${u.pass?'rgba(34,197,94,.15)':'rgba(234,179,8,.15)'};color:${u.pass?'#22c55e':'#eab308'}">
+          <span id="adminStatusDisplay_${u.id}" style="padding:.2rem .6rem;border-radius:20px;font-size:.75rem;background:${u.pass?'rgba(34,197,94,.15)':'rgba(234,179,8,.15)'};color:${u.pass?'#22c55e':'#eab308'}">
             ${u.pass ? '✓ Aktivan' : '⏳ Čeka registraciju'}
           </span>
+          <label id="adminStatusEdit_${u.id}" style="display:none;align-items:center;gap:.4rem;font-size:.8rem;cursor:pointer">
+            <input type="checkbox" id="adminStatusCheck_${u.id}" ${u.pass?'checked':''} style="width:14px;height:14px;accent-color:var(--gold)">
+            Aktivan
+          </label>
         </td>
         <td style="padding:.6rem .8rem;text-align:right;white-space:nowrap">
           <button id="adminEditBtn_${u.id}" onclick="adminEditUser('${u.id}')" 
@@ -3354,6 +3358,8 @@ async function renderAdminUsers(){
 function adminEditUser(userId){
   document.getElementById('adminDaysDisplay_'+userId).style.display='none';
   document.getElementById('adminDaysInput_'+userId).style.display='inline-block';
+  document.getElementById('adminStatusDisplay_'+userId).style.display='none';
+  document.getElementById('adminStatusEdit_'+userId).style.display='inline-flex';
   document.getElementById('adminEditBtn_'+userId).style.display='none';
   document.getElementById('adminSaveBtn_'+userId).style.display='inline-block';
   document.getElementById('adminCancelBtn_'+userId).style.display='inline-block';
@@ -3365,6 +3371,8 @@ function adminCancelEdit(userId){
   document.getElementById('adminDaysInput_'+userId).value = disp.textContent;
   document.getElementById('adminDaysInput_'+userId).style.display='none';
   disp.style.display='inline';
+  document.getElementById('adminStatusDisplay_'+userId).style.display='inline';
+  document.getElementById('adminStatusEdit_'+userId).style.display='none';
   document.getElementById('adminEditBtn_'+userId).style.display='inline-block';
   document.getElementById('adminSaveBtn_'+userId).style.display='none';
   document.getElementById('adminCancelBtn_'+userId).style.display='none';
@@ -3375,16 +3383,29 @@ async function adminSaveUser(userId){
   const days = parseInt(input.value);
   if(isNaN(days)||days<0||days>40){ toast('Unesite broj između 0 i 40.'); return; }
 
+  const isActive = document.getElementById('adminStatusCheck_'+userId).checked;
+
   const saveBtn = document.getElementById('adminSaveBtn_'+userId);
   saveBtn.textContent='...';
   saveBtn.disabled=true;
 
   try {
-    const result = await gasCall('updateUser', {data: JSON.stringify({id: userId, remainingDays: days})});
+    const result = await gasCall('updateUser', {data: JSON.stringify({id: userId, remainingDays: days, setActive: isActive})});
     if(result && result.success){
       document.getElementById('adminDaysDisplay_'+userId).textContent = days;
+      // Update status badge
+      const statusDisp = document.getElementById('adminStatusDisplay_'+userId);
+      if(isActive){
+        statusDisp.style.background='rgba(34,197,94,.15)';
+        statusDisp.style.color='#22c55e';
+        statusDisp.textContent='✓ Aktivan';
+      } else {
+        statusDisp.style.background='rgba(239,68,68,.15)';
+        statusDisp.style.color='#ef4444';
+        statusDisp.textContent='✗ Deaktiviran';
+      }
       adminCancelEdit(userId);
-      toast('Dani ažurirani!');
+      toast('Korisnik ažuriran!');
     } else {
       toast(result.error || 'Greška pri spremanju.');
     }
