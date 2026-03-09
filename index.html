@@ -817,7 +817,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 
 </div>
 
-<div id="tabAdmin" style="display:none">
+<div id="tabAdmin" style="display:none;width:100%;min-height:calc(100vh - 100px);padding:1.5rem;box-sizing:border-box">
   <div class="page">
     <div class="list-card" style="padding:1.5rem">
       <h2 style="color:var(--gold);margin-bottom:1.5rem;font-family:'Playfair Display',serif">👤 Upravljanje korisnicima</h2>
@@ -1225,7 +1225,10 @@ function switchMainTab(mainId, btn){
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
     if(projEl) projEl.style.display='none';
     const adminEl=document.getElementById('tabAdmin');
-    if(adminEl){ adminEl.style.display='block'; renderAdminUsers(); }
+    if(adminEl){ 
+      adminEl.style.cssText='display:block;width:100%;min-height:calc(100vh - 100px);padding:1.5rem;box-sizing:border-box';
+      renderAdminUsers(); 
+    }
     return;
   } else if(mainId==='project'){
     subWrap.classList.remove('visible');
