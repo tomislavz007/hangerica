@@ -958,7 +958,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzPh_aaNjeDCbNI7xxaRnUpQb_dOTDCLU9CUK8JjQeK8iWKVyZlenP-Atpn0oX7uOsYVg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUSMEsmTiK1fvbnoqtRLXGPNZAV-4G_9I1SaZ6E4L-eQoUBMheEyjkgdU6cxChpQa/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3448,7 +3448,7 @@ async function adminSaveUser(userId){
 }
 
 async function resendInvite(userId){
-  const result = await gasCall('resendInvite', {userId});
+  const result = await gasCall('resendInvite', {targetUserId: userId});
   if(result && result.success) toast('Pozivnica ponovno poslana!');
   else toast('Greška pri slanju pozivnice.');
 }
@@ -3477,7 +3477,7 @@ async function deleteUser(userId, userName){
   showConfirm(`Obrisati korisnika <strong>${userName}</strong>?<br><small style="color:var(--muted)">Ova radnja se ne može poništiti.</small>`, async () => {
     console.log('deleteUser called with userId:', userId);
     try {
-      const result = await gasCall('deleteUser', {userId});
+      const result = await gasCall('deleteUser', {targetUserId: userId});
       console.log('deleteUser result:', JSON.stringify(result));
       if(result && result.success){ toast(`Korisnik ${userName} obrisan.`); renderAdminUsers(); }
       else toast(result.error || 'Greška pri brisanju.');
@@ -3490,7 +3490,7 @@ async function deleteUser(userId, userName){
 
 async function sendResetLink(userId, userName){
   if(!confirm(`Poslati link za reset lozinke korisniku ${userName}?`)) return;
-  const result = await gasCall('sendPasswordReset', {userId});
+  const result = await gasCall('sendPasswordReset', {targetUserId: userId});
   if(result && result.success) toast(`✓ Reset link poslan na email od ${userName}`);
   else toast(result.error || 'Greška pri slanju.');
 }
