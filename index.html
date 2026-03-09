@@ -947,7 +947,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzLs502T3FrBz-Uq6Q1lGekPcP38ISlKRP_hTSuFZjrGyDdw0QcsOxpcRKrvagSN52w4Q/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxGy4hVrpymuHtGDKpbcX6ZGK5dxA4flwEjZUfl30Oaa4PJN7Gl2QbnmcwXBSgOmwnEKg/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3300,30 +3300,47 @@ async function renderAdminUsers(){
     const table = document.createElement('table');
     table.style.cssText = 'width:100%;border-collapse:collapse;font-size:.85rem';
     table.innerHTML = `<thead><tr style="color:var(--muted);border-bottom:1px solid var(--border)">
-      <th style="padding:.5rem;text-align:left">Ime</th>
-      <th style="padding:.5rem;text-align:left">Username</th>
-      <th style="padding:.5rem;text-align:left">Email</th>
-      <th style="padding:.5rem;text-align:left">Rola</th>
-      <th style="padding:.5rem;text-align:left">Status</th>
-      <th style="padding:.5rem"></th>
+      <th style="padding:.5rem .8rem;text-align:left">Ime</th>
+      <th style="padding:.5rem .8rem;text-align:left">Username</th>
+      <th style="padding:.5rem .8rem;text-align:left">Rola</th>
+      <th style="padding:.5rem .8rem;text-align:center">Dani odmora</th>
+      <th style="padding:.5rem .8rem;text-align:left">Status</th>
+      <th style="padding:.5rem .8rem"></th>
     </tr></thead>`;
     
     const tbody = document.createElement('tbody');
     users.forEach(u => {
       const tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid var(--border)';
+      tr.id = 'adminRow_' + u.id;
       tr.innerHTML = `
-        <td style="padding:.6rem">${u.name||''}</td>
-        <td style="padding:.6rem;color:var(--muted)">${u.id||''}</td>
-        <td style="padding:.6rem;color:var(--muted)">${u.email||'—'}</td>
-        <td style="padding:.6rem">${u.role==='approver'?'Odobravatelj':'Zaposlenik'}</td>
-        <td style="padding:.6rem">
+        <td style="padding:.6rem .8rem;font-weight:500">${u.name||''}</td>
+        <td style="padding:.6rem .8rem;color:var(--muted)">${u.id||''}</td>
+        <td style="padding:.6rem .8rem">${u.role==='approver'?'Odobravatelj':'Zaposlenik'}</td>
+        <td style="padding:.6rem .8rem;text-align:center">
+          <span id="adminDaysDisplay_${u.id}" style="font-weight:600;color:var(--gold)">${u.remainingDays||0}</span>
+          <input id="adminDaysInput_${u.id}" type="number" min="0" max="40" value="${u.remainingDays||0}"
+            style="display:none;width:60px;background:var(--surface2);border:1px solid var(--gold);border-radius:6px;padding:.25rem .4rem;color:var(--text);text-align:center;font-size:.85rem">
+        </td>
+        <td style="padding:.6rem .8rem">
           <span style="padding:.2rem .6rem;border-radius:20px;font-size:.75rem;background:${u.pass?'rgba(34,197,94,.15)':'rgba(234,179,8,.15)'};color:${u.pass?'#22c55e':'#eab308'}">
             ${u.pass ? '✓ Aktivan' : '⏳ Čeka registraciju'}
           </span>
         </td>
-        <td style="padding:.6rem">
-          ${!u.pass ? `<button class="btn-sm" onclick="resendInvite('${u.id}')" style="font-size:.75rem;padding:.2rem .6rem">Ponovno pošalji</button>` : ''}
+        <td style="padding:.6rem .8rem;text-align:right;white-space:nowrap">
+          <button id="adminEditBtn_${u.id}" onclick="adminEditUser('${u.id}')" 
+            style="font-size:.75rem;padding:.25rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;margin-right:.3rem">
+            ✏️ Uredi
+          </button>
+          <button id="adminSaveBtn_${u.id}" onclick="adminSaveUser('${u.id}')"
+            style="display:none;font-size:.75rem;padding:.25rem .7rem;background:var(--gold);border:none;border-radius:6px;color:#0d0f18;font-weight:600;cursor:pointer;margin-right:.3rem">
+            Spremi
+          </button>
+          <button id="adminCancelBtn_${u.id}" onclick="adminCancelEdit('${u.id}')"
+            style="display:none;font-size:.75rem;padding:.25rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;margin-right:.3rem">
+            Odustani
+          </button>
+          ${!u.pass ? `<button onclick="resendInvite('${u.id}')" style="font-size:.75rem;padding:.25rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer">📧 Pošalji</button>` : ''}
         </td>`;
       tbody.appendChild(tr);
     });
@@ -3331,6 +3348,51 @@ async function renderAdminUsers(){
     wrap.appendChild(table);
   } catch(e) {
     wrap.innerHTML = '<div style="color:#ef4444">Greška pri učitavanju korisnika.</div>';
+  }
+}
+
+function adminEditUser(userId){
+  document.getElementById('adminDaysDisplay_'+userId).style.display='none';
+  document.getElementById('adminDaysInput_'+userId).style.display='inline-block';
+  document.getElementById('adminEditBtn_'+userId).style.display='none';
+  document.getElementById('adminSaveBtn_'+userId).style.display='inline-block';
+  document.getElementById('adminCancelBtn_'+userId).style.display='inline-block';
+  document.getElementById('adminDaysInput_'+userId).focus();
+}
+
+function adminCancelEdit(userId){
+  const disp = document.getElementById('adminDaysDisplay_'+userId);
+  document.getElementById('adminDaysInput_'+userId).value = disp.textContent;
+  document.getElementById('adminDaysInput_'+userId).style.display='none';
+  disp.style.display='inline';
+  document.getElementById('adminEditBtn_'+userId).style.display='inline-block';
+  document.getElementById('adminSaveBtn_'+userId).style.display='none';
+  document.getElementById('adminCancelBtn_'+userId).style.display='none';
+}
+
+async function adminSaveUser(userId){
+  const input = document.getElementById('adminDaysInput_'+userId);
+  const days = parseInt(input.value);
+  if(isNaN(days)||days<0||days>40){ toast('Unesite broj između 0 i 40.'); return; }
+
+  const saveBtn = document.getElementById('adminSaveBtn_'+userId);
+  saveBtn.textContent='...';
+  saveBtn.disabled=true;
+
+  try {
+    const result = await gasCall('updateUser', {data: JSON.stringify({id: userId, remainingDays: days})});
+    if(result && result.success){
+      document.getElementById('adminDaysDisplay_'+userId).textContent = days;
+      adminCancelEdit(userId);
+      toast('Dani ažurirani!');
+    } else {
+      toast(result.error || 'Greška pri spremanju.');
+    }
+  } catch(e) {
+    toast('Greška pri povezivanju.');
+  } finally {
+    saveBtn.textContent='Spremi';
+    saveBtn.disabled=false;
   }
 }
 
