@@ -3315,6 +3315,7 @@ async function renderAdminUsers(){
       <th style="padding:.5rem .8rem;text-align:left">Username</th>
       <th style="padding:.5rem .8rem;text-align:left">Rola</th>
       <th style="padding:.5rem .8rem;text-align:center">Dani odmora</th>
+      <th style="padding:.5rem .8rem;text-align:center">Slobodni dani</th>
       <th style="padding:.5rem .8rem;text-align:left">Status</th>
       <th style="padding:.5rem .8rem"></th>
     </tr></thead>`;
@@ -3332,6 +3333,11 @@ async function renderAdminUsers(){
           <span id="adminDaysDisplay_${u.id}" style="font-weight:600;color:var(--gold)">${u.remainingDays||0}</span>
           <input id="adminDaysInput_${u.id}" type="number" min="0" max="40" value="${u.remainingDays||0}"
             style="display:none;width:60px;background:var(--surface2);border:1px solid var(--gold);border-radius:6px;padding:.25rem .4rem;color:var(--text);text-align:center;font-size:.85rem">
+        </td>
+        <td style="padding:.6rem .8rem;text-align:center">
+          <span id="adminFreeDaysDisplay_${u.id}" style="font-weight:600;color:#60a5fa">${u.freeDays||0}</span>
+          <input id="adminFreeDaysInput_${u.id}" type="number" min="0" max="30" value="${u.freeDays||0}"
+            style="display:none;width:60px;background:var(--surface2);border:1px solid #60a5fa;border-radius:6px;padding:.25rem .4rem;color:var(--text);text-align:center;font-size:.85rem">
         </td>
         <td style="padding:.6rem .8rem">
           <span id="adminStatusDisplay_${u.id}" style="padding:.2rem .6rem;border-radius:20px;font-size:.75rem;background:${u.pass?'rgba(34,197,94,.15)':'rgba(234,179,8,.15)'};color:${u.pass?'#22c55e':'#eab308'}">
@@ -3371,6 +3377,8 @@ async function renderAdminUsers(){
 function adminEditUser(userId){
   document.getElementById('adminDaysDisplay_'+userId).style.display='none';
   document.getElementById('adminDaysInput_'+userId).style.display='inline-block';
+  document.getElementById('adminFreeDaysDisplay_'+userId).style.display='none';
+  document.getElementById('adminFreeDaysInput_'+userId).style.display='inline-block';
   document.getElementById('adminStatusDisplay_'+userId).style.display='none';
   document.getElementById('adminStatusEdit_'+userId).style.display='inline-flex';
   document.getElementById('adminEditBtn_'+userId).style.display='none';
@@ -3384,6 +3392,10 @@ function adminCancelEdit(userId){
   document.getElementById('adminDaysInput_'+userId).value = disp.textContent;
   document.getElementById('adminDaysInput_'+userId).style.display='none';
   disp.style.display='inline';
+  const fdisp = document.getElementById('adminFreeDaysDisplay_'+userId);
+  document.getElementById('adminFreeDaysInput_'+userId).value = fdisp.textContent;
+  document.getElementById('adminFreeDaysInput_'+userId).style.display='none';
+  fdisp.style.display='inline';
   document.getElementById('adminStatusDisplay_'+userId).style.display='inline';
   document.getElementById('adminStatusEdit_'+userId).style.display='none';
   document.getElementById('adminEditBtn_'+userId).style.display='inline-block';
@@ -3396,6 +3408,10 @@ async function adminSaveUser(userId){
   const days = parseInt(input.value);
   if(isNaN(days)||days<0||days>40){ toast('Unesite broj između 0 i 40.'); return; }
 
+  const freeInput = document.getElementById('adminFreeDaysInput_'+userId);
+  const freeDays = parseInt(freeInput.value);
+  if(isNaN(freeDays)||freeDays<0||freeDays>30){ toast('Slobodni dani moraju biti između 0 i 30.'); return; }
+
   const isActive = document.getElementById('adminStatusCheck_'+userId).checked;
 
   const saveBtn = document.getElementById('adminSaveBtn_'+userId);
@@ -3403,9 +3419,10 @@ async function adminSaveUser(userId){
   saveBtn.disabled=true;
 
   try {
-    const result = await gasCall('updateUser', {data: JSON.stringify({id: userId, remainingDays: days, setActive: isActive})});
+    const result = await gasCall('updateUser', {data: JSON.stringify({id: userId, remainingDays: days, freeDays: freeDays, setActive: isActive})});
     if(result && result.success){
       document.getElementById('adminDaysDisplay_'+userId).textContent = days;
+      document.getElementById('adminFreeDaysDisplay_'+userId).textContent = freeDays;
       // Update status badge
       const statusDisp = document.getElementById('adminStatusDisplay_'+userId);
       if(isActive){
@@ -3458,9 +3475,16 @@ function confirmResolve(){} // kept for safety
 
 async function deleteUser(userId, userName){
   showConfirm(`Obrisati korisnika <strong>${userName}</strong>?<br><small style="color:var(--muted)">Ova radnja se ne može poništiti.</small>`, async () => {
-    const result = await gasCall('deleteUser', {userId});
-    if(result && result.success){ toast(`Korisnik ${userName} obrisan.`); renderAdminUsers(); }
-    else toast(result.error || 'Greška pri brisanju.');
+    console.log('deleteUser called with userId:', userId);
+    try {
+      const result = await gasCall('deleteUser', {userId});
+      console.log('deleteUser result:', JSON.stringify(result));
+      if(result && result.success){ toast(`Korisnik ${userName} obrisan.`); renderAdminUsers(); }
+      else toast(result.error || 'Greška pri brisanju.');
+    } catch(e) {
+      console.error('deleteUser error:', e);
+      toast('Greška pri povezivanju.');
+    }
   });
 }
 
