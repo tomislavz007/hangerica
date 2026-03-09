@@ -809,7 +809,7 @@ const USERS = [
   { id:'domagoj',   name:'Domagoj Bošnjak',   pos:'Account executive', remainingDays:24, freeDays:7,  role:'employee' },
   { id:'iva',       name:'Iva Žmirak',         pos:'Dizajner',          remainingDays:22, freeDays:0,  role:'employee' },
   { id:'dario',     name:'Dario Oxenham',     pos:'Odobravatelj',      remainingDays:24, freeDays:0,  role:'approver' },
-  { id:'tzeljko',   name:'Tomislav Zeljko',   pos:'Odobravatelj',      remainingDays:24, freeDays:0,  role:'approver' },
+  { id:'tzeljko',   name:'Tomislav Zeljko',   pos:'Odobravatelj',      remainingDays:24, freeDays:0,  role:'approver', isAdmin:true },
 ];
 
 // localStorage key za preostale dane (inicijalizira se iz USERS.remainingDays)
@@ -905,7 +905,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyt1P4zlbDfQiw1lI9rVKy56fxLeDThUhd_XAV7NA7hCIWNcMwQ7uf-zpfxm7SOGKi7MA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzLs502T3FrBz-Uq6Q1lGekPcP38ISlKRP_hTSuFZjrGyDdw0QcsOxpcRKrvagSN52w4Q/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -1036,6 +1036,11 @@ function doLogout(){
 // APP INIT
 // ══════════════════════════════════════════
 function initApp(){
+  // Show admin tab if user is admin
+  const adminTabBtn = document.getElementById('adminTabBtn');
+  if(adminTabBtn) adminTabBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
+  // Show project review tab
+
   document.getElementById('userAvatar').textContent=initials(currentUser.name);
   document.getElementById('userName').textContent=currentUser.name.split(' ')[0];
   const rb=document.getElementById('userRole');
@@ -3172,6 +3177,163 @@ function deleteProj(projId){
 
 // ── Hook renderProjects into renderAll / switchMainTab ──
 
+
+// ══════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════
+
+async function createUser(){
+  const name = document.getElementById('newUserName').value.trim();
+  const email = document.getElementById('newUserEmail').value.trim();
+  const userId = document.getElementById('newUserId').value.trim().toLowerCase();
+  const role = document.getElementById('newUserRole').value;
+  const pos = document.getElementById('newUserPos').value.trim();
+  const days = parseInt(document.getElementById('newUserDays').value) || 25;
+  const errEl = document.getElementById('adminErr');
+
+  if(!name || !email || !userId){
+    errEl.textContent = 'Molimo ispunite sva obavezna polja.';
+    return;
+  }
+  if(!email.includes('@')){
+    errEl.textContent = 'Unesite ispravnu email adresu.';
+    return;
+  }
+
+  errEl.textContent = '';
+  const btn = document.querySelector('#tabAdmin .btn-primary');
+  if(btn){ btn.disabled=true; btn.textContent='Slanje...'; }
+
+  try {
+    const result = await gasCall('createUser', {
+      data: JSON.stringify({ id: userId, name, email, role, pos, remainingDays: days, freeDays: 0 })
+    });
+
+    if(result && result.success){
+      toast('Korisnik kreiran! Email s pozivnicom je poslan.');
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserEmail').value = '';
+      document.getElementById('newUserId').value = '';
+      document.getElementById('newUserPos').value = '';
+      document.getElementById('newUserDays').value = '25';
+      renderAdminUsers();
+    } else {
+      errEl.textContent = result.error || 'Greška pri kreiranju korisnika.';
+    }
+  } catch(e) {
+    errEl.textContent = 'Greška pri povezivanju.';
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='📧 Kreiraj korisnika i pošalji pozivnicu'; }
+  }
+}
+
+async function renderAdminUsers(){
+  const wrap = document.getElementById('adminUsersList');
+  if(!wrap) return;
+  wrap.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Učitavanje...</div>';
+  
+  try {
+    const users = await gasCall('getUsers');
+    if(!Array.isArray(users)){ wrap.innerHTML = '<div style="color:var(--muted)">Nema korisnika.</div>'; return; }
+    
+    wrap.innerHTML = '';
+    const table = document.createElement('table');
+    table.style.cssText = 'width:100%;border-collapse:collapse;font-size:.85rem';
+    table.innerHTML = `<thead><tr style="color:var(--muted);border-bottom:1px solid var(--border)">
+      <th style="padding:.5rem;text-align:left">Ime</th>
+      <th style="padding:.5rem;text-align:left">Username</th>
+      <th style="padding:.5rem;text-align:left">Email</th>
+      <th style="padding:.5rem;text-align:left">Rola</th>
+      <th style="padding:.5rem;text-align:left">Status</th>
+      <th style="padding:.5rem"></th>
+    </tr></thead>`;
+    
+    const tbody = document.createElement('tbody');
+    users.forEach(u => {
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid var(--border)';
+      tr.innerHTML = `
+        <td style="padding:.6rem">${u.name||''}</td>
+        <td style="padding:.6rem;color:var(--muted)">${u.id||''}</td>
+        <td style="padding:.6rem;color:var(--muted)">${u.email||'—'}</td>
+        <td style="padding:.6rem">${u.role==='approver'?'Odobravatelj':'Zaposlenik'}</td>
+        <td style="padding:.6rem">
+          <span style="padding:.2rem .6rem;border-radius:20px;font-size:.75rem;background:${u.pass?'rgba(34,197,94,.15)':'rgba(234,179,8,.15)'};color:${u.pass?'#22c55e':'#eab308'}">
+            ${u.pass ? '✓ Aktivan' : '⏳ Čeka registraciju'}
+          </span>
+        </td>
+        <td style="padding:.6rem">
+          ${!u.pass ? `<button class="btn-sm" onclick="resendInvite('${u.id}')" style="font-size:.75rem;padding:.2rem .6rem">Ponovno pošalji</button>` : ''}
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+  } catch(e) {
+    wrap.innerHTML = '<div style="color:#ef4444">Greška pri učitavanju korisnika.</div>';
+  }
+}
+
+async function resendInvite(userId){
+  const result = await gasCall('resendInvite', {userId});
+  if(result && result.success) toast('Pozivnica ponovno poslana!');
+  else toast('Greška pri slanju pozivnice.');
+}
+
+// Registration flow — called on page load if ?token= in URL
+function checkRegistrationToken(){
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const userId = params.get('uid');
+  if(!token || !userId) return;
+  
+  // Show registration overlay
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('regOverlay').style.display = 'flex';
+  document.getElementById('regLogo').src = 'data:image/png;base64,' + LOGO_B64;
+  
+  // Store token and userId for submission
+  window._regToken = token;
+  window._regUserId = userId;
+}
+
+async function submitRegistration(){
+  const pass1 = document.getElementById('regPass1').value;
+  const pass2 = document.getElementById('regPass2').value;
+  const errEl = document.getElementById('regErr');
+  
+  if(!pass1 || pass1.length < 4){
+    errEl.textContent = 'Lozinka mora imati najmanje 4 znaka.';
+    return;
+  }
+  if(pass1 !== pass2){
+    errEl.textContent = 'Lozinke se ne podudaraju.';
+    return;
+  }
+  
+  errEl.textContent = '';
+  try {
+    const result = await gasCall('setPassword', {
+      userId: window._regUserId,
+      token: window._regToken,
+      pass: pass1
+    });
+    
+    if(result && result.success){
+      document.getElementById('regOverlay').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+      toast('Lozinka postavljena! Možete se prijaviti.');
+      // Pre-select the user in dropdown
+      const sel = document.getElementById('loginUser');
+      if(sel) sel.value = window._regUserId;
+    } else {
+      errEl.textContent = result.error || 'Greška. Pokušajte ponovo.';
+    }
+  } catch(e) {
+    errEl.textContent = 'Greška pri povezivanju.';
+  }
+}
+
 // ══════════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════════
@@ -3185,6 +3347,7 @@ if(localStorage.getItem('hgr_version') !== APP_VERSION){
   localStorage.setItem('hgr_version', APP_VERSION);
 }
 initLogin();
+checkRegistrationToken();
 
 // Auto-restore session if token exists
 (async function(){
