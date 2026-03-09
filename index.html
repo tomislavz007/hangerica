@@ -801,8 +801,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:360px;width:90%;text-align:center">
     <div id="confirmMsg" style="margin-bottom:1.5rem;line-height:1.6"></div>
     <div style="display:flex;gap:.8rem;justify-content:center">
-      <button onclick="confirmResolve(false)" style="padding:.6rem 1.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem">Odustani</button>
-      <button onclick="confirmResolve(true)" style="padding:.6rem 1.4rem;background:#ef4444;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.9rem;font-weight:600">Obriši</button>
+      <button id="confirmCancelBtn" style="padding:.6rem 1.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem">Odustani</button>
+      <button id="confirmOkBtn" style="padding:.6rem 1.4rem;background:#ef4444;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.9rem;font-weight:600">Obriši</button>
     </div>
   </div>
 </div>
@@ -3441,14 +3441,20 @@ function showConfirm(msg, onConfirm){
   const el = document.getElementById('confirmDialog');
   if(el.parentElement !== document.body) document.body.appendChild(el);
   document.getElementById('confirmMsg').innerHTML = msg;
-  el.style.display = 'flex';
   _confirmCallback = onConfirm;
+  el.style.display = 'flex';
+
+  // Rewire buttons fresh each time
+  const btnOk = document.getElementById('confirmOkBtn');
+  const btnCancel = document.getElementById('confirmCancelBtn');
+  const newOk = btnOk.cloneNode(true);
+  const newCancel = btnCancel.cloneNode(true);
+  btnOk.parentNode.replaceChild(newOk, btnOk);
+  btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+  newOk.addEventListener('click', () => { el.style.display='none'; if(_confirmCallback) _confirmCallback(); _confirmCallback=null; });
+  newCancel.addEventListener('click', () => { el.style.display='none'; _confirmCallback=null; });
 }
-function confirmResolve(yes){
-  document.getElementById('confirmDialog').style.display = 'none';
-  if(yes && _confirmCallback) _confirmCallback();
-  _confirmCallback = null;
-}
+function confirmResolve(){} // kept for safety
 
 async function deleteUser(userId, userName){
   showConfirm(`Obrisati korisnika <strong>${userName}</strong>?<br><small style="color:var(--muted)">Ova radnja se ne može poništiti.</small>`, async () => {
