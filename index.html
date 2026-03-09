@@ -685,6 +685,29 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 
 
   </div>
+<div id="tabAdmin" style="display:none">
+  <div class="page">
+    <div class="list-card" style="padding:1.5rem">
+      <h2 style="color:var(--gold);margin-bottom:1.5rem;font-family:'Playfair Display',serif">👤 Upravljanje korisnicima</h2>
+      <div style="background:var(--surface2);border-radius:12px;padding:1.5rem;margin-bottom:2rem;border:1px solid var(--border)">
+        <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text)">Dodaj novog korisnika</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="fg"><label>Ime i prezime</label><input type="text" id="newUserName" placeholder="npr. Ana Anić"></div>
+          <div class="fg"><label>Email</label><input type="email" id="newUserEmail" placeholder="ana@hanger.hr"></div>
+          <div class="fg"><label>Username (za prijavu)</label><input type="text" id="newUserId" placeholder="npr. ana"></div>
+          <div class="fg"><label>Rola</label><select id="newUserRole"><option value="employee">Zaposlenik</option><option value="approver">Odobravatelj</option></select></div>
+          <div class="fg"><label>Radni naziv</label><input type="text" id="newUserPos" placeholder="npr. Account manager"></div>
+          <div class="fg"><label>Dani odmora</label><input type="number" id="newUserDays" value="25" min="0" max="40"></div>
+        </div>
+        <div id="adminErr" style="color:#ef4444;font-size:.85rem;margin-bottom:.5rem"></div>
+        <button class="btn-primary" onclick="createUser()" style="width:100%">📧 Kreiraj korisnika i pošalji pozivnicu</button>
+      </div>
+      <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text)">Postojeći korisnici</h3>
+      <div id="adminUsersList"></div>
+    </div>
+  </div>
+</div>
+
 
   <!-- PROJECT FORM MODAL -->
   <div class="modal-overlay" id="projFormOverlay" onclick="closeProjForm(event)">
@@ -794,51 +817,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
     <div class="modal-info" id="modalInfo"></div>
     <div class="modal-actions" id="modalActions"></div>
   </div>
-
-<!-- ADMIN PANEL -->
-<div id="tabAdmin" style="display:none;padding:1.5rem;max-width:900px;margin:0 auto">
-  <div class="list-card" style="padding:1.5rem">
-    <h2 style="color:var(--gold);margin-bottom:1.5rem;font-family:'Playfair Display',serif">👤 Upravljanje korisnicima</h2>
-    
-    <div style="background:var(--surface2);border-radius:12px;padding:1.5rem;margin-bottom:2rem;border:1px solid var(--border)">
-      <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text)">Dodaj novog korisnika</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <div class="fg">
-          <label>Ime i prezime</label>
-          <input type="text" id="newUserName" placeholder="npr. Ana Anić">
-        </div>
-        <div class="fg">
-          <label>Email</label>
-          <input type="email" id="newUserEmail" placeholder="ana.anic@hanger.hr">
-        </div>
-        <div class="fg">
-          <label>Username (za prijavu)</label>
-          <input type="text" id="newUserId" placeholder="npr. ana">
-        </div>
-        <div class="fg">
-          <label>Rola</label>
-          <select id="newUserRole">
-            <option value="employee">Zaposlenik</option>
-            <option value="approver">Odobravatelj</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Radni naziv</label>
-          <input type="text" id="newUserPos" placeholder="npr. Account manager">
-        </div>
-        <div class="fg">
-          <label>Dani odmora</label>
-          <input type="number" id="newUserDays" value="25" min="0" max="40">
-        </div>
-      </div>
-      <div id="adminErr" style="color:#ef4444;font-size:.85rem;margin-bottom:.5rem"></div>
-      <button class="btn-primary" onclick="createUser()" style="width:100%">📧 Kreiraj korisnika i pošalji pozivnicu</button>
-    </div>
-
-    <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text)">Postojeći korisnici</h3>
-    <div id="adminUsersList"></div>
-  </div>
-</div>
 
 <!-- Registration overlay -->
 <div id="regOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:10000;align-items:center;justify-content:center">
@@ -3425,29 +3403,9 @@ if(localStorage.getItem('hgr_version') !== APP_VERSION){
 initLogin();
 checkRegistrationToken();
 
-// Auto-restore session if token exists
-(async function(){
-  const token = sessionStorage.getItem('hgr_token');
-  const uid = sessionStorage.getItem('hgr_uid');
-  if(token && uid){
-    try {
-      const result = await gasCall('validateToken', {token: token, userId: uid});
-      if(result && result.valid){
-        const user = getUserById(uid);
-        if(user){
-          currentUser = user;
-          document.getElementById('loginScreen').style.display='none';
-          document.getElementById('appShell').style.display='block';
-          initData().then(() => initApp());
-          return;
-        }
-      }
-    } catch(e){}
-    // Token invalid — clear session
-    sessionStorage.removeItem('hgr_token');
-    sessionStorage.removeItem('hgr_uid');
-  }
-})();
+// Always require login — no auto-restore
+sessionStorage.removeItem('hgr_token');
+sessionStorage.removeItem('hgr_uid');
 </script>
 </body>
 </html>
