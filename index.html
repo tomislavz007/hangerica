@@ -796,6 +796,17 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
     <div class="modal-actions" id="modalActions"></div>
   </div>
 
+<!-- Custom confirm dialog -->
+<div id="confirmDialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20000;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:360px;width:90%;text-align:center">
+    <div id="confirmMsg" style="margin-bottom:1.5rem;line-height:1.6"></div>
+    <div style="display:flex;gap:.8rem;justify-content:center">
+      <button onclick="confirmResolve(false)" style="padding:.6rem 1.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem">Odustani</button>
+      <button onclick="confirmResolve(true)" style="padding:.6rem 1.4rem;background:#ef4444;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.9rem;font-weight:600">Obriši</button>
+    </div>
+  </div>
+</div>
+
 <!-- Registration overlay -->
 <div id="regOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:10000;align-items:center;justify-content:center">
   <div class="login-box">
@@ -3425,11 +3436,25 @@ async function resendInvite(userId){
   else toast('Greška pri slanju pozivnice.');
 }
 
+let _confirmCallback = null;
+function showConfirm(msg, onConfirm){
+  document.getElementById('confirmMsg').innerHTML = msg;
+  const el = document.getElementById('confirmDialog');
+  el.style.display = 'flex';
+  _confirmCallback = onConfirm;
+}
+function confirmResolve(yes){
+  document.getElementById('confirmDialog').style.display = 'none';
+  if(yes && _confirmCallback) _confirmCallback();
+  _confirmCallback = null;
+}
+
 async function deleteUser(userId, userName){
-  if(!confirm(`Obrisati korisnika ${userName}? Ova radnja se ne može poništiti.`)) return;
-  const result = await gasCall('deleteUser', {userId});
-  if(result && result.success){ toast(`Korisnik ${userName} obrisan.`); renderAdminUsers(); }
-  else toast(result.error || 'Greška pri brisanju.');
+  showConfirm(`Obrisati korisnika <strong>${userName}</strong>?<br><small style="color:var(--muted)">Ova radnja se ne može poništiti.</small>`, async () => {
+    const result = await gasCall('deleteUser', {userId});
+    if(result && result.success){ toast(`Korisnik ${userName} obrisan.`); renderAdminUsers(); }
+    else toast(result.error || 'Greška pri brisanju.');
+  });
 }
 
 async function sendResetLink(userId, userName){
