@@ -947,7 +947,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzuYjSNr9HuKpjTxu1VDdSOoKjy2bix_x-PJ3m7ElpVlaYFea7iuUaAfTY5GwxZLX0R4g/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzPh_aaNjeDCbNI7xxaRnUpQb_dOTDCLU9CUK8JjQeK8iWKVyZlenP-Atpn0oX7uOsYVg/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3346,6 +3346,7 @@ async function renderAdminUsers(){
           </button>
           ${!u.pass ? `<button onclick="resendInvite('${u.id}')" style="font-size:.75rem;padding:.25rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer">📧 Pošalji</button>` : ''}
           <button onclick="sendResetLink('${u.id}', '${(u.name||'').replace(/'/g,'')}')" style="font-size:.75rem;padding:.25rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--gold);cursor:pointer">🔑 Reset lozinke</button>
+          <button onclick="deleteUser('${u.id}', '${(u.name||'').replace(/'/g,'')}')" style="font-size:.75rem;padding:.25rem .7rem;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#ef4444;cursor:pointer">🗑️</button>
         </td>`;
       tbody.appendChild(tr);
     });
@@ -3422,6 +3423,13 @@ async function resendInvite(userId){
   const result = await gasCall('resendInvite', {userId});
   if(result && result.success) toast('Pozivnica ponovno poslana!');
   else toast('Greška pri slanju pozivnice.');
+}
+
+async function deleteUser(userId, userName){
+  if(!confirm(`Obrisati korisnika ${userName}? Ova radnja se ne može poništiti.`)) return;
+  const result = await gasCall('deleteUser', {userId});
+  if(result && result.success){ toast(`Korisnik ${userName} obrisan.`); renderAdminUsers(); }
+  else toast(result.error || 'Greška pri brisanju.');
 }
 
 async function sendResetLink(userId, userName){
