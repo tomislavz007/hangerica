@@ -1055,6 +1055,7 @@ function initApp(){
   const MAIN_TABS=[
     { id:'moji-dani', label:'📋 Moji dani' },
     ...(canAccessProjects ? [{ id:'project', label:'📊 Project review' }] : []),
+    ...(currentUser.isAdmin ? [{ id:'admin', label:'⚙️ Admin' }] : []),
   ];
 
   // Sub-tabs per role
