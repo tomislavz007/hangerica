@@ -1224,9 +1224,13 @@ function switchMainTab(mainId, btn){
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
     if(projEl) projEl.style.display='none';
     const adminEl=document.getElementById('tabAdmin');
-    if(adminEl){ 
-      adminEl.style.display='block';
-      renderAdminUsers(); 
+    if(adminEl){
+      // Move tabAdmin to body level so parent display:none can't hide it
+      if(adminEl.parentElement !== document.body){
+        document.body.appendChild(adminEl);
+      }
+      adminEl.style.cssText='display:block!important;position:fixed;top:60px;left:0;right:0;bottom:0;overflow-y:auto;background:var(--bg);z-index:10;padding:1.5rem;box-sizing:border-box';
+      renderAdminUsers();
     }
     return;
   } else if(mainId==='project'){
