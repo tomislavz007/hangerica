@@ -1166,6 +1166,9 @@ function switchMainTab(mainId, btn){
   const subWrap=document.getElementById('subTabsWrap');
   const projEl=document.getElementById('main-project');
 
+  const adminEl2=document.getElementById('tabAdmin');
+  if(adminEl2) adminEl2.style.display='none';
+
   if(mainId==='moji-dani'){
     subWrap.classList.add('visible');
     if(projEl) projEl.style.display='none';
@@ -1173,6 +1176,13 @@ function switchMainTab(mainId, btn){
     const firstSub=subWrap.querySelector('.sub-tab.active');
     if(firstSub) showSubTab(firstSub.dataset.id);
     else showSubTab(subWrap.querySelector('.sub-tab').dataset.id);
+  } else if(mainId==='admin'){
+    subWrap.classList.remove('visible');
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    if(projEl) projEl.style.display='none';
+    const adminEl=document.getElementById('tabAdmin');
+    if(adminEl){ adminEl.style.display='block'; renderAdminUsers(); }
+    return;
   } else if(mainId==='project'){
     subWrap.classList.remove('visible');
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
