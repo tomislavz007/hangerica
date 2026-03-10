@@ -1109,15 +1109,9 @@ function gasCall(action, params={}) {
     if(token) url.searchParams.set('token', token);
     if(uid) url.searchParams.set('userId', uid);
   }
-  const POST_ACTIONS = ['saveProject','updateProject','saveRequest','updateRequest','saveBirthday','createUser','updateUser'];
-  if(POST_ACTIONS.includes(action)){
-    return fetch(GAS_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({action, token: sessionStorage.getItem('hgr_token')||'', userId: sessionStorage.getItem('hgr_uid')||'', ...params})
-    }).then(r=>r.json()).catch(e=>{ console.error('gasCall POST error:',e); throw e; });
-  }
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, typeof v==='object'?JSON.stringify(v):v));
+  Object.entries(params).forEach(([k,v]) => {
+    url.searchParams.set(k, typeof v==='object' ? JSON.stringify(v) : String(v));
+  });
   return fetch(url.toString())
     .then(r => r.json())
     .catch(e => { console.error('gasCall error:', e); throw e; });
@@ -3326,11 +3320,11 @@ function saveProjForm(){
   if(editingProjId){
     const idx=_projectCache.findIndex(p=>p.id==editingProjId);
     if(idx>=0) _projectCache[idx]=proj;
-    gasCall('updateProject',{data:proj});
+    gasCall('updateProject',{data:proj}).then(r=>console.log('updateProject result:',r));
     toast('Projekt ažuriran!');
   } else {
     _projectCache.unshift(proj);
-    gasCall('saveProject',{data:proj});
+    gasCall('saveProject',{data:proj}).then(r=>console.log('saveProject result:',r));
     toast('Projekt spremljen!');
   }
 
