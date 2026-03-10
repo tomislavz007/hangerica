@@ -533,6 +533,19 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   <!-- TAB: Moj odmor (approver) -->
   <div class="tab-content" id="tab-moj-appr">
     <div class="page">
+
+      <!-- ── MINI DASHBOARD (approver) ── -->
+      <div id="miniDashboardAppr" style="margin-bottom:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="list-card" style="padding:1.2rem">
+          <div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.8rem">🏖️ Trenutno na godišnjem</div>
+          <div id="dashOnLeave2" style="font-size:.88rem;color:var(--text)">—</div>
+        </div>
+        <div class="list-card" style="padding:1.2rem">
+          <div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.8rem">🎂 Rođendani (danas + 7 dana)</div>
+          <div id="dashBirthdays2" style="font-size:.88rem;color:var(--text)">—</div>
+        </div>
+      </div>
+
       <div class="two-col">
         <div>
           <div class="quota-card">
@@ -3496,9 +3509,13 @@ function monthDay(dateStr){
 
 // ── MINI DASHBOARD ─────────────────────────────────────
 async function renderDashboard(){
-  const leaveEl = document.getElementById('dashOnLeave');
-  const bdEl = document.getElementById('dashBirthdays');
-  if(!leaveEl || !bdEl) return;
+  const leaveEl = document.getElementById('dashOnLeave') || document.getElementById('dashOnLeave2');
+  const bdEl = document.getElementById('dashBirthdays') || document.getElementById('dashBirthdays2');
+
+  // Fill both sets of elements (employee + approver)
+  const leaveEls = [document.getElementById('dashOnLeave'), document.getElementById('dashOnLeave2')].filter(Boolean);
+  const bdEls = [document.getElementById('dashBirthdays'), document.getElementById('dashBirthdays2')].filter(Boolean);
+  if(!leaveEls.length) return;
 
   // Tko je na godišnjem danas
   const today = new Date();
@@ -3509,12 +3526,13 @@ async function renderDashboard(){
   });
   const onLeave = reqs.filter(r=> r.status==='approved' && r.startDate<=todayStr && r.endDate>=todayStr);
   if(onLeave.length){
-    leaveEl.innerHTML = onLeave.map(r=>`<div style="padding:.25rem 0;border-bottom:1px solid var(--border)">
+    const html = onLeave.map(r=>`<div style="padding:.25rem 0;border-bottom:1px solid var(--border)">
       <span style="color:var(--gold);font-weight:600">${r.name}</span>
       <span style="color:var(--muted);font-size:.8rem"> do ${new Date(r.endDate+'T12:00:00').toLocaleDateString('hr-HR',{day:'numeric',month:'short'})}</span>
     </div>`).join('');
+    leaveEls.forEach(el => el.innerHTML = html);
   } else {
-    leaveEl.innerHTML = '<span style="color:var(--muted)">Nitko trenutno nije na godišnjem 🙂</span>';
+    leaveEls.forEach(el => el.innerHTML = '<span style="color:var(--muted)">Nitko trenutno nije na godišnjem 🙂</span>');
   }
 
   // Rođendani danas + 7 dana
@@ -3531,15 +3549,16 @@ async function renderDashboard(){
     });
   }
   if(upcoming.length){
-    bdEl.innerHTML = upcoming.map(b=>{
+    const html = upcoming.map(b=>{
       const when = b.isToday ? '<span style="color:var(--gold);font-weight:700">Danas! 🎉</span>' : `<span style="color:var(--muted);font-size:.8rem">za ${b.daysLeft} ${b.daysLeft===1?'dan':'dana'}</span>`;
       return `<div style="padding:.25rem 0;border-bottom:1px solid var(--border)">
         <span style="color:var(--text);font-weight:600">${b.name}</span> ${when}
         ${b.client?`<span style="color:var(--muted);font-size:.78rem"> · ${b.client}</span>`:''}
       </div>`;
     }).join('');
+    bdEls.forEach(el => el.innerHTML = html);
   } else {
-    bdEl.innerHTML = '<span style="color:var(--muted)">Nema rođendana ovaj tjedan 🎂</span>';
+    bdEls.forEach(el => el.innerHTML = '<span style="color:var(--muted)">Nema rođendana ovaj tjedan 🎂</span>');
   }
 }
 
