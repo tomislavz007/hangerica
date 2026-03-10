@@ -1521,6 +1521,7 @@ function switchSubTab(subId, btn){
 function switchMainTab(mainId, btn){
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
 
   const subWrap=document.getElementById('subTabsWrap');
   const projEl=document.getElementById('main-project');
