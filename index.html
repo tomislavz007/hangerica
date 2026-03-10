@@ -3541,6 +3541,10 @@ async function submitRegistration(){
     });
     
     if(result && result.success){
+      // Clear token from URL so overlay doesn't reappear on refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window._regToken = null;
+      window._regUserId = null;
       document.getElementById('regOverlay').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'flex';
       toast('Lozinka postavljena! Možete se prijaviti.');
