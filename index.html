@@ -63,7 +63,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:60
 /* NAV */
 /* MAIN TABS */
 .main-tabs{background:var(--surface);border-bottom:1px solid var(--border);
-  display:flex;padding:0 1.8rem;gap:0;}
+  display:flex;padding:0 1.8rem;gap:0;position:sticky;top:60px;z-index:150;}
 .main-tab{padding:.75rem 1.4rem;font-size:.88rem;font-weight:600;color:var(--muted);
   border-bottom:3px solid transparent;cursor:pointer;transition:all .2s;
   background:none;border-top:none;border-left:none;border-right:none;
@@ -729,7 +729,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
         </div>
         <div class="fg">
           <label>Datum projekta</label>
-          <input type="month" id="pDate">
+          <select id="pDate"></select>
         </div>
       </div>
 
@@ -1240,7 +1240,7 @@ function switchMainTab(mainId, btn){
       if(adminEl.parentElement !== document.body){
         document.body.appendChild(adminEl);
       }
-      adminEl.style.cssText='display:block!important;position:fixed;top:60px;left:0;right:0;bottom:0;overflow-y:auto;background:var(--bg);z-index:10;padding:1.5rem;box-sizing:border-box';
+      adminEl.style.cssText='display:block!important;position:fixed;top:105px;left:0;right:0;bottom:0;overflow-y:auto;background:var(--bg);z-index:10;padding:1.5rem;box-sizing:border-box';
       renderAdminUsers();
     }
     return;
@@ -2152,6 +2152,26 @@ function parseCosts(costsStr){
 // ── Project form ──
 let editingProjId = null;
 
+function fillDateSelect(selectId, selectedVal){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const now = new Date();
+  const currentYM = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const val = selectedVal || currentYM;
+  sel.innerHTML = '';
+  const months = ['Siječanj','Veljača','Ožujak','Travanj','Svibanj','Lipanj','Srpanj','Kolovoz','Rujan','Listopad','Studeni','Prosinac'];
+  for(let y = 2024; y <= 2027; y++){
+    for(let m = 1; m <= 12; m++){
+      const ym = y+'-'+String(m).padStart(2,'0');
+      const opt = document.createElement('option');
+      opt.value = ym;
+      opt.textContent = months[m-1]+' '+y;
+      if(ym === val) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+}
+
 function openProjForm(projId){
   projId = projId || null;
   editingProjId = projId;
@@ -2208,7 +2228,7 @@ function openProjForm(projId){
     if(proj){
       document.getElementById('pClient').value = proj.client || '';
       document.getElementById('pName').value = proj.name || '';
-      document.getElementById('pDate').value = proj.date || defaultDate;
+      fillDateSelect('pDate', proj.date || defaultDate);
       document.getElementById('pInvoiced').value = proj.invoiced || '';
       document.getElementById('costRows').innerHTML = '';
       var costs = parseCosts(proj.costs);
@@ -2217,7 +2237,7 @@ function openProjForm(projId){
   } else {
     document.getElementById('pClient').value = '';
     document.getElementById('pName').value = '';
-    document.getElementById('pDate').value = defaultDate;
+    fillDateSelect('pDate', defaultDate);
     document.getElementById('pInvoiced').value = '';
     document.getElementById('costRows').innerHTML = '';
     addCostRow();
@@ -3069,7 +3089,7 @@ function openProjForm(projId){
     if(proj){
       document.getElementById('pClient').value = proj.client || '';
       document.getElementById('pName').value = proj.name || '';
-      document.getElementById('pDate').value = proj.date || defaultDate;
+      fillDateSelect('pDate', proj.date || defaultDate);
       document.getElementById('pInvoiced').value = proj.invoiced || '';
       document.getElementById('costRows').innerHTML = '';
       var costs = parseCosts(proj.costs);
@@ -3078,7 +3098,7 @@ function openProjForm(projId){
   } else {
     document.getElementById('pClient').value = '';
     document.getElementById('pName').value = '';
-    document.getElementById('pDate').value = defaultDate;
+    fillDateSelect('pDate', defaultDate);
     document.getElementById('pInvoiced').value = '';
     document.getElementById('costRows').innerHTML = '';
     addCostRow();
