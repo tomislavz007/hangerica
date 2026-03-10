@@ -325,6 +325,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
       <label>Lozinka</label>
       <input type="password" id="loginPass" placeholder="Upiši lozinku" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+      <input type="checkbox" id="rememberMe" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
+      <label for="rememberMe" style="font-size:.82rem;color:var(--muted);cursor:pointer">Zapamti me (2 sata)</label>
+    </div>
     <button class="btn-login" onclick="doLogin()">Prijava →</button>
     <div class="login-err" id="loginErr"></div>
   </div>
@@ -958,7 +962,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxieisKohN_VugFVQ1AONisJX9eDrp-S4tUCUjx3DR4JaPYC1WbMOZx-uiUax7suyHgLg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyXfLFPoKIdVQRAH_YeGZLanD-6WZd8rLC1L_jTzLQrQpblweoBP497xUr-QSabeOgVwg/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -1046,10 +1050,10 @@ async function doLogin(){
   const pass=document.getElementById('loginPass').value;
   const err=document.getElementById('loginErr');
   const btn=document.querySelector('#loginScreen button') || document.querySelector('.login-box button');
+  const remember=document.getElementById('rememberMe')?.checked;
   if(!uid){err.textContent='Molimo odaberite korisnika.';return;}
   if(!pass){err.textContent='Unesite lozinku.';return;}
 
-  // Disable button while checking
   if(btn){ btn.disabled=true; btn.textContent='Provjera...'; }
   err.textContent='';
 
@@ -1059,9 +1063,14 @@ async function doLogin(){
       const user = getUserById(uid);
       if(!user){ err.textContent='Greška: korisnik nije pronađen.'; return; }
       currentUser = user;
-      // Store session token
       sessionStorage.setItem('hgr_token', result.token);
       sessionStorage.setItem('hgr_uid', uid);
+      if(remember){
+        const expires = Date.now() + 2*60*60*1000; // 2 sata
+        localStorage.setItem('hgr_token', result.token);
+        localStorage.setItem('hgr_uid', uid);
+        localStorage.setItem('hgr_expires', expires);
+      }
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='block';
       initData().then(() => initApp());
@@ -1078,6 +1087,9 @@ async function doLogin(){
 function doLogout(){
   sessionStorage.removeItem('hgr_token');
   sessionStorage.removeItem('hgr_uid');
+  localStorage.removeItem('hgr_token');
+  localStorage.removeItem('hgr_uid');
+  localStorage.removeItem('hgr_expires');
   currentUser=null;
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('appShell').style.display='none';
@@ -3594,9 +3606,31 @@ if(localStorage.getItem('hgr_version') !== APP_VERSION){
 initLogin();
 checkRegistrationToken();
 
-// Always require login — no auto-restore
-sessionStorage.removeItem('hgr_token');
-sessionStorage.removeItem('hgr_uid');
+// Auto-restore session from localStorage if "Zapamti me" was used
+(function(){
+  const token = localStorage.getItem('hgr_token');
+  const uid = localStorage.getItem('hgr_uid');
+  const expires = parseInt(localStorage.getItem('hgr_expires')||'0');
+  if(token && uid && Date.now() < expires){
+    const user = getUserById(uid);
+    if(user){
+      currentUser = user;
+      sessionStorage.setItem('hgr_token', token);
+      sessionStorage.setItem('hgr_uid', uid);
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('appShell').style.display='block';
+      initData().then(() => initApp());
+    } else {
+      localStorage.removeItem('hgr_token');
+      localStorage.removeItem('hgr_uid');
+      localStorage.removeItem('hgr_expires');
+    }
+  } else {
+    localStorage.removeItem('hgr_token');
+    localStorage.removeItem('hgr_uid');
+    localStorage.removeItem('hgr_expires');
+  }
+})();
 </script>
 </body>
 </html>
