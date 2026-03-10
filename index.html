@@ -1070,7 +1070,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzxdttbkte3DTzqR1OCCVviW8n9IA2gfuY5xQVrmiCUJJ-HJS3Exo9fNzQHqirLYg3T2A/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbx-ufveWwLWTV_D9tLCnfinhgVYsJFPoFIY7QNkg6LLYzB41oePqSLNoNa3YFAvzaJCEw/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -2160,7 +2160,8 @@ function renderProjects(){
     const profit=invoiced-totalCost;
     const margin=invoiced>0?Math.round(profit/invoiced*100):0;
     const mCls=margin>=50?'high':margin>=25?'mid':'low';
-    const canEdit=currentUser.role==='approver'||p.person===currentUser.name;
+    const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
+    const isFakt=p.fakturirano==='true'||p.fakturirano===true;
     return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
       <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
@@ -2168,8 +2169,12 @@ function renderProjects(){
       <div class="proj-eur">${fmtEur(invoiced)}</div>
       <div class="proj-eur red">${fmtEur(totalCost)}</div>
       <div class="proj-eur green">${fmtEur(profit)}</div>
-      <div style="display:flex;align-items:center;gap:.4rem">
+      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
         <span class="margin-badge ${mCls}">${margin}%</span>
+        ${canEdit?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
+          <input type="checkbox" ${isFakt?'checked':''} onchange="toggleFakturirano('${p.id}',this.checked)" style="accent-color:var(--green);width:13px;height:13px;cursor:pointer">
+          ${isFakt?'✓ Fakt.':'Fakt.'}
+        </label>`:''}
         ${canEdit?`<button class="btn-del" onclick="event.stopPropagation();deleteProj('${p.id}')" title="Obriši">✕</button>`:''}
       </div>
     </div>`;
@@ -3041,7 +3046,8 @@ function renderProjects(){
     const profit=invoiced-totalCost;
     const margin=invoiced>0?Math.round(profit/invoiced*100):0;
     const mCls=margin>=50?'high':margin>=25?'mid':'low';
-    const canEdit=currentUser.role==='approver'||p.person===currentUser.name;
+    const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
+    const isFakt=p.fakturirano==='true'||p.fakturirano===true;
     return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
       <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
@@ -3049,8 +3055,12 @@ function renderProjects(){
       <div class="proj-eur">${fmtEur(invoiced)}</div>
       <div class="proj-eur red">${fmtEur(totalCost)}</div>
       <div class="proj-eur green">${fmtEur(profit)}</div>
-      <div style="display:flex;align-items:center;gap:.4rem">
+      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
         <span class="margin-badge ${mCls}">${margin}%</span>
+        ${canEdit?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
+          <input type="checkbox" ${isFakt?'checked':''} onchange="toggleFakturirano('${p.id}',this.checked)" style="accent-color:var(--green);width:13px;height:13px;cursor:pointer">
+          ${isFakt?'✓ Fakt.':'Fakt.'}
+        </label>`:''}
         ${canEdit?`<button class="btn-del" onclick="event.stopPropagation();deleteProj('${p.id}')" title="Obriši">✕</button>`:''}
       </div>
     </div>`;
@@ -3562,6 +3572,14 @@ async function renderDashboard(){
   } else {
     bdEls.forEach(el => el.innerHTML = '<span style="color:var(--muted)">Nema rođendana ovaj tjedan 🎂</span>');
   }
+}
+
+async function toggleFakturirano(projId, checked){
+  const idx = _projectCache.findIndex(p=>String(p.id)===String(projId));
+  if(idx>=0) _projectCache[idx].fakturirano = checked ? 'true' : 'false';
+  await gasCall('updateProject', {data: {id: projId, fakturirano: checked ? 'true' : 'false'}});
+  renderProjects();
+  toast(checked ? '✓ Označeno kao fakturirano' : 'Fakturiranje poništeno');
 }
 
 async function renderAdminUsers(){
