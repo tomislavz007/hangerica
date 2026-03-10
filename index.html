@@ -958,7 +958,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyCPITZYP-PiqM486Oa31xnKzec_WWeOW5bF0EILMCfLXIpTcPCT7TP2QPPnkXvGqpCPQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby2LMR-j1aYS8HbQMEH2TonHBBdxzIDqq8ak0f_KPsXa0If6vvaQDhPSBNRnllMpwTk0g/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3535,8 +3535,8 @@ async function submitRegistration(){
   errEl.textContent = '';
   try {
     const result = await gasCall('setPassword', {
-      userId: window._regUserId,
-      token: window._regToken,
+      targetUserId: window._regUserId,
+      regToken: window._regToken,
       pass: pass1
     });
     
