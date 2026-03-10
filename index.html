@@ -14,6 +14,18 @@
   --green:#3db882; --amber:#c9a227; --red:#e05555; --blue:#4a90d9;
   --radius:12px;
 }
+/* Theme: Light */
+[data-theme="light"] {
+  --bg:#f5f5f0; --surface:#ffffff; --surface2:#f0ede8; --surface3:#e8e4de;
+  --gold:#c9a227; --gold-light:#e8c060;
+  --text:#1a1a1a; --muted:#888880; --border:#dddad4;
+}
+/* Theme: Hanger Orange */
+[data-theme="hanger"] {
+  --bg:#0f0f0f; --surface:#1a1a1a; --surface2:#222222; --surface3:#2a2a2a;
+  --gold:#e8521a; --gold-light:#ff7040;
+  --text:#f0ede8; --muted:#888880; --border:#333333;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
@@ -344,6 +356,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
         <span id="userName">-</span>
         <span class="role-badge" id="userRole">-</span>
       </div>
+      <button class="btn-logout" onclick="toggleThemePicker()" title="Promijeni temu" style="padding:.4rem .7rem;font-size:1rem">🎨</button>
       <button class="btn-logout" onclick="doLogout()">Odjava</button>
     </div>
   </header>
@@ -801,6 +814,25 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   </div>
 
 <!-- Custom confirm dialog -->
+<!-- Theme picker dropdown -->
+<div id="themePicker" style="display:none;position:fixed;top:56px;right:80px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem;z-index:5000;box-shadow:0 8px 32px rgba(0,0,0,.4);min-width:200px">
+  <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.08em">Odaberi temu</div>
+  <div style="display:flex;flex-direction:column;gap:.4rem">
+    <button onclick="setTheme('dark')" id="themeOpt_dark" style="display:flex;align-items:center;gap:.7rem;padding:.5rem .7rem;border-radius:8px;border:none;cursor:pointer;background:#0d0f18;width:100%;text-align:left">
+      <div style="width:20px;height:20px;border-radius:50%;background:#c9a227;flex-shrink:0"></div>
+      <span style="color:#ede9e3;font-size:.85rem">Dark Gold</span>
+    </button>
+    <button onclick="setTheme('light')" id="themeOpt_light" style="display:flex;align-items:center;gap:.7rem;padding:.5rem .7rem;border-radius:8px;border:none;cursor:pointer;background:#f5f5f0;width:100%;text-align:left">
+      <div style="width:20px;height:20px;border-radius:50%;background:#c9a227;flex-shrink:0"></div>
+      <span style="color:#1a1a1a;font-size:.85rem">Light</span>
+    </button>
+    <button onclick="setTheme('hanger')" id="themeOpt_hanger" style="display:flex;align-items:center;gap:.7rem;padding:.5rem .7rem;border-radius:8px;border:none;cursor:pointer;background:#0f0f0f;width:100%;text-align:left">
+      <div style="width:20px;height:20px;border-radius:50%;background:#e8521a;flex-shrink:0"></div>
+      <span style="color:#f0ede8;font-size:.85rem">Hanger</span>
+    </button>
+  </div>
+</div>
+
 <div id="confirmDialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20000;align-items:center;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:360px;width:90%;text-align:center">
     <div id="confirmMsg" style="margin-bottom:1.5rem;line-height:1.6"></div>
@@ -831,6 +863,26 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 
 <div id="tabAdmin" style="display:none;width:100%;min-height:calc(100vh - 60px);padding-top:calc(60px + 1.5rem);padding-left:1.5rem;padding-right:1.5rem;padding-bottom:1.5rem;box-sizing:border-box">
   <div class="page">
+
+    <!-- Theme Settings -->
+    <div class="list-card" style="padding:1.5rem;margin-bottom:1.5rem">
+      <h2 style="color:var(--gold);margin-bottom:1.2rem;font-family:'Playfair Display',serif">🎨 Izgled aplikacije</h2>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <div onclick="setTheme('dark')" id="themeBtn_dark" style="cursor:pointer;border-radius:12px;padding:1rem 1.4rem;border:2px solid var(--gold);background:#0d0f18;display:flex;align-items:center;gap:.7rem;min-width:160px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#c9a227"></div>
+          <div><div style="color:#ede9e3;font-size:.88rem;font-weight:600">Dark Gold</div><div style="color:#6b6f80;font-size:.75rem">Trenutna tema</div></div>
+        </div>
+        <div onclick="setTheme('light')" id="themeBtn_light" style="cursor:pointer;border-radius:12px;padding:1rem 1.4rem;border:2px solid var(--border);background:#f5f5f0;display:flex;align-items:center;gap:.7rem;min-width:160px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#c9a227"></div>
+          <div><div style="color:#1a1a1a;font-size:.88rem;font-weight:600">Light</div><div style="color:#888880;font-size:.75rem">Svijetla tema</div></div>
+        </div>
+        <div onclick="setTheme('hanger')" id="themeBtn_hanger" style="cursor:pointer;border-radius:12px;padding:1rem 1.4rem;border:2px solid var(--border);background:#0f0f0f;display:flex;align-items:center;gap:.7rem;min-width:160px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#e8521a"></div>
+          <div><div style="color:#f0ede8;font-size:.88rem;font-weight:600">Hanger</div><div style="color:#888880;font-size:.75rem">Brand narančasta</div></div>
+        </div>
+      </div>
+    </div>
+
     <div class="list-card" style="padding:1.5rem">
       <h2 style="color:var(--gold);margin-bottom:1.5rem;font-family:'Playfair Display',serif">👤 Upravljanje korisnicima</h2>
       <div style="background:var(--surface2);border-radius:12px;padding:1.5rem;margin-bottom:2rem;border:1px solid var(--border)">
@@ -1253,6 +1305,12 @@ function switchMainTab(mainId, btn){
         document.body.appendChild(adminEl);
       }
       adminEl.style.cssText='display:block!important;position:fixed;top:105px;left:0;right:0;bottom:0;overflow-y:auto;background:var(--bg);z-index:10;padding:1.5rem;box-sizing:border-box';
+      // Mark active theme button
+      const saved = localStorage.getItem('hgr_theme') || 'dark';
+      ['dark','light','hanger'].forEach(t => {
+        const btn = document.getElementById('themeBtn_'+t);
+        if(btn) btn.style.borderColor = t===saved ? 'var(--gold)' : 'var(--border)';
+      });
       renderAdminUsers();
     }
     return;
@@ -3484,6 +3542,41 @@ async function resendInvite(userId){
   if(result && result.success) toast('Pozivnica ponovno poslana!');
   else toast('Greška pri slanju pozivnice.');
 }
+
+function toggleThemePicker(){
+  const el = document.getElementById('themePicker');
+  if(el.parentElement !== document.body) document.body.appendChild(el);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+// Close theme picker when clicking outside
+document.addEventListener('click', function(e){
+  const picker = document.getElementById('themePicker');
+  if(picker && picker.style.display !== 'none'){
+    if(!picker.contains(e.target) && !e.target.closest('[onclick*="toggleThemePicker"]')){
+      picker.style.display = 'none';
+    }
+  }
+});
+
+function setTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme === 'dark' ? '' : theme);
+  localStorage.setItem('hgr_theme', theme);
+  // Update active indicator on theme options
+  ['dark','light','hanger'].forEach(t => {
+    const btn = document.getElementById('themeOpt_'+t);
+    if(btn) btn.style.outline = t===theme ? '2px solid var(--gold)' : 'none';
+    const adminBtn = document.getElementById('themeBtn_'+t);
+    if(adminBtn) adminBtn.style.borderColor = t===theme ? 'var(--gold)' : 'var(--border)';
+  });
+  document.getElementById('themePicker').style.display = 'none';
+  toast('Tema promijenjena!');
+}
+
+// Apply saved theme on page load
+(function(){
+  const saved = localStorage.getItem('hgr_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved === 'dark' ? '' : saved);
+})();
 
 let _confirmCallback = null;
 function showConfirm(msg, onConfirm){
