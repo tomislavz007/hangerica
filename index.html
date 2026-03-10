@@ -3502,9 +3502,15 @@ function checkRegistrationToken(){
   const userId = params.get('uid');
   if(!token || !userId) return;
   
+  // Move regOverlay to body level so parent display:none can't affect it
+  const regEl = document.getElementById('regOverlay');
+  if(regEl && regEl.parentElement !== document.body){
+    document.body.appendChild(regEl);
+  }
+
   // Show registration overlay
   document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('regOverlay').style.display = 'flex';
+  regEl.style.cssText = 'display:flex;position:fixed;inset:0;background:var(--bg);z-index:10000;align-items:center;justify-content:center';
   document.getElementById('regLogo').src = 'data:image/png;base64,' + LOGO_B64;
   
   // Store token and userId for submission
