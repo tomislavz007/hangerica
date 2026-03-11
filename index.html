@@ -51,7 +51,69 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 
-/* ── PREMIUM BACKGROUND ── */
+/* ── SMOOTH THEME TRANSITION ── */
+*, *::before, *::after {
+  transition: background-color .35s ease, border-color .35s ease, color .2s ease;
+}
+/* Exclude elements that shouldn't transition */
+input, select, textarea, button, .btn-login, [style*="animation"] {
+  transition: background-color .35s ease, border-color .35s ease, color .2s ease, opacity .2s, transform .1s !important;
+}
+
+/* ── SKELETON LOADING ── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+.skeleton-line { height: 14px; margin-bottom: 8px; }
+.skeleton-line.short { width: 40%; }
+.skeleton-line.medium { width: 65%; }
+.skeleton-line.full { width: 100%; }
+.skeleton-block { height: 72px; width: 100%; margin-bottom: 8px; border-radius: 8px; }
+.skeleton-card {
+  background: var(--surface);
+  border: 1px solid rgba(201,162,39,0.08);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  margin-bottom: .5rem;
+}
+
+/* ── AVATAR COLORS ── */
+.av-bruno     { background: #e05555 !important; color: #fff !important; }
+.av-tomislava { background: #4a90d9 !important; color: #fff !important; }
+.av-magdalena { background: #9b59b6 !important; color: #fff !important; }
+.av-domagoj   { background: #3db882 !important; color: #fff !important; }
+.av-iva       { background: #e8521a !important; color: #fff !important; }
+.av-dario     { background: #c9a227 !important; color: #000 !important; }
+.av-tzeljko   { background: #2ecc71 !important; color: #000 !important; }
+
+/* ── SEASONAL BANNER ── */
+#seasonalBanner {
+  display: none;
+  width: 100%;
+  padding: .6rem 1.8rem;
+  font-size: .82rem;
+  font-family: 'Outfit', sans-serif;
+  text-align: center;
+  letter-spacing: .02em;
+  position: relative;
+  z-index: 5;
+  cursor: default;
+}
+
+/* ── DRAG & DROP ── */
+.task-draggable { cursor: grab; user-select: none; }
+.task-draggable:active { cursor: grabbing; }
+.task-drag-over { outline: 2px dashed var(--gold); outline-offset: 2px; border-radius: 8px; }
+.task-dragging  { opacity: .4; }
+
+
 body{
   font-family:'Outfit',sans-serif;
   background:var(--bg);
@@ -495,6 +557,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
       <button class="btn-logout" onclick="doLogout()">Odjava</button>
     </div>
   </header>
+  <div id="seasonalBanner"></div>
   <div class="main-tabs" id="mainTabs"></div>
   <div class="sub-tabs-wrap" id="subTabsWrap"></div>
   <div class="nav-tabs" id="navTabs"></div>
@@ -856,7 +919,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 
       <!-- Tasks list -->
       <div id="tasksList" style="display:flex;flex-direction:column;gap:.5rem">
-        <div style="color:var(--muted);text-align:center;padding:2rem">Učitavanje taskova...</div>
+        <div id="taskSkeletonInit"></div>
       </div>
     </div>
   </div>
@@ -1252,7 +1315,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxRw6Li37-nDATorR6fGvk7GDJ1w8gm8tF6KF9mdz2Fv6lSBfXCSBOpgiwrtcYqA80aTg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzpfPM8oPPRQWovwcxa02GW5mkDL3SAiyUlbjMlnxY7VL0y-uRg_qRq-5LXAmILrDi76Q/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -1398,7 +1461,10 @@ function initApp(){
   if(adminTabBtn) adminTabBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
   // Show project review tab
 
-  document.getElementById('userAvatar').textContent=initials(currentUser.name);
+  const av = document.getElementById('userAvatar');
+  av.textContent = initials(currentUser.name);
+  av.className = 'user-avatar ' + avatarClass(currentUser.name);
+  initSeasonalBanner();
   document.getElementById('userName').textContent=currentUser.name.split(' ')[0];
   const rb=document.getElementById('userRole');
   rb.textContent=currentUser.role==='approver'?'Odobravatelj':'Zaposlenik';
@@ -1739,7 +1805,7 @@ function renderTeam(){
     const barCol=pct<50?'var(--green)':pct<80?'var(--amber)':'var(--red)';
     return`<div class="team-card">
       <div class="tc-top">
-        <div class="tc-avatar">${initials(u.name)}</div>
+        <div class="tc-avatar ${avatarClass(u.name)}">${initials(u.name)}</div>
         <div><div class="tc-name">${u.name}</div><div class="tc-role">${u.pos}</div></div>
       </div>
       <div class="tc-bar-bg"><div class="tc-bar" style="width:${pct}%;background:${barCol}"></div></div>
@@ -3842,7 +3908,7 @@ function updateTaskAssignees(){
 async function renderTasks(){
   const el=document.getElementById('tasksList');
   if(!el) return;
-  el.innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem;font-size:.85rem">Učitavanje...</div>';
+  el.innerHTML=skeletonTaskList();
 
   const tasks=await getTasks();
   const projs=getProjects();
@@ -3881,20 +3947,64 @@ async function renderTasks(){
     const projName=proj?proj.name+' <span style="color:var(--muted);font-size:.78rem">— '+(proj.client||'')+'</span>':'Ostalo';
     const done=ptasks.filter(t=>t.done==='true'||t.done===true).length;
 
+    const PERSONS=['Bruno Sušak','Tomislava Obrč','Magdalena Tenčić','Domagoj Bošnjak','Iva Žmirak','Dario Oxenham','Tomislav Zeljko'];
     const taskRows=ptasks.map(t=>{
       const isDone=t.done==='true'||t.done===true;
       const isOverdue=t.due&&!isDone&&new Date(t.due)<new Date();
       const dueLabel=t.due?new Date(t.due+'T12:00:00').toLocaleDateString('hr-HR',{day:'numeric',month:'short'}):'';
-      return`<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:.6rem;align-items:center;padding:.6rem .8rem;border-radius:8px;background:var(--surface2);${isDone?'opacity:.6':''}">
-        <input type="checkbox" ${isDone?'checked':''} onchange="toggleTaskDone('${t.id}',this.checked)"
+      const tid=t.id;
+      const assigneeShort=t.assignee?t.assignee.split(' ')[0]:'—';
+
+      // Normal view row
+      const normalRow=`<div id="task-view-${tid}" style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:.6rem;align-items:center;padding:.6rem .8rem;border-radius:8px;background:var(--surface2);${isDone?'opacity:.6':''}">
+        <input type="checkbox" ${isDone?'checked':''} onchange="toggleTaskDone('${tid}',this.checked)"
           style="accent-color:var(--green);width:16px;height:16px;cursor:pointer;flex-shrink:0">
-        <div>
-          <div style="font-size:.88rem;color:var(--text);${isDone?'text-decoration:line-through;color:var(--muted)':''}">${t.name||'—'}</div>
-          ${t.note?`<div style="font-size:.76rem;color:var(--muted)">${t.note}</div>`:''}
+        <div style="min-width:0">
+          <div style="font-size:.88rem;color:var(--text);${isDone?'text-decoration:line-through;color:var(--muted)':''};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name||'—'}</div>
+          ${t.note?`<div style="font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.note}</div>`:''}
         </div>
-        <div style="font-size:.78rem;color:var(--muted);white-space:nowrap">${t.assignee?t.assignee.split(' ')[0]:'—'}</div>
+        <div style="font-size:.78rem;color:var(--muted);white-space:nowrap">${assigneeShort}</div>
         <div style="font-size:.76rem;color:${isOverdue?'var(--red)':isDone?'var(--green)':'var(--muted)'};white-space:nowrap">${dueLabel}</div>
-        <button onclick="deleteTask('${t.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:.1rem .3rem" title="Obriši">✕</button>
+        <button onclick="openTaskEdit('${tid}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:.1rem .4rem;transition:color .15s" title="Uredi" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">✏️</button>
+        <button onclick="deleteTask('${tid}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:.1rem .3rem;transition:color .15s" title="Obriši" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+      </div>`;
+
+      // Edit view row (hidden by default)
+      const personOptions=PERSONS.map(p=>`<option value="${p}" ${p===t.assignee?'selected':''}>${p.split(' ')[0]} ${p.split(' ')[1]}</option>`).join('');
+      const editRow=`<div id="task-edit-${tid}" style="display:none;padding:.8rem;border-radius:8px;background:var(--surface2);border:1px solid var(--gold);gap:.5rem;flex-direction:column">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
+          <div>
+            <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Naziv</div>
+            <input id="te-name-${tid}" value="${(t.name||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Outfit',sans-serif">
+          </div>
+          <div>
+            <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Zadužena osoba</div>
+            <select id="te-assignee-${tid}" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Outfit',sans-serif">
+              <option value="">—</option>${personOptions}
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Rok</div>
+            <input id="te-due-${tid}" type="date" value="${t.due||''}" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Outfit',sans-serif">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Napomena</div>
+          <input id="te-note-${tid}" value="${(t.note||'').replace(/"/g,'&quot;')}" placeholder="Napomena..." style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Outfit',sans-serif">
+        </div>
+        <div style="display:flex;gap:.5rem;justify-content:flex-end">
+          <button onclick="closeTaskEdit('${tid}')" style="background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.4rem .9rem;color:var(--muted);font-size:.82rem;cursor:pointer;font-family:'Outfit',sans-serif">Odustani</button>
+          <button onclick="saveTaskEdit('${tid}')" style="background:var(--gold);border:none;border-radius:6px;padding:.4rem .9rem;color:#000;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">Spremi</button>
+        </div>
+      </div>`;
+
+      return`<div class="task-draggable" draggable="true" data-taskid="${tid}"
+        ondragstart="taskDragStart(event,'${tid}')"
+        ondragover="taskDragOver(event)"
+        ondragleave="taskDragLeave(event)"
+        ondrop="taskDrop(event,'${projId}')"
+        ondragend="taskDragEnd(event)">
+        ${normalRow}${editRow}
       </div>`;
     }).join('');
 
@@ -3938,6 +4048,95 @@ async function addTask(){
   toast('Task dodan!');
 }
 
+// ── TASK DRAG & DROP ──
+let _dragTaskId = null;
+let _dragSourceProjId = null;
+
+function taskDragStart(e, taskId){
+  _dragTaskId = taskId;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(()=>{ e.target.closest('.task-draggable').classList.add('task-dragging'); }, 0);
+}
+
+function taskDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const el = e.target.closest('.task-draggable');
+  if(el && el.dataset.taskid !== _dragTaskId){
+    document.querySelectorAll('.task-drag-over').forEach(x=>x.classList.remove('task-drag-over'));
+    el.classList.add('task-drag-over');
+  }
+}
+
+function taskDragLeave(e){
+  const el = e.target.closest('.task-draggable');
+  if(el) el.classList.remove('task-drag-over');
+}
+
+function taskDragEnd(e){
+  document.querySelectorAll('.task-draggable').forEach(x=>{
+    x.classList.remove('task-dragging','task-drag-over');
+  });
+  _dragTaskId = null;
+}
+
+function taskDrop(e, projId){
+  e.preventDefault();
+  const targetEl = e.target.closest('.task-draggable');
+  if(!targetEl || !_dragTaskId || !_taskCache) return;
+  const targetId = targetEl.dataset.taskid;
+  if(targetId === _dragTaskId) return;
+
+  // Reorder within cache
+  const fromIdx = _taskCache.findIndex(t=>String(t.id)===String(_dragTaskId));
+  const toIdx   = _taskCache.findIndex(t=>String(t.id)===String(targetId));
+  if(fromIdx<0||toIdx<0) return;
+
+  const [moved] = _taskCache.splice(fromIdx,1);
+  _taskCache.splice(toIdx,0,moved);
+
+  // Persist order as sortOrder field
+  _taskCache.forEach((t,i)=>{ t.sortOrder=i; });
+  renderTasks();
+
+  // Save new order to GAS
+  gasCall('reorderTasks',{order: _taskCache.map(t=>t.id).join(',')})
+    .then(r=>console.log('reorderTasks:',r));
+}
+
+function openTaskEdit(taskId){
+  const viewEl=document.getElementById('task-view-'+taskId);
+  const editEl=document.getElementById('task-edit-'+taskId);
+  if(viewEl) viewEl.style.display='none';
+  if(editEl){ editEl.style.display='flex'; editEl.querySelector('input')?.focus(); }
+}
+
+function closeTaskEdit(taskId){
+  const viewEl=document.getElementById('task-view-'+taskId);
+  const editEl=document.getElementById('task-edit-'+taskId);
+  if(viewEl) viewEl.style.display='';
+  if(editEl) editEl.style.display='none';
+}
+
+async function saveTaskEdit(taskId){
+  if(!_taskCache) return;
+  const name=document.getElementById('te-name-'+taskId)?.value.trim();
+  const assignee=document.getElementById('te-assignee-'+taskId)?.value;
+  const due=document.getElementById('te-due-'+taskId)?.value;
+  const note=document.getElementById('te-note-'+taskId)?.value.trim();
+
+  if(!name){ toast('Naziv ne može biti prazan.'); return; }
+
+  const idx=_taskCache.findIndex(t=>String(t.id)===String(taskId));
+  if(idx>=0){
+    _taskCache[idx]={..._taskCache[idx], name, assignee, due, note};
+  }
+
+  renderTasks();
+  gasCall('updateTask',{data:{id:taskId, name, assignee, due, note}}).then(r=>console.log('updateTask:',r));
+  toast('✓ Task spremljen!');
+}
+
 async function toggleTaskDone(taskId, checked){
   if(!_taskCache) return;
   const idx=_taskCache.findIndex(t=>String(t.id)===String(taskId));
@@ -3958,7 +4157,7 @@ async function deleteTask(taskId){
 async function renderAdminUsers(){
   const wrap = document.getElementById('adminUsersList');
   if(!wrap) return;
-  wrap.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Učitavanje...</div>';
+  wrap.innerHTML = skeletonCards(3);
   
   try {
     const users = await gasCall('getUsers');
@@ -4137,6 +4336,102 @@ function setTheme(theme){
   });
   document.getElementById('themePicker').style.display = 'none';
   toast('Tema promijenjena!');
+}
+
+function setTheme(theme){
+  // Add transitioning class to prevent flash
+  document.documentElement.classList.add('theme-transitioning');
+  document.documentElement.setAttribute('data-theme', theme === 'dark' ? '' : theme);
+  localStorage.setItem('hgr_theme', theme);
+  ['dark','light','hanger'].forEach(t => {
+    const btn = document.getElementById('themeOpt_'+t);
+    if(btn) btn.style.outline = t===theme ? '2px solid var(--gold)' : 'none';
+    const adminBtn = document.getElementById('themeBtn_'+t);
+    if(adminBtn) adminBtn.style.borderColor = t===theme ? 'var(--gold)' : 'var(--border)';
+  });
+  document.getElementById('themePicker').style.display = 'none';
+  setTimeout(()=>document.documentElement.classList.remove('theme-transitioning'), 400);
+  toast('Tema promijenjena!');
+}
+
+// ── AVATAR COLOR CLASS ──
+function avatarClass(name){
+  if(!name) return '';
+  const n = name.toLowerCase();
+  if(n.includes('bruno'))     return 'av-bruno';
+  if(n.includes('tomislava')) return 'av-tomislava';
+  if(n.includes('magdalena')) return 'av-magdalena';
+  if(n.includes('domagoj'))   return 'av-domagoj';
+  if(n.includes('iva'))       return 'av-iva';
+  if(n.includes('dario'))     return 'av-dario';
+  if(n.includes('tomislav'))  return 'av-tzeljko';
+  return '';
+}
+
+// ── SKELETON HELPERS ──
+function skeletonCards(count=3){
+  return Array.from({length:count}, ()=>`
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-line medium"></div>
+      <div class="skeleton skeleton-line short"></div>
+      <div style="height:.5rem"></div>
+      <div class="skeleton skeleton-line full"></div>
+      <div class="skeleton skeleton-line full" style="width:80%"></div>
+    </div>`).join('');
+}
+function skeletonTaskList(){
+  return Array.from({length:4}, ()=>`
+    <div class="skeleton-card" style="display:flex;align-items:center;gap:.8rem">
+      <div class="skeleton" style="width:16px;height:16px;border-radius:3px;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div class="skeleton skeleton-line medium"></div>
+        <div class="skeleton skeleton-line short"></div>
+      </div>
+      <div class="skeleton skeleton-line" style="width:50px;height:12px"></div>
+    </div>`).join('');
+}
+
+// ── SEASONAL BANNER ──
+function initSeasonalBanner(){
+  const el = document.getElementById('seasonalBanner');
+  if(!el) return;
+  const now = new Date();
+  const m = now.getMonth()+1, d = now.getDate();
+
+  let banner = null;
+
+  // Božić (20.12 - 6.1)
+  if((m===12 && d>=20) || (m===1 && d<=6)){
+    banner = { emoji:'🎄', text:'Sretne blagdane i sretna Nova godina svim Hanger kolegama!', bg:'linear-gradient(90deg,#1a3a1a,#2d5a2d,#1a3a1a)', color:'#7ecf7e', border:'#3db882' };
+  }
+  // Uskrs (28.3 - 5.4 okvirno)
+  else if(m===3&&d>=28 || m===4&&d<=5){
+    banner = { emoji:'🐣', text:'Sretan Uskrs! Uživajte u blagdanskom odmoru 🌸', bg:'linear-gradient(90deg,#2a1f0a,#3d2e0f,#2a1f0a)', color:'#f5c842', border:'#c9a227' };
+  }
+  // Ljeto (21.6 - 22.9)
+  else if((m===6&&d>=21)||(m===7)||(m===8)||(m===9&&d<=22)){
+    banner = { emoji:'☀️', text:'Ljetna sezona je tu — ne zaboravite iskoristiti godišnji odmor!', bg:'linear-gradient(90deg,#1a1200,#2a1e00,#1a1200)', color:'#ffd700', border:'#c9a227' };
+  }
+  // Dan žena (8.3)
+  else if(m===3&&d===8){
+    banner = { emoji:'💐', text:'Sretan Međunarodni dan žena svim kolegicama!', bg:'linear-gradient(90deg,#2a0a1a,#3d0f2e,#2a0a1a)', color:'#ff80bf', border:'#e05580' };
+  }
+  // Dan zaljubljenih (14.2)
+  else if(m===2&&d===14){
+    banner = { emoji:'💛', text:'Sretan Valentinovo od cijelog Hanger tima!', bg:'linear-gradient(90deg,#1a0a0a,#2a1010,#1a0a0a)', color:'#ffb3b3', border:'#e05555' };
+  }
+  // Nova godina (1.1 - 10.1)
+  else if(m===1&&d<=10){
+    banner = { emoji:'🎆', text:'Sretna Nova godina! Neka ' + now.getFullYear() + '. bude uspješna za sve nas!', bg:'linear-gradient(90deg,#0a0a1a,#10102a,#0a0a1a)', color:'#a0b0ff', border:'#4a90d9' };
+  }
+
+  if(banner){
+    el.style.display = 'block';
+    el.style.background = banner.bg;
+    el.style.color = banner.color;
+    el.style.borderBottom = `1px solid ${banner.border}40`;
+    el.innerHTML = `<span style="margin-right:.5rem">${banner.emoji}</span>${banner.text}<span style="margin-left:.5rem">${banner.emoji}</span>`;
+  }
 }
 
 // Apply saved theme on page load
