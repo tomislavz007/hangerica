@@ -52,11 +52,10 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 
 /* ── SMOOTH THEME TRANSITION ── */
-*, *::before, *::after {
-  transition: background-color .35s ease, border-color .35s ease, color .2s ease;
-}
-/* Exclude elements that shouldn't have slow color transition */
-input, select, textarea {
+/* Smooth theme transition - only on non-interactive elements */
+body, header, .main-tabs, .sub-tabs-wrap, .list-card, .form-card,
+.quota-card, .tab-content, .main-content, .stat-box, .team-card,
+.req-row, .cal-day, #tabAdmin, #loginScreen, .login-box {
   transition: background-color .35s ease, border-color .35s ease, color .2s ease;
 }
 
@@ -171,15 +170,15 @@ header, .main-tabs, .sub-tabs-wrap, .nav-tabs, .tab-content, #tabAdmin, #themePi
   background:radial-gradient(ellipse at 60% 30%,rgba(201,162,39,.07) 0%,transparent 60%),
   radial-gradient(ellipse at 20% 80%,rgba(74,144,217,.05) 0%,transparent 50%),var(--bg);}
 .login-box{
-  background: rgba(22,25,35,0.8);
-  border: none;
-  border-top: 2px solid rgba(201,162,39,0.5);
-  border-radius:0;
+  background: rgba(18,21,32,0.92);
+  border: 1px solid rgba(201,162,39,0.15);
+  border-top: 2px solid rgba(201,162,39,0.55);
+  border-radius: 16px;
   padding:2.8rem 2.4rem;
-  width:380px;
-  box-shadow: 0 40px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(201,162,39,0.08);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  width:400px;
+  box-shadow: 0 40px 80px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(201,162,39,0.08);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
 }
 .login-logo{display:block;height:36px;margin:0 auto 2rem;filter:none;}
 .login-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:900;text-align:center;
@@ -677,7 +676,7 @@ button[onclick^="apprSubmitRequest"]:hover {
   <div class="login-box">
     <img class="login-logo" id="loginLogo" src="" alt="HANGER">
     <div class="login-title">Hangerica</div>
-    <div class="login-sub">Prijavite se za pristup godišnjim odmorima</div>
+    <div class="login-sub">Vaš interni alat za odmor, projekte i taskove</div>
     <div class="lf">
       <label>Zaposlenik</label>
       <select id="loginUser"><option value="">— Odaberi korisnika —</option></select>
