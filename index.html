@@ -55,9 +55,9 @@
 *, *::before, *::after {
   transition: background-color .35s ease, border-color .35s ease, color .2s ease;
 }
-/* Exclude elements that shouldn't transition */
-input, select, textarea, button, .btn-login, [style*="animation"] {
-  transition: background-color .35s ease, border-color .35s ease, color .2s ease, opacity .2s, transform .1s !important;
+/* Exclude elements that shouldn't have slow color transition */
+input, select, textarea {
+  transition: background-color .35s ease, border-color .35s ease, color .2s ease;
 }
 
 /* ── SKELETON LOADING ── */
@@ -234,10 +234,24 @@ header{
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+/* ── TAB BOUNCE HOVER ── */
+@keyframes tabBounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-4px); }
+  55%  { transform: translateY(-2px); }
+  75%  { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
 .main-tab{padding:.75rem 1.4rem;font-size:.88rem;font-weight:600;color:var(--muted);
-  border-bottom:2px solid transparent;cursor:pointer;transition:all .25s;
+  border-bottom:2px solid transparent;cursor:pointer;
+  transition: color .25s, border-color .25s;
   background:none;border-top:none;border-left:none;border-right:none;
-  font-family:'Outfit',sans-serif;letter-spacing:-.01em;position:relative;}
+  font-family:'Outfit',sans-serif;letter-spacing:-.01em;position:relative;
+  display:inline-flex;align-items:center;gap:.35rem;}
+.main-tab:hover:not(.active){
+  color:var(--text);
+  animation: tabBounce .4s cubic-bezier(.36,.07,.19,.97) both;
+}
 .main-tab.active{color:var(--text);border-bottom-color:var(--gold);}
 .main-tab.active::after{
   content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
@@ -245,7 +259,6 @@ header{
   background:linear-gradient(90deg,transparent,var(--gold),transparent);
   border-radius:2px;
 }
-.main-tab:hover:not(.active){color:var(--text);}
 
 /* Page fade-in */
 @keyframes fadeUp {
@@ -265,12 +278,22 @@ header{
   backdrop-filter: blur(12px);
 }
 .sub-tabs-wrap.visible{display:flex;}
+@keyframes subTabBounce {
+  0%   { transform: translateY(0) scale(1); }
+  35%  { transform: translateY(-3px) scale(1.05); }
+  65%  { transform: translateY(-1px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
 .sub-tab{padding:.5rem 1rem;font-size:.78rem;font-weight:500;color:var(--muted);
-  border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;
+  border-bottom:2px solid transparent;cursor:pointer;
+  transition: color .2s, border-color .2s;
   background:none;border-top:none;border-left:none;border-right:none;
   font-family:'Outfit',sans-serif;}
 .sub-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
-.sub-tab:hover:not(.active){color:var(--text);}
+.sub-tab:hover:not(.active){
+  color:var(--text);
+  animation: subTabBounce .35s cubic-bezier(.36,.07,.19,.97) both;
+}
 
 /* keep old nav-tab for compat */
 .nav-tabs{display:none;}
@@ -278,6 +301,74 @@ header{
 
 /* TAB CONTENT */
 .tab-content{display:none;} .tab-content.active{display:block;}
+
+/* ── SECTION TITLES ── */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.2rem;
+  position: relative;
+}
+.section-title::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 1.4em;
+  background: linear-gradient(180deg, var(--gold), var(--gold-light));
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.section-title h2, .section-title .st-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.02em;
+  margin: 0;
+}
+.section-title .st-sub {
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  margin-top: .1rem;
+}
+
+/* ── EMPTY STATES ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  gap: .6rem;
+}
+.empty-state .es-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  filter: grayscale(.3);
+  animation: esBob 3s ease-in-out infinite;
+}
+.empty-state .es-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text);
+  opacity: .7;
+}
+.empty-state .es-sub {
+  font-size: .78rem;
+  color: var(--muted);
+  max-width: 240px;
+  line-height: 1.5;
+}
+@keyframes esBob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
 .page{max-width:1100px;margin:0 auto;padding:.8rem 1.5rem;}
 .two-col{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start;}
 @media(max-width:820px){.two-col{grid-template-columns:1fr;}}
@@ -325,10 +416,17 @@ header{
   border-color: rgba(201,162,39,0.2);
 }
 .form-card{padding:1.6rem;margin-bottom:1.5rem;}
-.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;margin-bottom:1.2rem;
-  display:flex;align-items:center;gap:.5rem;}
-.dot{width:7px;height:7px;background:var(--gold);border-radius:50%;display:inline-block;flex-shrink:0;}
-.list-card h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;padding:1.2rem 1.4rem;
+.card-title{
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:800;
+  margin-bottom:1.2rem;
+  display:flex;align-items:center;gap:.6rem;
+  padding-left:.8rem;
+  border-left:3px solid;
+  border-image:linear-gradient(180deg,var(--gold),var(--gold-light)) 1;
+  letter-spacing:-.02em;
+}
+.dot{display:none;}
+.list-card h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:800;padding:1.2rem 1.4rem;
   border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem;}
 
 /* FORM */
@@ -343,16 +441,70 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 .fg textarea{resize:vertical;min-height:60px;}
 .dur-preview{font-size:.76rem;color:var(--gold);margin-top:.15rem;min-height:1em;}
 .hol-warn{font-size:.72rem;color:#e8855a;margin-top:.1rem;display:none;}
+/* ══════════════════════════════════════
+   UNIVERSAL BOUNCE — svi interaktivni elementi
+══════════════════════════════════════ */
+@keyframes uBounce {
+  0%   { transform: translateY(0)    scale(1); }
+  30%  { transform: translateY(-4px) scale(1.04); }
+  55%  { transform: translateY(-2px) scale(1.02); }
+  75%  { transform: translateY(-3px) scale(1.03); }
+  100% { transform: translateY(0)    scale(1); }
+}
+@keyframes uBounceLight {
+  0%   { transform: translateY(0)    scale(1); }
+  35%  { transform: translateY(-3px) scale(1.03); }
+  65%  { transform: translateY(-1px) scale(1.01); }
+  100% { transform: translateY(0)    scale(1); }
+}
+
+/* Sve klase gumba i tabova */
+.filt:hover:not(.active),
+.btn-primary:hover,
+.btn-login:hover,
+.btn-logout:hover,
+.btn-sm:hover,
+.btn-approve:hover,
+.btn-reject:hover,
+.btn-del:hover,
+.btn-nav:hover,
+.btn-modal-close:hover,
+.themeOptBtn:hover,
+[id^="themeOpt_"]:hover,
+[id^="themeBtn_"]:hover {
+  animation: uBounce .38s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Manji bounce za sitne gumbe (edit, delete na taskovima) */
+button[title="Uredi"]:hover,
+button[title="Obriši"]:hover,
+.btn-del:hover {
+  animation: uBounceLight .3s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Spremi / Odustani u task editu */
+button[onclick^="saveTaskEdit"]:hover,
+button[onclick^="closeTaskEdit"]:hover,
+button[onclick^="addTask"]:hover,
+button[onclick^="openProjForm"]:hover,
+button[onclick^="saveProjForm"]:hover,
+button[onclick^="closeProjForm"]:hover,
+button[onclick^="submitRequest"]:hover,
+button[onclick^="apprSubmitRequest"]:hover {
+  animation: uBounce .38s cubic-bezier(.36,.07,.19,.97) both;
+}
+
 .btn-primary{padding:.75rem 1.5rem;background:var(--gold);color:#0d0f18;border:none;
   border-radius:8px;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:600;
-  cursor:pointer;transition:opacity .2s,transform .1s;}
-.btn-primary:hover{opacity:.88;} .btn-primary.full{width:100%;}
+  cursor:pointer;transition:opacity .15s;}
+.btn-primary:hover{opacity:.92;} .btn-primary.full{width:100%;}
+
 
 /* LISTS */
 .filter-row{display:flex;gap:.4rem;padding:.9rem 1.2rem;border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .filt{padding:.28rem .75rem;border-radius:0;border:1px solid var(--border);
   background:var(--surface2);color:var(--muted);font-size:.74rem;cursor:pointer;
-  transition:all .18s;font-family:'Outfit',sans-serif;}
+  transition:background .18s, color .18s, border-color .18s;font-family:'Outfit',sans-serif;}
 .filt.active{background:var(--gold);border-color:var(--gold);color:#0d0f18;font-weight:600;}
 .list-head{display:grid;padding:.55rem 1.2rem;font-size:.68rem;text-transform:uppercase;
   letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);}
@@ -420,7 +572,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 .cal-month-label{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;min-width:160px;text-align:center;}
 .btn-nav{background:var(--surface2);border:1px solid var(--border);color:var(--text);
   border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem;
-  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+  display:flex;align-items:center;justify-content:center;transition:border-color .15s, color .15s;}
 .btn-nav:hover{border-color:var(--gold);color:var(--gold);}
 
 .cal-grid-wrap{padding:1.2rem 1.4rem;}
@@ -547,6 +699,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 <div id="appShell" style="display:none">
   <header>
     <img class="header-logo" id="appLogo" src="" alt="HANGER">
+    <div id="lastUpdatedWrap" style="display:none;align-items:center;gap:.35rem;font-size:.72rem;color:var(--muted);font-family:'Outfit',sans-serif">
+      <span id="freshDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0"></span>
+      <span id="lastUpdatedTxt">—</span>
+      <button onclick="manualRefresh()" title="Osvježi podatke" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:.1rem .3rem;line-height:1" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">↻</button>
+    </div>
     <div class="header-right">
       <div class="user-chip">
         <div class="user-avatar" id="userAvatar">?</div>
@@ -873,7 +1030,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
   <div class="main-content" id="main-tasks" style="display:none">
     <div class="page">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.8rem">
-        <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;color:var(--text)">✅ Task manager</h2>
+        <div class="section-title"><div><div class="st-text">Task manager</div><div class="st-sub">Upravljajte zadacima po projektima</div></div></div>
         <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
           <select id="taskFilterProject" onchange="renderTasks()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none;max-width:220px">
             <option value="">Svi projekti</option>
@@ -1148,7 +1305,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
 
     <!-- Theme Settings -->
     <div class="list-card" style="padding:1.5rem;margin-bottom:1.5rem">
-      <h2 style="color:var(--gold);margin-bottom:1.2rem;font-family:'Plus Jakarta Sans',sans-serif">🎨 Izgled aplikacije</h2>
+      <div class="section-title" style="margin-bottom:1.2rem"><div><div class="st-text">Izgled aplikacije</div></div></div>
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
         <div onclick="setTheme('dark')" id="themeBtn_dark" style="cursor:pointer;border-radius:12px;padding:1rem 1.4rem;border:2px solid var(--gold);background:#0d0f18;display:flex;align-items:center;gap:.7rem;min-width:160px">
           <div style="width:28px;height:28px;border-radius:50%;background:#c9a227"></div>
@@ -1166,7 +1323,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
     </div>
 
     <div class="list-card" style="padding:1.5rem;margin-bottom:1.5rem">
-      <h2 style="color:var(--gold);margin-bottom:1.2rem;font-family:'Plus Jakarta Sans',sans-serif">🎂 Upravljanje rođendanima</h2>
+      <div class="section-title" style="margin-bottom:1.2rem"><div><div class="st-text">Upravljanje rođendanima</div><div class="st-sub">Zaposlenici i klijenti</div></div></div>
       <div style="background:var(--surface2);border-radius:12px;padding:1.2rem;margin-bottom:1.2rem;border:1px solid var(--border)">
         <h3 style="margin-bottom:.8rem;font-size:.95rem;color:var(--text)">Dodaj rođendan</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
@@ -1185,7 +1342,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:p
     </div>
 
     <div class="list-card" style="padding:1.5rem">
-      <h2 style="color:var(--gold);margin-bottom:1.5rem;font-family:'Plus Jakarta Sans',sans-serif">👤 Upravljanje korisnicima</h2>
+      <div class="section-title" style="margin-bottom:1.5rem"><div><div class="st-text">Upravljanje korisnicima</div><div class="st-sub">Dodajte, uredite ili uklonite korisnike</div></div></div>
       <div style="background:var(--surface2);border-radius:12px;padding:1.5rem;margin-bottom:2rem;border:1px solid var(--border)">
         <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text)">Dodaj novog korisnika</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
@@ -1335,7 +1492,7 @@ async function initData() {
     _daysCache = days || {};
     _projectCache = Array.isArray(projects) ? projects : [];
     _appReady = true;
-
+    updateLastUpdated();
   } catch(e) {
     console.error('Greška pri učitavanju:', e);
     _reqCache = [];
@@ -1343,6 +1500,42 @@ async function initData() {
     _appReady = true;
   }
   showLoading(false);
+}
+
+let _lastRefreshTime = null;
+let _lastUpdatedInterval = null;
+
+function updateLastUpdated(){
+  _lastRefreshTime = new Date();
+  const wrap = document.getElementById('lastUpdatedWrap');
+  const txt  = document.getElementById('lastUpdatedTxt');
+  const dot  = document.getElementById('freshDot');
+  if(!wrap) return;
+  wrap.style.display = 'flex';
+  if(_lastUpdatedInterval) clearInterval(_lastUpdatedInterval);
+  function tick(){
+    if(!_lastRefreshTime) return;
+    const secs = Math.floor((new Date() - _lastRefreshTime) / 1000);
+    const mins = Math.floor(secs / 60);
+    let label, fresh;
+    if(secs < 60)       { label = 'Upravo ažurirano';    fresh = true; }
+    else if(mins < 5)   { label = `Ažurirano prije ${mins}min`; fresh = true; }
+    else if(mins < 15)  { label = `Ažurirano prije ${mins}min`; fresh = false; }
+    else                { label = `Ažurirano prije ${mins}min — osvježi?`; fresh = false; }
+    if(txt) txt.textContent = label;
+    if(dot) dot.style.background = fresh ? 'var(--green)' : 'var(--amber)';
+  }
+  tick();
+  _lastUpdatedInterval = setInterval(tick, 30000);
+}
+
+async function manualRefresh(){
+  const btn = document.querySelector('[onclick="manualRefresh()"]');
+  if(btn){ btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(()=>{ btn.style.transform=''; btn.style.transition=''; }, 500); }
+  _taskCache = null;
+  await initData();
+  renderAll();
+  toast('Podaci osvježeni! ✓');
 }
 
 function gasCall(action, params={}) {
@@ -1704,7 +1897,9 @@ function renderMyDashboard(){
   if(freeList){
     const freeReqs=getRequests().filter(r=>getReqUserId(r)===u.id&&r.type==='Slobodni dan');
     if(!freeReqs.length){
-      freeList.innerHTML='<div class="empty"><div class="empty-icon">🗓️</div>'+(totalFree>0?'Nema iskorištenih slobodnih dana':'Nemate slobodnih dana')+'</div>';
+      freeList.innerHTML=totalFree>0
+        ? '<div class="empty-state"><div class="es-icon">🗓️</div><div class="es-title">Nema iskorištenih slobodnih dana</div><div class="es-sub">Slobodni dani koje iskoristite prikazat će se ovdje.</div></div>'
+        : '<div class="empty-state"><div class="es-icon">🗓️</div><div class="es-title">Nemate slobodnih dana</div><div class="es-sub">Slobodni dani dodjeljuju se od strane administratora.</div></div>';
     } else {
       freeList.innerHTML=freeReqs.map(r=>`
         <div class="req-row rr-emp">
@@ -1728,9 +1923,10 @@ function renderMyDashboard(){
 function renderMyRequests(){
   const reqs=getRequests()
     .filter(r=>getReqUserId(r)===currentUser.id)
-    .filter(r=>currentMyFilter==='sve'||r.status===currentMyFilter);
+    .filter(r=>currentMyFilter==='sve'||r.status===currentMyFilter)
+    .sort((a,b)=>Number(b.id||0)-Number(a.id||0));
   const el=document.getElementById('myRequestList');
-  if(!reqs.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏖️</div>Nema zahtjeva</div>';return;}
+  if(!reqs.length){el.innerHTML='<div class="empty-state"><div class="es-icon">🏖️</div><div class="es-title">Nema zahtjeva</div><div class="es-sub">Kada pošaljete zahtjev za odmor, prikazat će se ovdje.</div></div>';return;}
   el.innerHTML=reqs.map(r=>`
     <div class="req-row rr-emp">
       <div><div class="req-name">${r.type}</div>${r.note?'<div class="req-sub">'+r.note+'</div>':''}</div>
@@ -1743,9 +1939,9 @@ function renderMyRequests(){
 
 // ── Pending ──
 function renderPending(){
-  const reqs=getRequests().filter(r=>r.status==='na-cekanju');
+  const reqs=getRequests().filter(r=>r.status==='na-cekanju').sort((a,b)=>Number(b.id||0)-Number(a.id||0));
   const el=document.getElementById('pendingList');
-  if(!reqs.length){el.innerHTML='<div class="empty"><div class="empty-icon">✅</div>Nema zahtjeva na čekanju</div>';return;}
+  if(!reqs.length){el.innerHTML='<div class="empty-state"><div class="es-icon">✅</div><div class="es-title">Sve je odobreno!</div><div class="es-sub">Nema zahtjeva koji čekaju vaše odobrenje.</div></div>';return;}
   el.innerHTML=reqs.map(r=>{
     const u=getUserById(getReqUserId(r));
     return`<div class="req-row rr-appr">
@@ -1763,9 +1959,9 @@ function renderPending(){
 
 // ── All requests ──
 function renderAllRequests(){
-  const reqs=getRequests().filter(r=>currentAllFilter==='sve'||r.status===currentAllFilter);
+  const reqs=getRequests().filter(r=>currentAllFilter==='sve'||r.status===currentAllFilter).sort((a,b)=>Number(b.id||0)-Number(a.id||0));
   const el=document.getElementById('allRequestList');
-  if(!reqs.length){el.innerHTML='<div class="empty"><div class="empty-icon">🗂️</div>Nema zahtjeva</div>';return;}
+  if(!reqs.length){el.innerHTML='<div class="empty-state"><div class="es-icon">🗂️</div><div class="es-title">Nema zahtjeva</div><div class="es-sub">Zahtjevi za odmor pojavit će se ovdje.</div></div>';return;}
   el.innerHTML=reqs.map(r=>{
     const u=getUserById(getReqUserId(r));
     return`<div class="req-row rr-appr">
@@ -1843,7 +2039,7 @@ function renderApprDashboard(){
 
   // List own requests
   const el=document.getElementById('apprMyRequestList');
-  if(!reqs.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏖️</div>Nema zahtjeva</div>';return;}
+  if(!reqs.length){el.innerHTML='<div class="empty-state"><div class="es-icon">🏖️</div><div class="es-title">Nema zahtjeva</div><div class="es-sub">Kada pošaljete zahtjev za odmor, prikazat će se ovdje.</div></div>';return;}
   el.innerHTML='<div class="list-head lh-emp"><span>Vrsta</span><span>Datum</span><span>Dana</span><span>Status</span><span></span></div>'+
   reqs.map(r=>`
     <div class="req-row rr-emp">
@@ -1913,12 +2109,12 @@ function apprSubmitRequest(){
 }
 
 function apprDeleteReq(id){
-  if(!confirm('Obrisati ovaj odmor?')) return;
+  showConfirm('Obrisati ovaj odmor?', ()=>{
   _reqCache=_reqCache.filter(r=>r.id!==id);
   toast('Odmor obrisan.');
   renderAll();
   gasCall('deleteRequest',{id:id});
-}
+});
 
 // ══════════════════════════════════════════
 // CALENDAR
@@ -2221,12 +2417,12 @@ function submitRequest(){
 }
 
 function deleteReq(id){
-  if(!confirm('Povući ovaj zahtjev?')) return;
+  showConfirm('Povući ovaj zahtjev?', ()=>{
   _reqCache = _reqCache.filter(r=>r.id!==id);
   toast('Zahtjev povučen.');
   renderAll();
   gasCall('deleteRequest', {id: id});
-}
+});
 
 function decide(id,newStatus){
   const reqs=getRequests();
@@ -2396,7 +2592,7 @@ function renderProjects(){
   if(personF) projs=projs.filter(p=>personIncludes(p,personF) || p.person===personF);
 
   // Sort by date desc
-  projs.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  projs.sort((a,b)=>{ const d=(b.date||'').localeCompare(a.date||''); return d!==0?d:Number(b.id||0)-Number(a.id||0); });
 
   // Stats
   const statsWrap=document.getElementById('projStatsWrap');
@@ -2405,7 +2601,7 @@ function renderProjects(){
 
   const el=document.getElementById('projList');
   if(!projs.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">📊</div>Nema unesenih projekata</div>';
+    el.innerHTML='<div class="empty-state"><div class="es-icon">📊</div><div class="es-title">Nema projekata</div><div class="es-sub">Dodajte prvi projekt klikom na gumb ispod.</div></div>';
     return;
   }
 
@@ -2799,12 +2995,12 @@ function apprSubmitRequest(){
 }
 
 function apprDeleteReq(id){
-  if(!confirm('Obrisati ovaj odmor?')) return;
+  showConfirm('Obrisati ovaj odmor?', ()=>{
   _reqCache=_reqCache.filter(r=>r.id!==id);
   toast('Odmor obrisan.');
   renderAll();
   gasCall('deleteRequest',{id:id});
-}
+});
 
 // ══════════════════════════════════════════
 // CALENDAR
@@ -3107,12 +3303,12 @@ function submitRequest(){
 }
 
 function deleteReq(id){
-  if(!confirm('Povući ovaj zahtjev?')) return;
+  showConfirm('Povući ovaj zahtjev?', ()=>{
   _reqCache = _reqCache.filter(r=>r.id!==id);
   toast('Zahtjev povučen.');
   renderAll();
   gasCall('deleteRequest', {id: id});
-}
+});
 
 function decide(id,newStatus){
   const reqs=getRequests();
@@ -3282,7 +3478,7 @@ function renderProjects(){
   if(personF) projs=projs.filter(p=>personIncludes(p,personF) || p.person===personF);
 
   // Sort by date desc
-  projs.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  projs.sort((a,b)=>{ const d=(b.date||'').localeCompare(a.date||''); return d!==0?d:Number(b.id||0)-Number(a.id||0); });
 
   // Stats
   const statsWrap=document.getElementById('projStatsWrap');
@@ -3291,7 +3487,7 @@ function renderProjects(){
 
   const el=document.getElementById('projList');
   if(!projs.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">📊</div>Nema unesenih projekata</div>';
+    el.innerHTML='<div class="empty-state"><div class="es-icon">📊</div><div class="es-title">Nema projekata</div><div class="es-sub">Dodajte prvi projekt klikom na gumb ispod.</div></div>';
     return;
   }
 
@@ -3655,13 +3851,13 @@ function closeProjDetailBtn(){
 }
 
 function deleteProj(projId){
-  if(!confirm('Obrisati ovaj projekt?')) return;
+  showConfirm('Obrisati ovaj projekt?', ()=>{
   _projectCache=_projectCache.filter(p=>p.id!=projId);
   closeProjDetail();
   renderProjects();
   gasCall('deleteProject',{id:projId});
   toast('Projekt obrisan.');
-}
+});
 
 // ── Hook renderProjects into renderAll / switchMainTab ──
 
@@ -3800,7 +3996,7 @@ async function renderDashboard(){
     </div>`).join('');
     leaveEls.forEach(el => el.innerHTML = html);
   } else {
-    leaveEls.forEach(el => el.innerHTML = '<span style="color:var(--muted)">Nitko trenutno nije na godišnjem 🙂</span>');
+    leaveEls.forEach(el => el.innerHTML = '<div class="empty-state" style="padding:1rem"><div class="es-icon">🌴</div><div class="es-title">Nitko na godišnjem</div><div class="es-sub">Svi su na poslu danas!</div></div>');
   }
 
   // Rođendani danas + 7 dana
@@ -3938,7 +4134,7 @@ async function renderTasks(){
   });
 
   if(!myTasks.length){
-    el.innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem;font-size:.85rem">Nema taskova 🎉</div>';
+    el.innerHTML='<div class="empty-state"><div class="es-icon">🎉</div><div class="es-title">Svi taskovi su završeni!</div><div class="es-sub">Nema otvorenih zadataka. Dodajte novi task gore.</div></div>';
     return;
   }
 
@@ -4433,6 +4629,56 @@ function initSeasonalBanner(){
     el.innerHTML = `<span style="margin-right:.5rem">${banner.emoji}</span>${banner.text}<span style="margin-left:.5rem">${banner.emoji}</span>`;
   }
 }
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', function(e){
+  // Escape — zatvori sve otvorene modale/editove
+  if(e.key === 'Escape'){
+    // Zatvori project formu
+    const projModal = document.getElementById('projFormModal');
+    if(projModal && projModal.style.display !== 'none'){ closeProjFormBtn(); return; }
+    // Zatvori confirm dialog
+    const confirmDlg = document.getElementById('confirmDialog');
+    if(confirmDlg && confirmDlg.style.display !== 'none'){ confirmDlg.style.display='none'; return; }
+    // Zatvori theme picker
+    const tp = document.getElementById('themePicker');
+    if(tp && tp.style.display !== 'none'){ tp.style.display='none'; return; }
+    // Zatvori task edit modove
+    document.querySelectorAll('[id^="task-edit-"]').forEach(el=>{
+      if(el.style.display !== 'none'){
+        const tid = el.id.replace('task-edit-','');
+        closeTaskEdit(tid);
+      }
+    });
+    return;
+  }
+
+  // Enter — submit aktivne forme (samo ako nije u textarea)
+  if(e.key === 'Enter' && !e.shiftKey && document.activeElement.tagName !== 'TEXTAREA'){
+    const active = document.activeElement;
+
+    // Task edit forma — spremi
+    const taskEditEl = active.closest('[id^="task-edit-"]');
+    if(taskEditEl){
+      const tid = taskEditEl.id.replace('task-edit-','');
+      saveTaskEdit(tid); return;
+    }
+
+    // Login forma
+    if(active.closest('#loginScreen')){ doLogin(); return; }
+
+    // Novi zahtjev forma (employee)
+    if(active.closest('#tab-godisnji') || active.closest('#tab-slobodni')){
+      const submitBtn = document.querySelector('.btn-primary.full');
+      if(submitBtn) submitBtn.click(); return;
+    }
+
+    // Novi task forma
+    if(active.id === 'newTaskName' || active.id === 'newTaskNote' || active.id === 'newTaskDue'){
+      addTask(); return;
+    }
+  }
+});
 
 // Apply saved theme on page load
 (function(){
