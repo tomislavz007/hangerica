@@ -100,7 +100,7 @@ body::after {
 }
 
 /* Sve što je iznad pozadine treba z-index */
-header, .main-tabs, .sub-tabs-wrap, .nav-tabs, .main-content, .tab-content, #tabAdmin, #themePicker, #loginCard { position:relative; z-index:1; }
+header, .main-tabs, .sub-tabs-wrap, .nav-tabs, .tab-content, #tabAdmin, #themePicker, #loginCard { position:relative; z-index:1; }
 
 
 /* LOGIN */
@@ -137,7 +137,7 @@ select option{background:var(--surface2);}
 .login-err{color:var(--red);font-size:.8rem;text-align:center;margin-top:.6rem;min-height:1.2em;}
 
 /* APP SHELL */
-#appShell{display:none;min-height:100vh;}
+#appShell{display:none;}
 header{
   background: rgba(13,15,24,0.85);
   border-bottom: 1px solid rgba(201,162,39,0.15);
@@ -191,7 +191,7 @@ header{
   to   { opacity:1; transform:translateY(0); }
 }
 .main-content, .tab-content.active {
-  animation: fadeUp .3s ease forwards;
+  /* animation removed - caused blank screen on tab switch */
 }
 .list-card { animation: fadeUp .35s ease forwards; }
 
