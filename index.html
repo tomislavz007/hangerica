@@ -734,6 +734,10 @@ button[onclick^="apprSubmitRequest"]:hover {
           <div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.8rem">🎂 Rođendani (danas + 14 dana)</div>
           <div id="dashBirthdays" style="font-size:.88rem;color:var(--text)">—</div>
         </div>
+        <!-- Chat obavijesti -->
+        <div class="list-card" style="padding:1.2rem">
+          <div id="dashChatUnread"></div>
+        </div>
       </div>
       <!-- ── END DASHBOARD ── -->
 
@@ -889,6 +893,9 @@ button[onclick^="apprSubmitRequest"]:hover {
         <div class="list-card" style="padding:1.2rem">
           <div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.8rem">🎂 Rođendani (danas + 14 dana)</div>
           <div id="dashBirthdays2" style="font-size:.88rem;color:var(--text)">—</div>
+        </div>
+        <div class="list-card" style="padding:1.2rem;grid-column:1/-1">
+          <div id="dashChatUnread2"></div>
         </div>
       </div>
 
@@ -3922,11 +3929,20 @@ let _chatProjId = null;
 let _chatPollInterval = null;
 let _chatCache = [];
 
+// localStorage key for last-read timestamps per project
+function _chatReadKey(projId) { return `hgr_chat_read_${projId}`; }
+function _chatMarkRead(projId) { localStorage.setItem(_chatReadKey(projId), new Date().toISOString()); }
+function _chatLastRead(projId) { return localStorage.getItem(_chatReadKey(projId)) || '1970-01-01T00:00:00.000Z'; }
+function _chatUnreadCount(msgs, projId) {
+  const last = _chatLastRead(projId);
+  return msgs.filter(m => String(m.userId||'').toLowerCase() !== String(currentUser.id||'').toLowerCase()
+    && (m.timestamp||'') > last).length;
+}
+
 function initProjChat(projId, projPersons) {
   _chatProjId = projId;
   _chatCache = [];
 
-  // Check if current user is on this project
   const myName = currentUser.name || '';
   const personsStr = projPersons || '';
   const onProject = currentUser.isAdmin === true || currentUser.isAdmin === 'true' ||
@@ -3942,7 +3958,6 @@ function initProjChat(projId, projPersons) {
 
   loadProjChat();
 
-  // Poll every 12 seconds while modal is open
   clearInterval(_chatPollInterval);
   _chatPollInterval = setInterval(() => {
     if (document.getElementById('projDetailOverlay').classList.contains('open')) {
@@ -3957,6 +3972,9 @@ async function loadProjChat(silent = false) {
     if (!Array.isArray(msgs)) return;
     _chatCache = msgs;
     renderChatMessages(msgs);
+    _chatMarkRead(_chatProjId);
+    // Refresh dashboard unread badges
+    renderChatUnreadBadges();
   } catch(e) {
     if (!silent) {
       document.getElementById('projChatMessages').innerHTML =
@@ -3967,7 +3985,7 @@ async function loadProjChat(silent = false) {
 
 function renderChatMessages(msgs) {
   const el = document.getElementById('projChatMessages');
-  if (!msgs.length) {
+  if (!msgs || !msgs.length) {
     el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:.5rem">Nema poruka. Budite prvi! 👋</div>';
     return;
   }
@@ -3978,7 +3996,7 @@ function renderChatMessages(msgs) {
     return `<div style="display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'}">
       <div style="max-width:85%;background:${isMe?'var(--gold)':'var(--surface2)'};color:${isMe?'#000':'var(--text)'};
         border-radius:${isMe?'12px 12px 2px 12px':'12px 12px 12px 2px'};padding:.45rem .75rem;font-size:.84rem;word-break:break-word">
-        ${!isMe?`<div style="font-size:.72rem;font-weight:600;margin-bottom:.2rem;color:${isMe?'#000':'var(--muted)'}">${escHtml(m.userName||m.userId||'?')}</div>`:''}
+        ${!isMe?`<div style="font-size:.72rem;font-weight:600;margin-bottom:.2rem;color:var(--muted)">${escHtml(m.userName||m.userId||'?')}</div>`:''}
         ${escHtml(m.message||'')}
       </div>
       <div style="font-size:.68rem;color:var(--muted);margin-top:.15rem;padding:0 .2rem">${time}</div>
@@ -3994,12 +4012,11 @@ async function sendProjChat() {
   input.value = '';
   input.disabled = true;
 
-  // Optimistic render
-  const optimistic = [..._chatCache, {
-    userId: currentUser.id, userName: currentUser.name,
-    message: msg, timestamp: new Date().toISOString()
-  }];
-  renderChatMessages(optimistic);
+  // Optimistic render — append to existing cache, don't replace
+  const newMsg = { userId: currentUser.id, userName: currentUser.name, message: msg, timestamp: new Date().toISOString() };
+  _chatCache = [..._chatCache, newMsg];
+  renderChatMessages(_chatCache);
+  _chatMarkRead(_chatProjId);
 
   try {
     await gasCall('saveChatMessage', {
@@ -4008,13 +4025,63 @@ async function sendProjChat() {
       userName: currentUser.name,
       message: msg
     });
+    // Reload from server to get server-assigned id/timestamp
     loadProjChat(true);
   } catch(e) {
     toast('Greška pri slanju poruke.');
+    // Rollback optimistic
+    _chatCache = _chatCache.slice(0, -1);
+    renderChatMessages(_chatCache);
+    input.value = msg;
   } finally {
     input.disabled = false;
     input.focus();
   }
+}
+
+// ── Unread badges on dashboard ──
+async function renderChatUnreadBadges() {
+  const containers = document.querySelectorAll('[id^="dashChatUnread"]');
+  if (!containers.length) return;
+
+  try {
+    // Get all projects user is on
+    const myName = currentUser.name || '';
+    const myProjs = getProjects().filter(p => {
+      const persons = (p.persons || p.person || '').toLowerCase();
+      return currentUser.role === 'approver' || currentUser.isAdmin === true || currentUser.isAdmin === 'true'
+        || persons.includes(myName.toLowerCase());
+    });
+
+    let totalUnread = 0;
+    const unreadProjs = [];
+
+    for (const p of myProjs) {
+      try {
+        const msgs = await gasCall('getChatMessages', { projectId: p.id });
+        if (!Array.isArray(msgs)) continue;
+        const count = _chatUnreadCount(msgs, p.id);
+        if (count > 0) {
+          totalUnread += count;
+          unreadProjs.push({ proj: p, count });
+        }
+      } catch(e) {}
+    }
+
+    containers.forEach(el => {
+      if (!totalUnread) { el.innerHTML = ''; return; }
+      el.innerHTML = `
+        <div style="background:var(--surface2);border-radius:10px;padding:.8rem 1rem;margin-top:.8rem">
+          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.6rem">💬 Nepročitane poruke</div>
+          ${unreadProjs.map(({proj, count}) => `
+            <div onclick="switchTab('project');setTimeout(()=>openProjDetail('${proj.id}'),200)"
+              style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--border);cursor:pointer">
+              <span style="font-size:.84rem;color:var(--text)">${escHtml(proj.name||'Projekt')}</span>
+              <span style="background:var(--gold);color:#000;border-radius:99px;font-size:.7rem;font-weight:700;padding:.15rem .5rem">${count}</span>
+            </div>`).join('')}
+        </div>`;
+    });
+  } catch(e) {}
 }
 
 function escHtml(str) {
@@ -4202,6 +4269,9 @@ async function renderDashboard(){
   } else {
     bdEls.forEach(el => el.innerHTML = '<span style="color:var(--muted)">Nema rođendana ovaj tjedan 🎂</span>');
   }
+
+  // Chat unread badges
+  renderChatUnreadBadges();
 }
 
 async function toggleFakturirano(projId, checked){
