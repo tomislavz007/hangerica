@@ -733,6 +733,7 @@ button[onclick^="apprSubmitRequest"]:hover {
         <div class="list-card" style="padding:1.2rem">
           <div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.8rem">🎂 Rođendani (danas + 14 dana)</div>
           <div id="dashBirthdays" style="font-size:.88rem;color:var(--text)">—</div>
+          <div id="dashBdCalendar" style="margin-top:1rem"></div>
         </div>
         <!-- Chat obavijesti -->
         <div class="list-card" style="padding:1.2rem">
@@ -893,6 +894,7 @@ button[onclick^="apprSubmitRequest"]:hover {
         <div class="list-card" style="padding:1.2rem">
           <div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.8rem">🎂 Rođendani (danas + 14 dana)</div>
           <div id="dashBirthdays2" style="font-size:.88rem;color:var(--text)">—</div>
+          <div id="dashBdCalendar2" style="margin-top:1rem"></div>
         </div>
         <div class="list-card" style="padding:1.2rem;grid-column:1/-1">
           <div id="dashChatUnread2"></div>
@@ -1041,7 +1043,7 @@ button[onclick^="apprSubmitRequest"]:hover {
           <select id="taskFilterProject" onchange="renderTasks()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none;max-width:220px">
             <option value="">Svi projekti</option>
           </select>
-          <select id="taskFilterStatus" onchange="renderTasks()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none">
+          <select id="taskFilterStatus" onchange="this.dataset.userSet='1';renderTasks()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none">
             <option value="">Svi statusi</option>
             <option value="open">Otvoreni</option>
             <option value="done">Završeni</option>
@@ -1080,9 +1082,30 @@ button[onclick^="apprSubmitRequest"]:hover {
         <div id="taskFormErr" style="color:var(--red);font-size:.82rem;margin-top:.4rem"></div>
       </div>
 
-      <!-- Tasks list -->
-      <div id="tasksList" style="display:flex;flex-direction:column;gap:.5rem">
-        <div id="taskSkeletonInit"></div>
+      <!-- Tasks list + side chat for Iva -->
+      <div style="display:flex;gap:1rem;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div id="tasksList" style="display:flex;flex-direction:column;gap:.5rem">
+            <div id="taskSkeletonInit"></div>
+          </div>
+        </div>
+        <!-- Side chat panel — shown only when task project has chat (Iva) -->
+        <div id="taskSideChat" style="display:none;width:300px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:sticky;top:1rem">
+          <div style="padding:.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">💬 Chat projekta</div>
+              <div id="taskSideChatProjName" style="font-size:.88rem;font-weight:600;color:var(--text);margin-top:.15rem"></div>
+            </div>
+            <button onclick="closeTaskSideChat()" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:.2rem .3rem">✕</button>
+          </div>
+          <div id="taskChatMessages" style="height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:.45rem;padding:.7rem 1rem"></div>
+          <div style="padding:.6rem 1rem;border-top:1px solid var(--border);display:flex;gap:.4rem">
+            <input id="taskChatInput" type="text" placeholder="Poruka..." maxlength="500"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.42rem .7rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.83rem;outline:none"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTaskChat()}" />
+            <button onclick="sendTaskChat()" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.42rem .85rem;font-weight:700;cursor:pointer;font-size:.83rem">→</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1500,7 +1523,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzpfPM8oPPRQWovwcxa02GW5mkDL3SAiyUlbjMlnxY7VL0y-uRg_qRq-5LXAmILrDi76Q/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxhm8R6c3MxCmESJ2Z4MmikzJSv4RWff7xa_GaVvYgUcjSTadFgEzy2_Ivkvmv4HMxrZw/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3997,8 +4020,10 @@ function initProjChat(projId, projPersons) {
 
 async function loadProjChat(silent = false) {
   try {
-    const msgs = await gasCall('getChatMessages', { projectId: _chatProjId });
-    if (!Array.isArray(msgs)) return;
+    const res = await gasCall('getChatMessages', { projectId: _chatProjId });
+    // Handle both {ok, data:[]} and direct array formats
+    const msgs = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : null);
+    if (!msgs) return;
     // Merge: keep all existing + add any new ones by id or timestamp
     if (msgs.length >= _chatCache.length) {
       _chatCache = msgs; // server has more or equal — use server version
@@ -4094,8 +4119,9 @@ async function renderChatUnreadBadges() {
 
     for (const p of myProjs) {
       try {
-        const msgs = await gasCall('getChatMessages', { projectId: p.id });
-        if (!Array.isArray(msgs)) continue;
+        const res = await gasCall('getChatMessages', { projectId: p.id });
+        const msgs = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : null);
+        if (!msgs) continue;
         const count = _chatUnreadCount(msgs, p.id);
         if (count > 0) {
           totalUnread += count;
@@ -4129,6 +4155,103 @@ function stopChatPoll() {
   _chatPollInterval = null;
   _chatProjId = null;
 }
+
+// ── TASK SIDE CHAT (za Ivu i sve koji imaju task na projektu) ──
+let _taskChatProjId = null;
+let _taskChatPollInterval = null;
+let _taskChatCache = [];
+
+function openTaskSideChat(projId, projName) {
+  _taskChatProjId = projId;
+  _taskChatCache = [];
+  document.getElementById('taskSideChatProjName').textContent = projName || 'Projekt';
+  document.getElementById('taskSideChat').style.display = 'block';
+  document.getElementById('taskChatMessages').innerHTML =
+    '<div style="color:var(--muted);font-size:.8rem;text-align:center">Učitavanje...</div>';
+  document.getElementById('taskChatInput').value = '';
+  loadTaskChat();
+  clearInterval(_taskChatPollInterval);
+  // Polling ne staje sve dok je tab aktivan
+  _taskChatPollInterval = setInterval(() => {
+    if (_taskChatProjId) loadTaskChat(true);
+  }, 12000);
+}
+
+function closeTaskSideChat() {
+  document.getElementById('taskSideChat').style.display = 'none';
+  clearInterval(_taskChatPollInterval);
+  _taskChatProjId = null;
+}
+
+async function loadTaskChat(silent = false) {
+  if (!_taskChatProjId) return;
+  try {
+    const res = await gasCall('getChatMessages', { projectId: _taskChatProjId });
+    const msgs = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : null);
+    if (!msgs) return;
+    if (msgs.length >= _taskChatCache.length) {
+      _taskChatCache = msgs;
+    } else {
+      const existingIds = new Set(msgs.map(m => m.id || m.timestamp));
+      const extra = _taskChatCache.filter(m => !existingIds.has(m.id || m.timestamp));
+      _taskChatCache = [...msgs, ...extra].sort((a,b) => (a.timestamp||'') < (b.timestamp||'') ? -1 : 1);
+    }
+    renderTaskChatMessages(_taskChatCache);
+  } catch(e) {
+    if (!silent) {
+      const el = document.getElementById('taskChatMessages');
+      if (el) el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center">Greška pri učitavanju.</div>';
+    }
+  }
+}
+
+function renderTaskChatMessages(msgs) {
+  const el = document.getElementById('taskChatMessages');
+  if (!el) return;
+  if (!msgs.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:.5rem">Nema poruka još. Budi prvi!</div>';
+    return;
+  }
+  el.innerHTML = msgs.map(m => {
+    const isMine = m.userId === currentUser.id || m.userName === currentUser.name;
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('hr-HR',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="display:flex;flex-direction:column;align-items:${isMine?'flex-end':'flex-start'}">
+      <div style="max-width:85%;background:${isMine?'var(--gold)':'var(--surface2)'};color:${isMine?'#000':'var(--text)'};border-radius:10px;padding:.4rem .65rem;font-size:.82rem;word-break:break-word">${m.message||''}</div>
+      <div style="font-size:.65rem;color:var(--muted);margin-top:.15rem">${isMine?'':((m.userName||'').split(' ')[0]+' · ')}${time}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendTaskChat() {
+  const input = document.getElementById('taskChatInput');
+  const msg = (input.value || '').trim();
+  if (!msg || !_taskChatProjId) return;
+  input.value = '';
+  input.disabled = true;
+  const newMsg = { userId: currentUser.id, userName: currentUser.name, message: msg, timestamp: new Date().toISOString() };
+  _taskChatCache = [..._taskChatCache, newMsg];
+  renderTaskChatMessages(_taskChatCache);
+  try {
+    await gasCall('saveChatMessage', {
+      projectId: _taskChatProjId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: msg
+    });
+    loadTaskChat(true);
+  } catch(e) {
+    toast('Greška pri slanju poruke.');
+    _taskChatCache = _taskChatCache.slice(0, -1);
+    renderTaskChatMessages(_taskChatCache);
+    input.value = msg;
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+
 
 function deleteProj(projId){
   showConfirm('Obrisati ovaj projekt?', ()=>{
@@ -4252,6 +4375,74 @@ function monthDay(dateStr){
   return (parts[1]||'99')+'-'+(parts[2]||'99');
 }
 
+// ── MINI BIRTHDAY CALENDAR ─────────────────────────────
+function renderBdCalendar(bds, containerIds) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed
+  const todayNum = now.getDate();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
+
+  // Build map of day -> birthday names for this month
+  const bdMap = {};
+  bds.forEach(b => {
+    const parts = (b.date || '').split('-');
+    const bMonth = parseInt(parts[1]) - 1;
+    const bDay = parseInt(parts[2]);
+    if (bMonth === month && bDay >= 1 && bDay <= daysInMonth) {
+      if (!bdMap[bDay]) bdMap[bDay] = [];
+      bdMap[bDay].push(b.name.split(' ')[0]); // first name only
+    }
+  });
+
+  const monthName = now.toLocaleDateString('hr-HR', { month: 'long', year: 'numeric' });
+  const dayNames = ['Po', 'Ut', 'Sr', 'Če', 'Pe', 'Su', 'Ne'];
+
+  let cells = '';
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    cells += '<div></div>';
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = d === todayNum;
+    const hasBd = !!bdMap[d];
+    const names = hasBd ? bdMap[d].join(', ') : '';
+    const title = hasBd ? ` title="${names}"` : '';
+    cells += `<div${title} style="
+      position:relative;
+      aspect-ratio:1;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:6px;
+      font-size:.7rem;
+      font-weight:${isToday?'700':'400'};
+      color:${isToday?'#000':hasBd?'var(--gold)':'var(--muted)'};
+      background:${isToday?'var(--gold)':hasBd?'rgba(201,162,39,.13)':'transparent'};
+      cursor:${hasBd?'default':'default'};
+      gap:1px;
+    ">
+      <span>${d}</span>
+      ${hasBd ? `<span style="font-size:.55rem;line-height:1;color:${isToday?'#000':'var(--gold)'};overflow:hidden;max-width:90%;white-space:nowrap;text-overflow:ellipsis">🎂</span>` : ''}
+    </div>`;
+  }
+
+  const html = `
+    <div style="border-top:1px solid var(--border);padding-top:.8rem">
+      <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.6rem;text-align:center">${monthName}</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px">
+        ${dayNames.map(d=>`<div style="text-align:center;font-size:.62rem;color:var(--muted);font-weight:600;padding-bottom:2px">${d}</div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
+        ${cells}
+      </div>
+    </div>`;
+
+  containerIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+}
+
 // ── MINI DASHBOARD ─────────────────────────────────────
 async function renderDashboard(){
   const leaveEl = document.getElementById('dashOnLeave') || document.getElementById('dashOnLeave2');
@@ -4305,6 +4496,9 @@ async function renderDashboard(){
   } else {
     bdEls.forEach(el => el.innerHTML = '<span style="color:var(--muted)">Nema rođendana ovaj tjedan 🎂</span>');
   }
+
+  // Mini birthday calendar for current month
+  renderBdCalendar(bds, ['dashBdCalendar', 'dashBdCalendar2']);
 
   // Chat unread badges
   renderChatUnreadBadges();
@@ -4396,7 +4590,13 @@ async function renderTasks(){
   projs.forEach(p=>projMap[String(p.id)]=p);
 
   const filterProj=document.getElementById('taskFilterProject')?.value||'';
-  const filterStatus=document.getElementById('taskFilterStatus')?.value||'';
+  // Iva sees only open tasks by default (not finance blind users generally)
+  const filterStatusEl = document.getElementById('taskFilterStatus');
+  // Auto-set to 'open' for Iva if no filter chosen yet
+  if(filterStatusEl && !filterStatusEl.dataset.userSet && isFinanceBlind()) {
+    if(!filterStatusEl.value) filterStatusEl.value = 'open';
+  }
+  const filterStatus=filterStatusEl?.value||'';
 
   // Filter tasks — employee sees only tasks on their projects or assigned to them
   let myTasks=tasks.filter(t=>{
@@ -4418,7 +4618,8 @@ async function renderTasks(){
   });
 
   if(!myTasks.length){
-    el.innerHTML='<div class="empty-state"><div class="es-icon">🎉</div><div class="es-title">Svi taskovi su završeni!</div><div class="es-sub">Nema otvorenih zadataka. Dodajte novi task gore.</div></div>';
+    const msg = filterStatus==='done' ? 'Nema završenih taskova.' : 'Nema otvorenih taskova! 🎉';
+    el.innerHTML=`<div class="empty-state"><div class="es-icon">🎯</div><div class="es-title">${msg}</div><div class="es-sub">Promijeni filter za prikaz svih taskova.</div></div>`;
     return;
   }
 
@@ -4491,11 +4692,26 @@ async function renderTasks(){
     return`<div class="list-card" style="padding:1.2rem;margin-bottom:.8rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
         <div style="font-size:.9rem;font-weight:600;color:var(--text)">${projName}</div>
-        <span style="font-size:.75rem;color:var(--muted)">${done}/${ptasks.length} završeno</span>
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <span style="font-size:.75rem;color:var(--muted)">${done}/${ptasks.length} završeno</span>
+          <button onclick="openTaskSideChat('${projId}','${proj?proj.name.replace(/'/g,"\\'"):'Projekt'}')"
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.25rem .6rem;font-size:.75rem;color:var(--muted);cursor:pointer;white-space:nowrap"
+            title="Otvori chat ovog projekta">💬 Chat</button>
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:.4rem">${taskRows}</div>
     </div>`;
   }).join('');
+
+  // Auto-otvori chat za Ivu na prvom projektu koji ima njen task (ako nije već otvoren)
+  if (isFinanceBlind() && !_taskChatProjId) {
+    const myAssigned = myTasks.filter(t => t.assignee === currentUser.name);
+    if (myAssigned.length) {
+      const firstProjId = String(myAssigned[0].projectId);
+      const firstProj = projMap[firstProjId];
+      if (firstProj) openTaskSideChat(firstProjId, firstProj.name);
+    }
+  }
 }
 
 async function addTask(){
@@ -4621,9 +4837,21 @@ async function toggleTaskDone(taskId, checked){
   if(!_taskCache) return;
   const idx=_taskCache.findIndex(t=>String(t.id)===String(taskId));
   if(idx>=0) _taskCache[idx].done=checked?'true':'false';
-  renderTasks();
+
+  // Update visually in-place — don't re-render (task stays visible)
+  const viewRow = document.getElementById('task-view-'+taskId);
+  if(viewRow){
+    viewRow.style.opacity = checked ? '.55' : '1';
+    const nameEl = viewRow.querySelector('div > div:first-child');
+    if(nameEl) nameEl.style.textDecoration = checked ? 'line-through' : '';
+    if(nameEl) nameEl.style.color = checked ? 'var(--muted)' : 'var(--text)';
+    // Update due date color
+    const dueCols = viewRow.querySelectorAll('div[style*="font-size:.76rem"]');
+    dueCols.forEach(d => { if(checked) d.style.color='var(--green)'; });
+  }
+
   gasCall('updateTask',{data:{id:taskId,done:checked?'true':'false'}}).then(r=>console.log('updateTask:',r));
-  if(checked) toast('✓ Task završen!');
+  if(checked) toast('✓ Task završen! Ostaje vidljiv — filtriraj po "Završeni" za pregled.');
 }
 
 async function deleteTask(taskId){
