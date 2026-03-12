@@ -763,20 +763,10 @@ button[onclick^="apprSubmitRequest"]:hover {
               <a href="https://marketingmreza.rs/" target="_blank" title="Marketing Mreža" style="font-size:.72rem;color:var(--muted);text-decoration:none;padding:.18rem .5rem;border-radius:4px;border:1px solid var(--border)">Mktg Mreža</a>
             </div>
           </div>
-          <div id="homeNews" style="display:flex;gap:.85rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin">
+          <div id="homeNews" style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto;gap:.75rem">
             <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem">Učitavanje vijesti...</div>
           </div>
         </div>
-
-        <!-- Quiz -->
-        <div class="list-card" style="padding:1.4rem">
-          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
-            <span class="dot" style="background:var(--gold)"></span> Upoznaj kolege 🎯
-          </div>
-          <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Pogodi čiji je odgovor!</div>
-          <div id="homeQuiz" style="min-height:200px"></div>
-        </div>
-
         <!-- Konzum Klik -->
         <div class="list-card" style="padding:1.4rem" id="konzumKlikCard">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
@@ -807,6 +797,16 @@ button[onclick^="apprSubmitRequest"]:hover {
           <!-- Last ordered info -->
           <div id="konzumLastOrdered" style="margin-top:.7rem;font-size:.7rem;color:var(--muted);text-align:right"></div>
         </div>
+
+        <!-- Quiz -->
+        <div class="list-card" style="padding:1.4rem">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
+            <span class="dot" style="background:var(--gold)"></span> Upoznaj kolege 🎯
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Pogodi čiji je odgovor!</div>
+          <div id="homeQuiz" style="min-height:200px"></div>
+        </div>
+
 
       </div>
 
@@ -1731,7 +1731,11 @@ function showLoading(show) {
     el = document.createElement('div');
     el.id = 'loadingOverlay';
     el.style.cssText = 'position:fixed;inset:0;background:rgba(13,15,24,.85);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;font-family:DM Sans,sans-serif;';
-    el.innerHTML = '<div style="width:40px;height:40px;border:3px solid #262b3e;border-top-color:#c9a227;border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="color:#6b6f80;font-size:.85rem">Učitavanje podataka...</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+    el.innerHTML = '<div style="width:40px;height:40px;border:3px solid #262b3e;border-top-color:#c9a227;border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="color:#6b6f80;font-size:.85rem">Učitavanje podataka...</div><style>@keyframes spin{to{transform:rotate(360deg)}}
+  #homeNews { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; }
+  @media(max-width:900px){ #homeNews { grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:520px){ #homeNews { grid-template-columns:1fr 1fr; } }
+</style>';
     document.body.appendChild(el);
   }
   el.style.display = show ? 'flex' : 'none';
@@ -4697,14 +4701,12 @@ async function loadHomeNews() {
         const s = staticCards[rendered.length];
         rendered.push(renderNewsCard(s.title, s.summary, s.url, s.sourceIcon, s.source, s.sourceColor, s.img, s.tag));
       }
-      newsEl.style.cssText = 'display:flex;gap:.85rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin';
       newsEl.innerHTML = rendered.join('');
       return;
     }
   } catch(e) {}
 
   // Fallback to static cards
-  newsEl.style.cssText = 'display:flex;gap:.85rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin';
   newsEl.innerHTML = staticCards.map(s =>
     renderNewsCard(s.title, s.summary, s.url, s.sourceIcon, s.source, s.sourceColor, s.img, s.tag)
   ).join('');
@@ -4715,7 +4717,7 @@ function renderNewsCard(title, summary, url, icon, sourceName, sourceColor, imgU
     // Magazine cover style
     return `
     <a href="${url}" target="_blank" rel="noopener"
-      style="display:block;text-decoration:none;border-radius:12px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);transition:all .2s;cursor:pointer;flex-shrink:0;width:200px"
+      style="display:block;text-decoration:none;border-radius:12px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);transition:all .2s;cursor:pointer;width:100%"
       onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.15)'"
       onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="position:relative;height:120px;overflow:hidden">
@@ -5047,8 +5049,17 @@ function quizLiveAnswer(chosen) {
 }
 
 function renderQuizRefreshPrompt(el, missing, myAnswers) {
+  // Filter out any questions already answered (double-check via localStorage cache)
+  const localAnsweredKey = 'hgr_answered_' + currentUser.id;
+  const localAnswered = new Set(JSON.parse(localStorage.getItem(localAnsweredKey) || '[]'));
+  const truly_missing = missing.filter(q => !localAnswered.has(q.id));
+  if (truly_missing.length === 0) {
+    // Nothing left to ask — show quiz instead
+    renderHomeQuizSection();
+    return;
+  }
   // Pick up to 3 random unanswered questions to show
-  const shuffled = missing.sort(() => Math.random() - 0.5).slice(0, 3);
+  const shuffled = truly_missing.sort(() => Math.random() - 0.5).slice(0, 3);
   el.innerHTML = `
     <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:14px;padding:1.2rem 1.3rem;border:1px solid rgba(201,162,39,.25)">
       <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem">
@@ -5084,6 +5095,12 @@ async function saveQuizRefresh(questionIds) {
       results.push({ questionId: qId, answer: inp.value.trim() });
     }
   }
+  // Save answered IDs to localStorage regardless (so we don't ask again even if skipped)
+  const localAnsweredKey = 'hgr_answered_' + currentUser.id;
+  const localAnswered = new Set(JSON.parse(localStorage.getItem(localAnsweredKey) || '[]'));
+  questionIds.forEach(id => localAnswered.add(id));
+  localStorage.setItem(localAnsweredKey, JSON.stringify([...localAnswered]));
+
   if (results.length === 0) {
     document.getElementById('homeQuiz').innerHTML = '';
     renderHomeQuizSection();
@@ -5153,6 +5170,14 @@ async function saveQuizProfile() {
     } catch(e) {}
   }
   _quizAnswersCache = null; // invalidate cache
+  // Sync all answered IDs to localStorage so refresh prompt never repeats them
+  const localAnsweredKey = 'hgr_answered_' + currentUser.id;
+  const localAnswered = new Set(JSON.parse(localStorage.getItem(localAnsweredKey) || '[]'));
+  QUIZ_QUESTIONS_DEF.forEach(q => {
+    const input = document.getElementById('qpf_' + q.id);
+    if (input && input.value.trim()) localAnswered.add(q.id);
+  });
+  localStorage.setItem(localAnsweredKey, JSON.stringify([...localAnswered]));
   if (statusEl) { statusEl.textContent = `✓ Spremljeno ${saved} odgovora!`; statusEl.style.color = 'var(--green)'; }
   setTimeout(() => renderHomeQuizSection(), 1200);
 }
