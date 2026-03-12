@@ -763,7 +763,7 @@ button[onclick^="apprSubmitRequest"]:hover {
               <a href="https://marketingmreza.rs/" target="_blank" title="Marketing Mreža" style="font-size:.72rem;color:var(--muted);text-decoration:none;padding:.18rem .5rem;border-radius:4px;border:1px solid var(--border)">Mktg Mreža</a>
             </div>
           </div>
-          <div id="homeNews" style="display:flex;flex-direction:column;gap:.7rem">
+          <div id="homeNews" style="display:flex;gap:.85rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin">
             <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem">Učitavanje vijesti...</div>
           </div>
         </div>
@@ -775,6 +775,37 @@ button[onclick^="apprSubmitRequest"]:hover {
           </div>
           <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Pogodi čiji je odgovor!</div>
           <div id="homeQuiz" style="min-height:200px"></div>
+        </div>
+
+        <!-- Konzum Klik -->
+        <div class="list-card" style="padding:1.4rem" id="konzumKlikCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:1.4rem">🛒</span>
+              <div>
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Konzum Klik</div>
+                <div style="font-size:.73rem;color:var(--muted)">Dodaj što treba naručiti za ured</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.5rem">
+              <span id="konzumItemCount" style="font-size:.72rem;background:var(--gold);color:#000;padding:2px 8px;border-radius:20px;font-weight:700;display:none"></span>
+              <button id="konzumNarucioBtn" onclick="konzumMarkOrdered()" style="display:none;background:#2d7a2d;color:#fff;border:none;border-radius:8px;padding:.38rem .85rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif">✓ Naručeno — resetiraj</button>
+            </div>
+          </div>
+          <!-- Input row -->
+          <div style="display:flex;gap:.5rem;margin-bottom:.9rem">
+            <input id="konzumItemInput" type="text" placeholder="Npr. Jabuke 2 kg, Zeleni čaj 3 kom..."
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--text);font-size:.83rem;font-family:'Outfit',sans-serif;outline:none"
+              onkeydown="if(event.key==='Enter')konzumAddItem()"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+            <button onclick="konzumAddItem()" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.45rem .9rem;font-size:.83rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap">+ Dodaj</button>
+          </div>
+          <!-- Items list -->
+          <div id="konzumItemsList" style="display:flex;flex-direction:column;gap:.4rem;max-height:320px;overflow-y:auto">
+            <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:.8rem">Učitavanje...</div>
+          </div>
+          <!-- Last ordered info -->
+          <div id="konzumLastOrdered" style="margin-top:.7rem;font-size:.7rem;color:var(--muted);text-align:right"></div>
         </div>
 
       </div>
@@ -1587,7 +1618,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyMLgyfauYGRaX8S3wm2wd_9CTetDdpamMnv6dNkcVKR8tKTbtaMoGt981mO9-j_0CzdQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby8v0Qywm_9fFFwuV5KJqvA066silYg_rJbata3PSdYxVK0h6XLfv1kGK9MP2hBDQKHuQ/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -4471,6 +4502,16 @@ const QUIZ_QUESTIONS_DEF = [
   { id: 'q_serija',      text: 'Koja je tvoja omiljena serija?' },
   { id: 'q_zemlja',      text: 'U kojoj zemlji bi volio/la živjeti?' },
   { id: 'q_zivotinja',   text: 'Koja je tvoja omiljena životinja?' },
+  { id: 'q_auto',        text: 'Koja je tvoja najdraža marka auta?' },
+  { id: 'q_jutro',       text: 'Ujutro obavezno...?' },
+  { id: 'q_vecer',       text: 'Prije spavanja obavezno...?' },
+  { id: 'q_tenisice',    text: 'Omiljena marka tenisica?' },
+  { id: 'q_brand',       text: 'Najdraži brand općenito?' },
+  { id: 'q_kava',        text: 'Kava ili čaj?' },
+  { id: 'q_vikend',      text: 'Idealan vikend je...?' },
+  { id: 'q_supermod',    text: 'Supermoć koju bi odabrao/la?' },
+  { id: 'q_pjesma',      text: 'Pjesma koja ti uvijek popravi raspoloženje?' },
+  { id: 'q_emoji',       text: 'Koji emoji najviše koristiš?' },
 ];
 
 let _quizAnswersCache = null;  // all users' answers from server
@@ -4507,6 +4548,7 @@ async function initHomeTab() {
   renderHomeStats();
   loadHomeNews();
   await renderHomeQuizSection();
+  loadKonzumItems();
 }
 
 async function renderHomeStats() {
@@ -4562,28 +4604,63 @@ async function loadHomeNews() {
   const newsEl = document.getElementById('homeNews');
   if (!newsEl) return;
 
-  // Static visual cards — no API needed, always look great
+  // Static magazine-style cards with cover images
   const staticCards = [
     {
       source: 'poslovni.hr', sourceIcon: '📰', sourceColor: '#c9a227',
-      title: 'Najnovije poslovne vijesti',
-      summary: 'Trendovi, kompanije i tržišta — sve na jednom mjestu.',
+      title: 'Trendovi i kompanije: što donosi 2026.?',
+      summary: 'Poslovne prilike, tržišta i najvažnija kretanja u domaćoj ekonomiji.',
       url: 'https://www.poslovni.hr/kompanije',
-      tag: 'Biznis'
+      tag: 'Biznis',
+      img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=220&fit=crop&auto=format'
     },
     {
-      source: 'BBC Technology', sourceIcon: '🌍', sourceColor: '#bb1919',
-      title: 'Tech & Innovation',
+      source: 'BBC Technology', sourceIcon: '🤖', sourceColor: '#bb1919',
+      title: 'AI preuzima industrije: kako se pripremiti',
       summary: 'Najnoviji razvoji u svijetu tehnologije, AI i digitalnih medija.',
       url: 'https://www.bbc.com/technology',
-      tag: 'Tech'
+      tag: 'Tech',
+      img: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=400&h=220&fit=crop&auto=format'
     },
     {
       source: 'Marketing Mreža', sourceIcon: '📣', sourceColor: '#6c63ff',
-      title: 'Marketing & Komunikacije',
-      summary: 'Kampanje, brandovi i digitalni marketing u regiji.',
+      title: 'Mikro influenseri mijenjaju marketing u regiji',
+      summary: 'Kako male, autentične zajednice postaju moćniji alat od mega kampanja.',
       url: 'https://marketingmreza.rs/',
-      tag: 'Marketing'
+      tag: 'Marketing',
+      img: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&h=220&fit=crop&auto=format'
+    },
+    {
+      source: 'Forbes Adria', sourceIcon: '💼', sourceColor: '#1a6b3c',
+      title: 'Mladi poduzetnici koji mijenjaju pravila igre',
+      summary: 'Startupovi, inovatori i vizionari koji oblikuju poslovnu scenu regije.',
+      url: 'https://www.forbes.hr/',
+      tag: 'Startup',
+      img: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=400&h=220&fit=crop&auto=format'
+    },
+    {
+      source: 'Index.hr', sourceIcon: '🇭🇷', sourceColor: '#e63030',
+      title: 'Aktualne vijesti iz Hrvatske i regije',
+      summary: 'Najčitaniji hrvatski news portal — politika, ekonomija, sport i lifestyle.',
+      url: 'https://www.index.hr/?ar=1',
+      tag: 'Hrvatska',
+      img: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&h=220&fit=crop&auto=format'
+    },
+    {
+      source: 'CNN Business', sourceIcon: '🌐', sourceColor: '#cc0000',
+      title: 'Global business & economy news',
+      summary: 'Markets, tech, media and the latest moves shaping the world economy.',
+      url: 'https://edition.cnn.com/business',
+      tag: 'World',
+      img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=220&fit=crop&auto=format'
+    },
+    {
+      source: 'HURA', sourceIcon: '🎨', sourceColor: '#e8760a',
+      title: 'Hrvatska udruga reklamnih agencija',
+      summary: 'Industrija, nagrade, edukacije i trendovi u hrvatskom oglašavanju.',
+      url: 'https://hura.hr/',
+      tag: 'Agencije',
+      img: 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=400&h=220&fit=crop&auto=format'
     },
   ];
 
@@ -4611,32 +4688,54 @@ async function loadHomeNews() {
     } catch(e) {}
 
     if (articles && articles.length >= 1) {
-      const rendered = articles.slice(0,3).map(a => {
+      const rendered = articles.slice(0,4).map(a => {
         const src = NEWS_SOURCES.find(s => (a.source||'').toLowerCase().includes(s.label.toLowerCase().split(' ')[0])) || NEWS_SOURCES[0];
-        return renderNewsCard(a.title, a.summary, a.url || src.url, src.icon, src.label, src.color);
+        return renderNewsCard(a.title, a.summary, a.url || src.url, src.icon, src.label, src.color, null, null);
       });
-      // fill to 3 with statics
-      while (rendered.length < 3) {
+      // fill to 4 with statics
+      while (rendered.length < 4) {
         const s = staticCards[rendered.length];
-        rendered.push(renderNewsCard(s.title, s.summary, s.url, s.sourceIcon, s.source, s.sourceColor));
+        rendered.push(renderNewsCard(s.title, s.summary, s.url, s.sourceIcon, s.source, s.sourceColor, s.img, s.tag));
       }
+      newsEl.style.cssText = 'display:flex;gap:.85rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin';
       newsEl.innerHTML = rendered.join('');
       return;
     }
   } catch(e) {}
 
   // Fallback to static cards
+  newsEl.style.cssText = 'display:flex;gap:.85rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin';
   newsEl.innerHTML = staticCards.map(s =>
-    renderNewsCard(s.title, s.summary, s.url, s.sourceIcon, s.source, s.sourceColor)
+    renderNewsCard(s.title, s.summary, s.url, s.sourceIcon, s.source, s.sourceColor, s.img, s.tag)
   ).join('');
 }
 
-function renderNewsCard(title, summary, url, icon, sourceName, sourceColor) {
+function renderNewsCard(title, summary, url, icon, sourceName, sourceColor, imgUrl, tag) {
+  if (imgUrl) {
+    // Magazine cover style
+    return `
+    <a href="${url}" target="_blank" rel="noopener"
+      style="display:block;text-decoration:none;border-radius:12px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);transition:all .2s;cursor:pointer;flex-shrink:0;width:200px"
+      onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.15)'"
+      onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="position:relative;height:120px;overflow:hidden">
+        <img src="${imgUrl}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.background='${sourceColor}22';this.style.display='none'">
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.7))"></div>
+        <span style="position:absolute;top:7px;left:7px;background:${sourceColor};color:#fff;font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em">${tag||sourceName}</span>
+      </div>
+      <div style="padding:.6rem .75rem .75rem">
+        <div style="font-size:.65rem;font-weight:700;color:${sourceColor};text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem">${icon} ${sourceName}</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${title}</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${summary}</div>
+      </div>
+    </a>`;
+  }
+  // List style fallback
   return `
     <a href="${url}" target="_blank" rel="noopener"
       style="display:flex;gap:.8rem;align-items:flex-start;text-decoration:none;padding:.75rem .85rem;border-radius:10px;background:var(--surface2);border:1px solid transparent;transition:all .18s;cursor:pointer"
-      onmouseover="this.style.borderColor=\'${sourceColor}\';this.style.background=\'rgba(0,0,0,.04)\'"
-      onmouseout="this.style.borderColor=\'transparent\';this.style.background=\'var(--surface2)\'">
+      onmouseover="this.style.borderColor='${sourceColor}';this.style.background='rgba(0,0,0,.04)'"
+      onmouseout="this.style.borderColor='transparent';this.style.background='var(--surface2)'">
       <div style="width:38px;height:38px;border-radius:8px;background:${sourceColor}22;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;border:1px solid ${sourceColor}44">${icon}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.22rem">
@@ -4653,6 +4752,108 @@ function homeNewsFallback() {
   return NEWS_SOURCES.map(s =>
     renderNewsCard(s.label + ' vijesti', 'Klikni za najnovije vijesti.', s.url, s.icon, s.label, s.color)
   ).join('');
+}
+
+// ── KONZUM KLIK ──────────────────────────────────────────
+
+let _konzumItems = []; // [{id, text, addedBy, addedByName, addedAt}]
+
+async function loadKonzumItems() {
+  try {
+    const res = await gasRequest({ action: 'getKonzumItems' });
+    _konzumItems = (res && res.data) ? res.data : [];
+  } catch(e) { _konzumItems = []; }
+  renderKonzumItems();
+}
+
+function renderKonzumItems() {
+  const list = document.getElementById('konzumItemsList');
+  const countBadge = document.getElementById('konzumItemCount');
+  const orderBtn = document.getElementById('konzumNarucioBtn');
+  const lastEl = document.getElementById('konzumLastOrdered');
+  if (!list) return;
+
+  const active = _konzumItems.filter(i => !i.ordered);
+  const lastOrder = _konzumItems.filter(i => i.ordered).sort((a,b) => b.orderedAt > a.orderedAt ? 1 : -1)[0];
+
+  if (countBadge) {
+    countBadge.textContent = active.length + ' stavki';
+    countBadge.style.display = active.length > 0 ? '' : 'none';
+  }
+  if (orderBtn) {
+    orderBtn.style.display = (currentUser && currentUser.isAdmin && active.length > 0) ? '' : 'none';
+  }
+  if (lastEl && lastOrder) {
+    const d = new Date(lastOrder.orderedAt);
+    lastEl.textContent = 'Zadnja narudžba: ' + d.toLocaleDateString('hr-HR') + ' — ' + (lastOrder.orderedByName || '');
+  }
+
+  if (active.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:1rem 0">🛒 Lista je prazna — dodaj što treba nabaviti!</div>';
+    return;
+  }
+
+  list.innerHTML = active.map(item => `
+    <div style="display:flex;align-items:center;gap:.6rem;background:var(--surface2);border-radius:9px;padding:.5rem .75rem;border:1px solid var(--border)">
+      <span style="font-size:1rem">🔹</span>
+      <div style="flex:1;min-width:0">
+        <span style="font-size:.85rem;color:var(--text);font-weight:500">${escHtml(item.text)}</span>
+        <span style="font-size:.7rem;color:var(--muted);margin-left:.5rem">— ${escHtml(item.addedByName||'')}</span>
+      </div>
+      <button onclick="konzumDeleteItem('${item.id}')"
+        style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:0 .2rem;opacity:.6"
+        title="Ukloni" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">✕</button>
+    </div>
+  `).join('');
+}
+
+async function konzumAddItem() {
+  const inp = document.getElementById('konzumItemInput');
+  const text = inp ? inp.value.trim() : '';
+  if (!text) return;
+  inp.value = '';
+  inp.focus();
+
+  const item = {
+    id: 'ki_' + Date.now(),
+    text,
+    addedBy: currentUser.id,
+    addedByName: currentUser.name,
+    addedAt: new Date().toISOString(),
+    ordered: false,
+    orderedAt: '',
+    orderedByName: ''
+  };
+
+  // Optimistic
+  _konzumItems.push(item);
+  renderKonzumItems();
+
+  await gasRequest({ action: 'saveKonzumItem', data: JSON.stringify(item) });
+  await loadKonzumItems();
+}
+
+async function konzumDeleteItem(id) {
+  _konzumItems = _konzumItems.filter(i => i.id !== id);
+  renderKonzumItems();
+  await gasRequest({ action: 'deleteKonzumItem', itemId: id });
+}
+
+async function konzumMarkOrdered() {
+  if (!confirm('Označi sve stavke kao naručeno i resetiraj listu?')) return;
+  const btn = document.getElementById('konzumNarucioBtn');
+  if (btn) { btn.textContent = '⏳ Šalje se...'; btn.disabled = true; }
+  await gasRequest({
+    action: 'konzumMarkOrdered',
+    orderedBy: currentUser.id,
+    orderedByName: currentUser.name
+  });
+  await loadKonzumItems();
+  if (btn) { btn.textContent = '✓ Naručeno — resetiraj'; btn.disabled = false; }
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── QUIZ SECTION ─────────────────────────────────────────
@@ -4674,6 +4875,22 @@ async function renderHomeQuizSection() {
   if (myAnswers.length < 5) {
     renderQuizProfileForm(el, myAnswers, missing);
     return;
+  }
+
+  // Occasionally prompt user to answer more questions (if any missing)
+  // Trigger ~every 5th login session randomly
+  if (missing.length > 0) {
+    const lastPromptKey = 'hgr_quiz_prompt_' + currentUser.id;
+    const lastPrompt = localStorage.getItem(lastPromptKey) || '';
+    const today = new Date().toISOString().substring(0, 10);
+    const sessionCount = parseInt(localStorage.getItem('hgr_session_count_' + currentUser.id) || '0') + 1;
+    localStorage.setItem('hgr_session_count_' + currentUser.id, sessionCount);
+    // Show if: never shown, or shown >5 sessions ago and today not shown
+    if (!lastPrompt || (sessionCount % 5 === 0 && lastPrompt !== today)) {
+      localStorage.setItem(lastPromptKey, today);
+      renderQuizRefreshPrompt(el, missing, myAnswers);
+      return;
+    }
   }
 
   // Build a quiz question about someone else
@@ -4722,6 +4939,16 @@ async function renderHomeQuizSection() {
     q_serija: ['Breaking Bad','Game of Thrones','Friends','The Office','Stranger Things','Black Mirror','Succession','Ted Lasso','Peaky Blinders','Squid Game'],
     q_zemlja: ['Japan','Italija','Australija','Kanada','Norveška','Švicarska','Portugal','Novi Zeland','Island','Danska'],
     q_zivotinja: ['Pas','Mačka','Delfin','Lav','Vuk','Sova','Ris','Konj','Lisica','Medvjed'],
+    q_auto:      ['BMW','Mercedes','Audi','Porsche','Tesla','Toyota','Volkswagen','Ferrari','Jeep','Volvo'],
+    q_jutro:     ['Kava','Tuš','Vijesti','Gym','Šetnja s psom','Jutarnji jogging','Meditacija','Doručak u miru','Podcast','Instagram scroll'],
+    q_vecer:     ['Čitanje','Netflix','Topli čaj','Meditacija','Skincare rutina','Gym','Šetnja','Podcast','Dnevnik','Gaming'],
+    q_tenisice:  ['Nike','Adidas','New Balance','Jordan','Vans','Converse','On Running','Salomon','Hoka','Asics'],
+    q_brand:     ['Apple','Nike','Zara','IKEA','Lego','Netflix','Spotify','Tesla','Dyson','Patagonia'],
+    q_kava:      ['Kava','Čaj','Oboje','Ni jedno'],
+    q_vikend:    ['Izlazak u prirodu','Café i knjiga','Sport','Putovanje','Kuhanje za prijatelje','Netflix maraton','Muzej/kultura','Spavanje','Obiteljski ručak','Spontano'],
+    q_supermod:  ['Letenje','Nevidljivost','Čitanje misli','Teleportacija','Zaustavljanje vremena','Supersnaga','Liječenje','Pričanje s životinjama','Vatra','Predviđanje budućnosti'],
+    q_pjesma:    ['Mr. Brightside','Happy','Dancing Queen','Lose Yourself','Bohemian Rhapsody','Shape of You','Blinding Lights','Sweet Home Alabama','Africa','Eye of the Tiger'],
+    q_emoji:     ['😂','❤️','🔥','😍','🙏','😭','✨','🤣','💀','👀'],
   };
 
   let wrongPool = sameQ.map(a => String(a.answer).trim());
@@ -4817,6 +5044,57 @@ function quizLiveAnswer(chosen) {
       Sljedeće →
     </button>`;
   el.appendChild(fb);
+}
+
+function renderQuizRefreshPrompt(el, missing, myAnswers) {
+  // Pick up to 3 random unanswered questions to show
+  const shuffled = missing.sort(() => Math.random() - 0.5).slice(0, 3);
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:14px;padding:1.2rem 1.3rem;border:1px solid rgba(201,162,39,.25)">
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem">
+        <span style="font-size:1.3rem">✨</span>
+        <div>
+          <div style="font-size:.88rem;font-weight:700;color:#f0d060">Osvježi svoj profil!</div>
+          <div style="font-size:.73rem;color:rgba(255,255,255,.55)">Ima još ${missing.length} pitanja na koja nisi odgovorio/la</div>
+        </div>
+        <button onclick="document.getElementById('homeQuiz').innerHTML='';renderHomeQuizSection()" style="margin-left:auto;background:transparent;border:none;color:rgba(255,255,255,.4);font-size:1.1rem;cursor:pointer;padding:0 .3rem" title="Preskoči">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.65rem">
+        ${shuffled.map(q => `
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:.7rem .9rem">
+            <div style="font-size:.78rem;color:rgba(255,255,255,.6);margin-bottom:.45rem">${q.text}</div>
+            <input id="qrf_${q.id}" type="text" placeholder="Tvoj odgovor..."
+              style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:.4rem .7rem;color:#fff;font-size:.82rem;font-family:'Outfit',sans-serif;outline:none;box-sizing:border-box"
+              onkeydown="if(event.key==='Enter')saveQuizRefresh(${JSON.stringify(shuffled.map(q2=>q2.id))})">
+          </div>
+        `).join('')}
+      </div>
+      <button onclick="saveQuizRefresh(${JSON.stringify(shuffled.map(q=>q.id))})"
+        style="margin-top:.85rem;width:100%;background:linear-gradient(135deg,#c9a227,#e8c547);color:#000;border:none;border-radius:9px;padding:.55rem;font-size:.84rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif">
+        Spremi odgovore →
+      </button>
+    </div>`;
+}
+
+async function saveQuizRefresh(questionIds) {
+  const results = [];
+  for (const qId of questionIds) {
+    const inp = document.getElementById('qrf_' + qId);
+    if (inp && inp.value.trim()) {
+      results.push({ questionId: qId, answer: inp.value.trim() });
+    }
+  }
+  if (results.length === 0) {
+    document.getElementById('homeQuiz').innerHTML = '';
+    renderHomeQuizSection();
+    return;
+  }
+  for (const r of results) {
+    await gasRequest({ action:'saveQuizAnswer', userId: currentUser.id, userName: currentUser.name, questionId: r.questionId, answer: r.answer });
+  }
+  _quizAnswersCache = null;
+  document.getElementById('homeQuiz').innerHTML = '';
+  renderHomeQuizSection();
 }
 
 async function renderQuizProfileForm(el, myAnswers, missing) {
