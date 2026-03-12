@@ -1236,10 +1236,21 @@ button[onclick^="apprSubmitRequest"]:hover {
 
   <!-- PROJECT DETAIL MODAL -->
   <div class="modal-overlay" id="projDetailOverlay" onclick="closeProjDetail(event)">
-    <div class="modal" style="width:520px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column" onclick="event.stopPropagation()">
       <h3 id="projDetailTitle">Detalji projekta</h3>
       <div id="projDetailContent"></div>
       <div style="margin-top:1.2rem;display:flex;gap:.8rem" id="projDetailActions"></div>
+      <!-- CHAT -->
+      <div id="projChatSection" style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1rem;display:none">
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.7rem">💬 Chat projekta</div>
+        <div id="projChatMessages" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem;margin-bottom:.8rem;padding-right:.2rem"></div>
+        <div style="display:flex;gap:.5rem">
+          <input id="projChatInput" type="text" placeholder="Napiši poruku..." maxlength="500"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.5rem .8rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;outline:none"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendProjChat()}" />
+          <button onclick="sendProjChat()" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.5rem 1rem;font-weight:600;cursor:pointer;font-size:.85rem">Pošalji</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3892,14 +3903,128 @@ function openProjDetail(projId){
 
   if(document.activeElement) document.activeElement.blur();
   document.getElementById('projDetailOverlay').classList.add('open');
+  initProjChat(p.id, p.persons || p.person || '');
 }
 
 function closeProjDetail(e){
   if(e&&e.target!==document.getElementById('projDetailOverlay')) return;
   document.getElementById('projDetailOverlay').classList.remove('open');
+  stopChatPoll();
 }
 function closeProjDetailBtn(){
   document.getElementById('projDetailOverlay').classList.remove('open');
+  stopChatPoll();
+}
+// ══════════════════════════════════════════
+// PROJECT CHAT
+// ══════════════════════════════════════════
+let _chatProjId = null;
+let _chatPollInterval = null;
+let _chatCache = [];
+
+function initProjChat(projId, projPersons) {
+  _chatProjId = projId;
+  _chatCache = [];
+
+  // Check if current user is on this project
+  const myName = currentUser.name || '';
+  const personsStr = projPersons || '';
+  const onProject = currentUser.isAdmin === true || currentUser.isAdmin === 'true' ||
+    currentUser.role === 'approver' ||
+    personsStr.toLowerCase().includes(myName.toLowerCase());
+
+  const section = document.getElementById('projChatSection');
+  if (!onProject) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  document.getElementById('projChatMessages').innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center">Učitavanje...</div>';
+  document.getElementById('projChatInput').value = '';
+
+  loadProjChat();
+
+  // Poll every 12 seconds while modal is open
+  clearInterval(_chatPollInterval);
+  _chatPollInterval = setInterval(() => {
+    if (document.getElementById('projDetailOverlay').classList.contains('open')) {
+      loadProjChat(true);
+    }
+  }, 12000);
+}
+
+async function loadProjChat(silent = false) {
+  try {
+    const msgs = await gasCall('getChatMessages', { projectId: _chatProjId });
+    if (!Array.isArray(msgs)) return;
+    _chatCache = msgs;
+    renderChatMessages(msgs);
+  } catch(e) {
+    if (!silent) {
+      document.getElementById('projChatMessages').innerHTML =
+        '<div style="color:var(--muted);font-size:.8rem;text-align:center">Greška pri učitavanju chata.</div>';
+    }
+  }
+}
+
+function renderChatMessages(msgs) {
+  const el = document.getElementById('projChatMessages');
+  if (!msgs.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:.5rem">Nema poruka. Budite prvi! 👋</div>';
+    return;
+  }
+  const myId = String(currentUser.id || '').toLowerCase();
+  el.innerHTML = msgs.map(m => {
+    const isMe = String(m.userId || '').toLowerCase() === myId;
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleString('hr-HR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'}">
+      <div style="max-width:85%;background:${isMe?'var(--gold)':'var(--surface2)'};color:${isMe?'#000':'var(--text)'};
+        border-radius:${isMe?'12px 12px 2px 12px':'12px 12px 12px 2px'};padding:.45rem .75rem;font-size:.84rem;word-break:break-word">
+        ${!isMe?`<div style="font-size:.72rem;font-weight:600;margin-bottom:.2rem;color:${isMe?'#000':'var(--muted)'}">${escHtml(m.userName||m.userId||'?')}</div>`:''}
+        ${escHtml(m.message||'')}
+      </div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:.15rem;padding:0 .2rem">${time}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendProjChat() {
+  const input = document.getElementById('projChatInput');
+  const msg = (input.value || '').trim();
+  if (!msg || !_chatProjId) return;
+  input.value = '';
+  input.disabled = true;
+
+  // Optimistic render
+  const optimistic = [..._chatCache, {
+    userId: currentUser.id, userName: currentUser.name,
+    message: msg, timestamp: new Date().toISOString()
+  }];
+  renderChatMessages(optimistic);
+
+  try {
+    await gasCall('saveChatMessage', {
+      projectId: _chatProjId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: msg
+    });
+    loadProjChat(true);
+  } catch(e) {
+    toast('Greška pri slanju poruke.');
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function stopChatPoll() {
+  clearInterval(_chatPollInterval);
+  _chatPollInterval = null;
+  _chatProjId = null;
 }
 
 function deleteProj(projId){
