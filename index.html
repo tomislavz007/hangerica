@@ -1087,14 +1087,14 @@ button[onclick^="apprSubmitRequest"]:hover {
     </div>
   </div>
 
-  <!-- TAB: Project review -->
+  <!-- TAB: Projects -->
   <div class="main-content" id="main-project" style="display:none">
     <div class="page" style="padding-top:0">
       <!-- Financial dashboard (approver only) -->
       <div id="projStatsWrap" style="display:none;margin-bottom:0">
-
         <!-- KPI cards -->
         <div class="stats-grid" id="projStats" style="margin-bottom:1.2rem"></div>
+      </div>
 
       <!-- Filter bar + New project button -->
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
@@ -1109,14 +1109,43 @@ button[onclick^="apprSubmitRequest"]:hover {
         <button class="btn-primary" onclick="openProjForm()" style="padding:.6rem 1.2rem;font-size:.85rem">+ Novi projekt</button>
       </div>
 
-      <!-- Project list -->
-      <div class="list-card" id="projListCard">
-        <div class="list-head" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr 1fr">
-          <span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span>
-          <span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>
+      <!-- Main area: list + side chat panel -->
+      <div style="display:flex;gap:1rem;align-items:flex-start">
+
+        <!-- Project list -->
+        <div style="flex:1;min-width:0">
+          <div class="list-card" id="projListCard">
+            <div class="list-head" id="projListHead" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr 1fr">
+              <span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span>
+              <span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>
+            </div>
+            <div id="projList"></div>
+          </div>
         </div>
-        <div id="projList"></div>
-      </div>
+
+        <!-- Side chat panel (shown when project selected) -->
+        <div id="projSidePanel" style="display:none;width:300px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:sticky;top:1rem">
+          <div style="padding:.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">💬 Chat projekta</div>
+              <div id="sidePanelProjName" style="font-size:.88rem;font-weight:600;color:var(--text);margin-top:.15rem"></div>
+            </div>
+            <button onclick="closeSidePanel()" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:.2rem .3rem">✕</button>
+          </div>
+          <!-- Detail info -->
+          <div id="sidePanelDetail" style="padding:.8rem 1rem;border-bottom:1px solid var(--border);font-size:.82rem"></div>
+          <!-- Chat messages -->
+          <div id="projChatMessages" style="height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:.45rem;padding:.7rem 1rem"></div>
+          <!-- Chat input -->
+          <div style="padding:.6rem 1rem;border-top:1px solid var(--border);display:flex;gap:.4rem">
+            <input id="projChatInput" type="text" placeholder="Poruka..." maxlength="500"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.42rem .7rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.83rem;outline:none"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendProjChat()}" />
+            <button onclick="sendProjChat()" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.42rem .85rem;font-weight:700;cursor:pointer;font-size:.83rem">→</button>
+          </div>
+        </div>
+
+      </div><!-- end flex row -->
 
     </div>
 
@@ -1241,25 +1270,7 @@ button[onclick^="apprSubmitRequest"]:hover {
     </div>
   </div>
 
-  <!-- PROJECT DETAIL MODAL -->
-  <div class="modal-overlay" id="projDetailOverlay" onclick="closeProjDetail(event)">
-    <div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column" onclick="event.stopPropagation()">
-      <h3 id="projDetailTitle">Detalji projekta</h3>
-      <div id="projDetailContent"></div>
-      <div style="margin-top:1.2rem;display:flex;gap:.8rem" id="projDetailActions"></div>
-      <!-- CHAT -->
-      <div id="projChatSection" style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1rem;display:none">
-        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.7rem">💬 Chat projekta</div>
-        <div id="projChatMessages" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem;margin-bottom:.8rem;padding-right:.2rem"></div>
-        <div style="display:flex;gap:.5rem">
-          <input id="projChatInput" type="text" placeholder="Napiši poruku..." maxlength="500"
-            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.5rem .8rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;outline:none"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendProjChat()}" />
-          <button onclick="sendProjChat()" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.5rem 1rem;font-weight:600;cursor:pointer;font-size:.85rem">Pošalji</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- old drawer removed -->
 
   <!-- MODAL za detalje zahtjeva iz kalendara -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
@@ -1736,7 +1747,7 @@ function initApp(){
   const canAccessProjects = PROJECT_PERSONS.includes(currentUser.name);
   const MAIN_TABS=[
     { id:'moji-dani', label:'📋 Moji dani' },
-    ...(canAccessProjects ? [{ id:'project', label:'📊 Project review' }] : []),
+    ...(canAccessProjects ? [{ id:'project', label:'📊 Projects' }] : []),
     { id:'tasks', label:'✅ Tasks' },
     ...(isAdmin ? [{ id:'admin', label:'⚙️ Admin' }] : []),
   ];
@@ -2565,7 +2576,13 @@ function toast(msg,type=''){
 // PROJECT REVIEW
 // ══════════════════════════════════════════
 
-const PROJECT_PERSONS = ['Bruno Sušak','Magdalena Tenčić','Tomislava Obrč','Domagoj Bošnjak','Tomislav Zeljko','Dario Oxenham'];
+const PROJECT_PERSONS = ['Bruno Sušak','Magdalena Tenčić','Tomislava Obrč','Domagoj Bošnjak','Tomislav Zeljko','Dario Oxenham','Iva Žmirak'];
+
+// Users who can see projects but NOT financial data (invoiced, costs, profit)
+const FINANCE_BLIND_USERS = ['Iva Žmirak'];
+function isFinanceBlind() {
+  return FINANCE_BLIND_USERS.includes(currentUser && currentUser.name);
+}
 
 function getProjects(){ return _projectCache || []; }
 
@@ -2668,6 +2685,17 @@ function renderProjects(){
   renderProjStats(getProjects());
 
   const el=document.getElementById('projList');
+  // Update header columns based on finance visibility
+  const head = document.getElementById('projListHead');
+  if(head) {
+    if(isFinanceBlind()) {
+      head.style.gridTemplateColumns = '2fr 1.5fr 1fr 1fr';
+      head.innerHTML = '<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span></span>';
+    } else {
+      head.style.gridTemplateColumns = '2fr 1.2fr 1fr 1fr 1fr 1fr 1fr';
+      head.innerHTML = '<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>';
+    }
+  }
   if(!projs.length){
     el.innerHTML='<div class="empty-state"><div class="es-icon">📊</div><div class="es-title">Nema projekata</div><div class="es-sub">Dodajte prvi projekt klikom na gumb ispod.</div></div>';
     return;
@@ -2682,16 +2710,17 @@ function renderProjects(){
     const mCls=margin>=50?'high':margin>=25?'mid':'low';
     const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
     const isFakt=p.fakturirano==='true'||p.fakturirano===true;
-    return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
+    const blind=isFinanceBlind();
+    return`<div class="proj-row" style="grid-template-columns:${blind?'2fr 1.5fr 1fr 1fr':'2fr 1.2fr 1fr 1fr 1fr 1fr 1fr'}" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
       <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
       <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
-      <div class="proj-eur">${fmtEur(invoiced)}</div>
-      <div class="proj-eur red">${fmtEur(totalCost)}</div>
-      <div class="proj-eur green">${fmtEur(profit)}</div>
+      ${blind?'\'':`<div class="proj-eur">${fmtEur(invoiced)}</div>`}
+      ${blind?'\'':`<div class="proj-eur red">${fmtEur(totalCost)}</div>`}
+      ${blind?'\'':`<div class="proj-eur green">${fmtEur(profit)}</div>`}
       <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-        <span class="margin-badge ${mCls}">${margin}%</span>
-        ${canEdit?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
+        ${blind?'\'':`<span class="margin-badge ${mCls}">${margin}%</span>`}
+        ${(canEdit&&!blind)?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
           <input type="checkbox" ${isFakt?'checked':''} onchange="toggleFakturirano('${p.id}',this.checked)" style="accent-color:var(--green);width:13px;height:13px;cursor:pointer">
           ${isFakt?'✓ Fakt.':'Fakt.'}
         </label>`:''}
@@ -2704,6 +2733,12 @@ function renderProjects(){
 let _selectedYear = new Date().getFullYear();
 
 function renderProjStats(projs){
+  // Finance blind users don't see KPI stats
+  const statsWrap = document.getElementById('projStatsWrap');
+  if(isFinanceBlind()){
+    if(statsWrap) statsWrap.style.display='none';
+    return;
+  }
   // Employees see only their own; approvers see all
   var rawProjs = getProjects();
   var allProjs = currentUser.role==='approver'
@@ -2961,8 +2996,8 @@ function saveProjForm(){
   var invoiced = parseFloat(document.getElementById('pInvoiced').value) || 0;
   var errEl = document.getElementById('projFormErr');
 
-  if(!client || !name || !date || !invoiced){
-    errEl.textContent = 'Molimo ispunite sva obavezna polja.';
+  if(!client || !name || !date){
+    errEl.textContent = 'Molimo ispunite obavezna polja (klijent, naziv, datum).';
     return;
   }
   errEl.textContent = '';
@@ -3826,8 +3861,8 @@ function saveProjForm(){
   const invoiced=parseFloat(document.getElementById('pInvoiced').value)||0;
   const errEl=document.getElementById('projFormErr');
 
-  if(!client||!name||!date||!invoiced){
-    errEl.textContent='Molimo ispunite sva obavezna polja.'; return;
+  if(!client||!name||!date){
+    errEl.textContent='Molimo ispunite obavezna polja (klijent, naziv, datum).'; return;
   }
   errEl.textContent='';
 
@@ -3864,7 +3899,7 @@ function saveProjForm(){
   renderProjects();
 }
 
-// ── Project detail ──
+// ── Project detail side panel ──
 function openProjDetail(projId){
   const p=getProjects().find(x=>x.id==projId);
   if(!p) return;
@@ -3874,54 +3909,42 @@ function openProjDetail(projId){
   const profit=invoiced-totalCost;
   const margin=invoiced>0?Math.round(profit/invoiced*100):0;
   const mCls=margin>=50?'high':margin>=25?'mid':'low';
+  const blind=isFinanceBlind();
+  const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name)||p.createdBy===currentUser.id;
 
-  document.getElementById('projDetailTitle').textContent=p.name||'Projekt';
-  document.getElementById('projDetailContent').innerHTML=`
-    <div class="modal-info" style="margin-bottom:1rem">
-      <div class="modal-row"><span>Klijent</span><span>${p.client||'—'}</span></div>
-      <div class="modal-row"><span>Odgovorne osobe</span><span>${p.persons||p.person||'—'}</span></div>
-      <div class="modal-row"><span>Datum</span><span>${projMonthLabel(p.date)}</span></div>
-      <div class="modal-row"><span>Fakturirano</span><span><b>${fmtEur(invoiced)}</b></span></div>
-    </div>
-    ${costs.length?`<div style="margin-bottom:1rem">
-      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem">Troškovi dobavljača</div>
-      ${costs.map(c=>`<div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.84rem">
-        <span>${c.name||'—'}</span><span style="color:var(--red)">${fmtEur(c.amount)}</span>
-      </div>`).join('')}
-      <div style="display:flex;justify-content:space-between;padding:.5rem 0;font-size:.82rem;color:var(--muted)">
-        <span>Ukupni troškovi</span><span style="color:var(--red);font-weight:600">${fmtEur(totalCost)}</span>
-      </div>
-    </div>`:''}
-    <div style="background:var(--surface2);border-radius:8px;padding:1rem">
-      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.9rem;font-weight:600">
-        <span>Zarada</span><span style="color:${profit>=0?'var(--green)':'var(--red)'}">${fmtEur(profit)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.82rem">
-        <span style="color:var(--muted)">Profitabilnost</span>
-        <span class="margin-badge ${mCls}">${margin}%</span>
-      </div>
+  document.getElementById('sidePanelProjName').textContent=p.name||'Projekt';
+
+  let detailHtml=`<div style="color:var(--muted);font-size:.78rem;margin-bottom:.2rem">${p.client||'—'} · ${projMonthLabel(p.date)}</div>
+    <div style="font-size:.8rem;margin-bottom:.5rem">${p.persons||p.person||'—'}</div>`;
+  if(!blind){
+    detailHtml+=`<div style="display:flex;gap:.8rem;font-size:.8rem;flex-wrap:wrap">
+      <span>💰 <b>${fmtEur(invoiced)}</b></span>
+      <span style="color:var(--red)">📦 ${fmtEur(totalCost)}</span>
+      <span style="color:var(--green)">📈 ${fmtEur(profit)}</span>
+      <span class="margin-badge ${mCls}">${margin}%</span>
     </div>`;
+  }
+  if(canEdit){
+    detailHtml+=`<div style="margin-top:.6rem;display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn-primary" style="padding:.35rem .8rem;font-size:.78rem" onclick="closeSidePanel();openProjForm('${p.id}')">✏️ Uredi</button>
+      ${currentUser.role==='approver'?`<button class="btn-sm btn-reject" style="padding:.35rem .7rem;font-size:.78rem" onclick="deleteProj('${p.id}')">Obriši</button>`:''}
+    </div>`;
+  }
+  document.getElementById('sidePanelDetail').innerHTML=detailHtml;
 
-  const canEdit=currentUser.role==='approver'||p.person===currentUser.name||p.createdBy===currentUser.id;
-  document.getElementById('projDetailActions').innerHTML=
-    (canEdit?`<button class="btn-primary" style="flex:1" onclick="closeProjDetail();openProjForm('${p.id}')">✏️ Uredi</button>`:'')+
-    (currentUser.role==='approver'?`<button class="btn-sm btn-reject" style="flex:.6;padding:.6rem" onclick="deleteProj('${p.id}')">Obriši</button>`:'')+ 
-    `<button class="btn-modal-close" style="flex:.6;padding:.6rem" onclick="closeProjDetailBtn()">Zatvori</button>`;
-
-  if(document.activeElement) document.activeElement.blur();
-  document.getElementById('projDetailOverlay').classList.add('open');
-  initProjChat(p.id, p.persons || p.person || '');
+  // Show panel
+  document.getElementById('projSidePanel').style.display='block';
+  // Start chat
+  initProjChat(p.id, p.persons||p.person||''  );
 }
 
-function closeProjDetail(e){
-  if(e&&e.target!==document.getElementById('projDetailOverlay')) return;
-  document.getElementById('projDetailOverlay').classList.remove('open');
+function closeSidePanel(){
+  document.getElementById('projSidePanel').style.display='none';
   stopChatPoll();
 }
-function closeProjDetailBtn(){
-  document.getElementById('projDetailOverlay').classList.remove('open');
-  stopChatPoll();
-}
+function closeProjDetail(e){ closeSidePanel(); }
+function closeProjDetailBtn(){ closeSidePanel(); }
+
 // ══════════════════════════════════════════
 // PROJECT CHAT
 // ══════════════════════════════════════════
@@ -3949,18 +3972,24 @@ function initProjChat(projId, projPersons) {
     currentUser.role === 'approver' ||
     personsStr.toLowerCase().includes(myName.toLowerCase());
 
-  const section = document.getElementById('projChatSection');
-  if (!onProject) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
+  const chatEl = document.getElementById('projChatMessages');
+  if (!chatEl) return;
 
-  document.getElementById('projChatMessages').innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center">Učitavanje...</div>';
+  if (!onProject) {
+    chatEl.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:.5rem">Nisi na ovom projektu.</div>';
+    document.getElementById('projChatInput').style.display = 'none';
+    return;
+  }
+  document.getElementById('projChatInput').style.display = '';
+
+  chatEl.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center">Učitavanje...</div>';
   document.getElementById('projChatInput').value = '';
 
   loadProjChat();
 
   clearInterval(_chatPollInterval);
   _chatPollInterval = setInterval(() => {
-    if (document.getElementById('projDetailOverlay').classList.contains('open')) {
+    if (document.getElementById('projSidePanel').style.display !== 'none') {
       loadProjChat(true);
     }
   }, 12000);
@@ -3970,10 +3999,17 @@ async function loadProjChat(silent = false) {
   try {
     const msgs = await gasCall('getChatMessages', { projectId: _chatProjId });
     if (!Array.isArray(msgs)) return;
-    _chatCache = msgs;
-    renderChatMessages(msgs);
+    // Merge: keep all existing + add any new ones by id or timestamp
+    if (msgs.length >= _chatCache.length) {
+      _chatCache = msgs; // server has more or equal — use server version
+    } else {
+      // Server returned fewer — merge by adding missing ones
+      const existingIds = new Set(msgs.map(m => m.id || m.timestamp));
+      const extra = _chatCache.filter(m => !existingIds.has(m.id || m.timestamp));
+      _chatCache = [...msgs, ...extra].sort((a,b) => (a.timestamp||'') < (b.timestamp||'') ? -1 : 1);
+    }
+    renderChatMessages(_chatCache);
     _chatMarkRead(_chatProjId);
-    // Refresh dashboard unread badges
     renderChatUnreadBadges();
   } catch(e) {
     if (!silent) {
