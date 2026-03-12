@@ -1477,25 +1477,43 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzpfPM8oPPRQWovwcxa02GW
 let _reqCache = null;
 let _daysCache = {};
 let _projectCache = null;
+let _usersCache = null;
 let _appReady = false;
 
 async function initData() {
   showLoading(true);
   try {
-    const [reqs, days, projects] = await Promise.all([
+    const [reqs, days, projects, usersRaw] = await Promise.all([
       gasCall('getRequests'),
       gasCall('getAllUserDays'),
-      gasCall('getProjects')
+      gasCall('getProjects'),
+      gasCall('getUsers')
     ]);
     _reqCache = Array.isArray(reqs) ? reqs : [];
     _daysCache = days || {};
     _projectCache = Array.isArray(projects) ? projects : [];
+    // Merge Sheets users with USERS defaults (Sheets takes priority)
+    if(Array.isArray(usersRaw) && usersRaw.length){
+      _usersCache = usersRaw.map(u => ({
+        id: String(u.id||'').trim(),
+        name: u.name||'',
+        pos: u.pos||'',
+        role: u.role||'employee',
+        remainingDays: parseInt(u.remainingDays)||25,
+        freeDays: parseInt(u.freeDays)||0,
+        isAdmin: u.isAdmin||false,
+        pass: u.pass||''
+      })).filter(u=>u.id);
+    } else {
+      _usersCache = [...USERS];
+    }
     _appReady = true;
     updateLastUpdated();
   } catch(e) {
     console.error('Greška pri učitavanju:', e);
     _reqCache = [];
     _daysCache = {};
+    _usersCache = [...USERS];
     _appReady = true;
   }
   showLoading(false);
@@ -1574,6 +1592,12 @@ function showLoading(show) {
 function getUserById(id){
   if(!id) return null;
   const clean = String(id).trim().toLowerCase();
+  // First check dynamic users from Sheets
+  if(_usersCache && _usersCache.length){
+    const fromSheets = _usersCache.find(u=>String(u.id||'').toLowerCase()===clean);
+    if(fromSheets) return fromSheets;
+  }
+  // Fallback to hardcoded USERS
   return USERS.find(u=>u.id.toLowerCase()===clean) || null;
 }
 // Helper to extract userId from a request object (Sheets returns 'user id' with space)
@@ -1586,9 +1610,13 @@ function getReqUserId(r){
 // ══════════════════════════════════════════
 function initLogin(){
   const sel=document.getElementById('loginUser');
+  // Use hardcoded USERS array — no auth token available yet at login screen
+  sel.innerHTML = '<option value="">— Odaberi korisnika —</option>';
   USERS.forEach(u=>{
     const o=document.createElement('option');
-    o.value=u.id;o.textContent=u.name+' ('+u.pos+')';sel.appendChild(o);
+    o.value=u.id;
+    o.textContent=u.name+(u.pos?' ('+u.pos+')':'');
+    sel.appendChild(o);
   });
 }
 
@@ -1607,9 +1635,7 @@ async function doLogin(){
   try {
     const result = await gasCall('login', {userId: uid, pass: pass});
     if(result && result.success){
-      const user = getUserById(uid);
-      if(!user){ err.textContent='Greška: korisnik nije pronađen.'; return; }
-      currentUser = user;
+      // Save token FIRST so subsequent gasCall requests are authenticated
       sessionStorage.setItem('hgr_token', result.token);
       sessionStorage.setItem('hgr_uid', uid);
       if(remember){
@@ -1618,6 +1644,28 @@ async function doLogin(){
         localStorage.setItem('hgr_uid', uid);
         localStorage.setItem('hgr_expires', expires);
       }
+      // Now fetch user object (token is already set)
+      let user = getUserById(uid);
+      if(!user){
+        try {
+          const usersRaw = await gasCall('getUsers');
+          if(Array.isArray(usersRaw)){
+            _usersCache = usersRaw.map(u => ({
+              id: String(u.id||'').trim(), name: u.name||'', pos: u.pos||'',
+              role: u.role||'employee', remainingDays: parseInt(u.remainingDays)||25,
+              freeDays: parseInt(u.freeDays)||0, isAdmin: u.isAdmin||false
+            })).filter(u=>u.id);
+            user = getUserById(uid);
+          }
+        } catch(e2) {}
+      }
+      // Final fallback — build minimal user from login response data
+      if(!user){
+        user = { id: uid, name: result.name||uid, pos: result.pos||'', role: result.role||'employee',
+                 remainingDays: parseInt(result.remainingDays)||25, freeDays: parseInt(result.freeDays)||0,
+                 isAdmin: result.isAdmin||false };
+      }
+      currentUser = user;
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='block';
       initData().then(() => { initApp(); setTimeout(renderDashboard, 300); });
@@ -1650,7 +1698,8 @@ function doLogout(){
 function initApp(){
   // Show admin tab if user is admin
   const adminTabBtn = document.getElementById('adminTabBtn');
-  if(adminTabBtn) adminTabBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
+  const isAdmin = currentUser.isAdmin === true || currentUser.isAdmin === 'true' || currentUser.isAdmin === 1;
+  if(adminTabBtn) adminTabBtn.style.display = isAdmin ? 'block' : 'none';
   // Show project review tab
 
   const av = document.getElementById('userAvatar');
@@ -1671,7 +1720,7 @@ function initApp(){
     { id:'moji-dani', label:'📋 Moji dani' },
     ...(canAccessProjects ? [{ id:'project', label:'📊 Project review' }] : []),
     { id:'tasks', label:'✅ Tasks' },
-    ...(currentUser.isAdmin ? [{ id:'admin', label:'⚙️ Admin' }] : []),
+    ...(isAdmin ? [{ id:'admin', label:'⚙️ Admin' }] : []),
   ];
 
   // Sub-tabs per role
@@ -2113,7 +2162,8 @@ function apprDeleteReq(id){
   toast('Odmor obrisan.');
   renderAll();
   gasCall('deleteRequest',{id:id});
-});
+  });
+}
 
 // ══════════════════════════════════════════
 // CALENDAR
@@ -2421,7 +2471,8 @@ function deleteReq(id){
   toast('Zahtjev povučen.');
   renderAll();
   gasCall('deleteRequest', {id: id});
-});
+  });
+}
 
 function decide(id,newStatus){
   const reqs=getRequests();
@@ -2999,7 +3050,8 @@ function apprDeleteReq(id){
   toast('Odmor obrisan.');
   renderAll();
   gasCall('deleteRequest',{id:id});
-});
+  });
+}
 
 // ══════════════════════════════════════════
 // CALENDAR
@@ -3307,7 +3359,8 @@ function deleteReq(id){
   toast('Zahtjev povučen.');
   renderAll();
   gasCall('deleteRequest', {id: id});
-});
+  });
+}
 
 function decide(id,newStatus){
   const reqs=getRequests();
@@ -3856,7 +3909,8 @@ function deleteProj(projId){
   renderProjects();
   gasCall('deleteProject',{id:projId});
   toast('Projekt obrisan.');
-});
+  });
+}
 
 // ── Hook renderProjects into renderAll / switchMainTab ──
 
