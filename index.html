@@ -4762,7 +4762,7 @@ let _konzumItems = []; // [{id, text, addedBy, addedByName, addedAt}]
 
 async function loadKonzumItems() {
   try {
-    const res = await gasRequest({ action: 'getKonzumItems' });
+    const res = await gasCall('getKonzumItems');
     _konzumItems = (res && res.data) ? res.data : [];
   } catch(e) { _konzumItems = []; }
   renderKonzumItems();
@@ -4831,25 +4831,22 @@ async function konzumAddItem() {
   _konzumItems.push(item);
   renderKonzumItems();
 
-  await gasRequest({ action: 'saveKonzumItem', data: JSON.stringify(item) });
+  await gasCall('saveKonzumItem', {data: JSON.stringify(item)});
   await loadKonzumItems();
 }
 
 async function konzumDeleteItem(id) {
   _konzumItems = _konzumItems.filter(i => i.id !== id);
   renderKonzumItems();
-  await gasRequest({ action: 'deleteKonzumItem', itemId: id });
+  await gasCall('deleteKonzumItem', {itemId: id});
 }
 
 async function konzumMarkOrdered() {
   if (!confirm('Označi sve stavke kao naručeno i resetiraj listu?')) return;
   const btn = document.getElementById('konzumNarucioBtn');
   if (btn) { btn.textContent = '⏳ Šalje se...'; btn.disabled = true; }
-  await gasRequest({
-    action: 'konzumMarkOrdered',
-    orderedBy: currentUser.id,
-    orderedByName: currentUser.name
-  });
+  await gasCall('konzumMarkOrdered', {orderedBy: currentUser.id,
+    orderedByName: currentUser.name});
   await loadKonzumItems();
   if (btn) { btn.textContent = '✓ Naručeno — resetiraj'; btn.disabled = false; }
 }
@@ -5107,7 +5104,7 @@ async function saveQuizRefresh(questionIds) {
     return;
   }
   for (const r of results) {
-    await gasRequest({ action:'saveQuizAnswer', userId: currentUser.id, userName: currentUser.name, questionId: r.questionId, answer: r.answer });
+    await gasCall('saveQuizAnswer', {userId: currentUser.id, userName: currentUser.name, questionId: r.questionId, answer: r.answer});
   }
   _quizAnswersCache = null;
   document.getElementById('homeQuiz').innerHTML = '';
