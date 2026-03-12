@@ -761,6 +761,7 @@ button[onclick^="apprSubmitRequest"]:hover {
               <a href="https://www.poslovni.hr/kompanije" target="_blank" title="poslovni.hr" style="font-size:.72rem;color:var(--muted);text-decoration:none;padding:.18rem .5rem;border-radius:4px;border:1px solid var(--border)">poslovni.hr</a>
               <a href="https://www.bbc.com/technology" target="_blank" title="BBC Technology" style="font-size:.72rem;color:var(--muted);text-decoration:none;padding:.18rem .5rem;border-radius:4px;border:1px solid var(--border)">BBC Tech</a>
               <a href="https://marketingmreza.rs/" target="_blank" title="Marketing Mreža" style="font-size:.72rem;color:var(--muted);text-decoration:none;padding:.18rem .5rem;border-radius:4px;border:1px solid var(--border)">Mktg Mreža</a>
+              <a href="https://lidermedia.hr/" target="_blank" title="Lider Media" style="font-size:.72rem;color:var(--muted);text-decoration:none;padding:.18rem .5rem;border-radius:4px;border:1px solid var(--border)">Lider</a>
             </div>
           </div>
           <div id="homeNews" style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto;gap:.75rem">
@@ -4611,8 +4612,11 @@ async function renderHomeStats() {
   const homeBdList = document.getElementById('homeBdList');
   if (homeBdList && bds.length) {
     const nowD = new Date();
+    const seen = new Set();
     const upcoming = [];
     bds.forEach(b => {
+      if (seen.has(b.name)) return; // deduplicate by name
+      seen.add(b.name);
       const parts = (b.date||'').split('-');
       const bMonth = parseInt(parts[1])-1, bDay = parseInt(parts[2]);
       let bd = new Date(nowD.getFullYear(), bMonth, bDay);
@@ -4643,6 +4647,7 @@ const NEWS_SOURCES = [
   { label:'poslovni.hr', url:'https://www.poslovni.hr/kompanije', icon:'📰', color:'#c9a227' },
   { label:'BBC Technology', url:'https://www.bbc.com/technology', icon:'🌍', color:'#bb1919' },
   { label:'Marketing Mreža', url:'https://marketingmreza.rs/', icon:'📣', color:'#6c63ff' },
+  { label:'Lider', url:'https://lidermedia.hr/', icon:'📊', color:'#005baa' },
 ];
 
 async function loadHomeNews() {
@@ -4706,6 +4711,14 @@ async function loadHomeNews() {
       url: 'https://hura.hr/',
       tag: 'Agencije',
       img: 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=400&h=220&fit=crop&auto=format'
+    },
+    {
+      source: 'Lider', sourceIcon: '📊', sourceColor: '#005baa',
+      title: 'Lidermedia: poslovne vijesti i analize',
+      summary: 'Vodeći poslovni tjednik — strategija, financije i ekonomska kretanja.',
+      url: 'https://lidermedia.hr/',
+      tag: 'Biznis',
+      img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=220&fit=crop&auto=format'
     },
   ];
 
