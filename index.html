@@ -516,6 +516,7 @@ button[onclick^="apprSubmitRequest"]:hover {
 .rr-emp{grid-template-columns:2.2fr 1.6fr .6fr 1fr .4fr;}
 .rr-appr{grid-template-columns:1.6fr 1.8fr 1.6fr .6fr 1fr 1fr;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 .req-name{font-weight:500;font-size:.87rem;}
 .req-sub{font-size:.72rem;color:var(--muted);margin-top:.1rem;}
 .req-date{font-size:.81rem;}
@@ -717,6 +718,65 @@ button[onclick^="apprSubmitRequest"]:hover {
   <div class="main-tabs" id="mainTabs"></div>
   <div class="sub-tabs-wrap" id="subTabsWrap"></div>
   <div class="nav-tabs" id="navTabs"></div>
+
+  <!-- TAB: Home -->
+  <div class="main-content" id="main-home" style="display:none">
+    <div class="page" style="padding-top:0;max-width:1100px">
+
+      <!-- Welcome banner -->
+      <div id="homeBanner" style="background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-radius:16px;padding:1.6rem 2rem;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <div id="homeGreeting" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:700;color:var(--text)">Dobro jutro! 👋</div>
+          <div id="homeDate" style="font-size:.88rem;color:var(--muted);margin-top:.25rem"></div>
+        </div>
+        <div id="homeWeatherQuote" style="font-size:.85rem;color:var(--muted);font-style:italic;max-width:300px;text-align:right"></div>
+      </div>
+
+      <!-- Top row: stats + news -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.4rem" id="homeStatsRow">
+        <div class="list-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:.4rem">
+          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">🏖️ Na godišnjem danas</div>
+          <div id="homeOnLeave" style="font-size:.9rem;color:var(--text);margin-top:.3rem">—</div>
+        </div>
+        <div class="list-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:.4rem">
+          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">🎂 Sljedeći rođendan</div>
+          <div id="homeNextBd" style="font-size:.9rem;color:var(--text);margin-top:.3rem">—</div>
+        </div>
+        <div class="list-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:.4rem">
+          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">✅ Moji otvoreni taskovi</div>
+          <div id="homeMyTasks" style="font-size:.9rem;color:var(--text);margin-top:.3rem">—</div>
+        </div>
+      </div>
+
+      <!-- Middle row: news + quiz -->
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:1rem;align-items:start">
+
+        <!-- Poslovni.hr vijesti -->
+        <div class="list-card" style="padding:1.4rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem">
+              <span class="dot"></span> Poslovne vijesti
+            </div>
+            <a href="https://www.poslovni.hr/kompanije" target="_blank" style="font-size:.75rem;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:.3rem">poslovni.hr →</a>
+          </div>
+          <div id="homeNews" style="display:flex;flex-direction:column;gap:.7rem">
+            <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem">Učitavanje vijesti...</div>
+          </div>
+        </div>
+
+        <!-- Quiz -->
+        <div class="list-card" style="padding:1.4rem">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
+            <span class="dot" style="background:var(--gold)"></span> Upoznaj kolege 🎯
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Pogodi čiji je odgovor!</div>
+          <div id="homeQuiz" style="min-height:200px"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
 
   <!-- TAB: Moj odmor (employee) -->
   <div class="tab-content" id="tab-moj">
@@ -1523,7 +1583,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxhm8R6c3MxCmESJ2Z4MmikzJSv4RWff7xa_GaVvYgUcjSTadFgEzy2_Ivkvmv4HMxrZw/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyMLgyfauYGRaX8S3wm2wd_9CTetDdpamMnv6dNkcVKR8tKTbtaMoGt981mO9-j_0CzdQ/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -1769,6 +1829,7 @@ function initApp(){
 
   const canAccessProjects = PROJECT_PERSONS.includes(currentUser.name);
   const MAIN_TABS=[
+    { id:'home', label:'🏠 Home' },
     { id:'moji-dani', label:'📋 Moji dani' },
     ...(canAccessProjects ? [{ id:'project', label:'📊 Projects' }] : []),
     { id:'tasks', label:'✅ Tasks' },
@@ -1792,7 +1853,7 @@ function initApp(){
 
   MAIN_TABS.forEach((t,i)=>{
     const b=document.createElement('button');
-    b.className='main-tab'+(i===0?' active':'');
+    b.className='main-tab'+(t.id==='home'?' active':'');
     b.textContent=t.label;
     b.dataset.id=t.id;
     b.onclick=()=>switchMainTab(t.id,b);
@@ -1812,10 +1873,15 @@ function initApp(){
     subWrap.appendChild(b);
   });
 
-  // Hide all tab-content, show first sub
+  // Hide all tab-content, show home tab first
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.main-content').forEach(t=>t.style.display='none');
-  showSubTab(SUB_TABS[0].id);
+  const homeEl2 = document.getElementById('main-home');
+  if(homeEl2) homeEl2.style.display='block';
+  // Hide subtabs on home
+  document.getElementById('subTabsWrap').classList.remove('visible');
+  // Init home after short delay
+  setTimeout(()=>initHomeTab(), 300);
 
   const today=new Date().toISOString().split('T')[0];
   if(document.getElementById('fFrom')){
@@ -1885,15 +1951,23 @@ function switchMainTab(mainId, btn){
   const subWrap=document.getElementById('subTabsWrap');
   const projEl=document.getElementById('main-project');
   const tasksEl2=document.getElementById('main-tasks');
+  const homeEl=document.getElementById('main-home');
 
   // Hide all main panels first
   if(projEl) projEl.style.display='none';
   if(tasksEl2) tasksEl2.style.display='none';
+  if(homeEl) homeEl.style.display='none';
 
   const adminEl2=document.getElementById('tabAdmin');
   if(adminEl2) adminEl2.style.display='none';
 
-  if(mainId==='moji-dani'){
+  if(mainId==='home'){
+    subWrap.classList.remove('visible');
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    if(homeEl) homeEl.style.display='block';
+    window.scrollTo({top:0, behavior:'instant'});
+    initHomeTab();
+  } else if(mainId==='moji-dani'){
     subWrap.classList.add('visible');
     const firstSub=subWrap.querySelector('.sub-tab.active');
     if(firstSub) showSubTab(firstSub.dataset.id);
@@ -4375,16 +4449,367 @@ function monthDay(dateStr){
   return (parts[1]||'99')+'-'+(parts[2]||'99');
 }
 
+// ══════════════════════════════════════════════════════
+// HOME TAB
+// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// HOME TAB — Quiz, Stats, News
+// ══════════════════════════════════════════════════════
+
+const QUIZ_QUESTIONS_DEF = [
+  { id: 'q_film',        text: 'Koji je tvoj omiljeni film?' },
+  { id: 'q_boja',        text: 'Koja je tvoja najdraža boja?' },
+  { id: 'q_destinacija', text: 'Koja je tvoja najdraža destinacija?' },
+  { id: 'q_hrana',       text: 'Koja je tvoja omiljena hrana?' },
+  { id: 'q_hobby',       text: 'Koji je tvoj omiljeni hobi?' },
+  { id: 'q_glazba',      text: 'Koji glazbeni žanr najviše slušaš?' },
+  { id: 'q_sport',       text: 'Koji sport pratiš ili treniraš?' },
+  { id: 'q_serija',      text: 'Koja je tvoja omiljena serija?' },
+  { id: 'q_zemlja',      text: 'U kojoj zemlji bi volio/la živjeti?' },
+  { id: 'q_zivotinja',   text: 'Koja je tvoja omiljena životinja?' },
+];
+
+let _quizAnswersCache = null;  // all users' answers from server
+let _quizLiveQuestion = null;  // current quiz question shown
+let _quizAnswered = false;
+
+async function getQuizAnswers() {
+  if (_quizAnswersCache) return _quizAnswersCache;
+  try {
+    const res = await gasCall('getQuizAnswers', {});
+    _quizAnswersCache = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+  } catch(e) { _quizAnswersCache = []; }
+  return _quizAnswersCache;
+}
+
+async function initHomeTab() {
+  const now = new Date();
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Dobro jutro' : hour < 18 ? 'Dobar dan' : 'Dobra večer';
+  const name = currentUser.name ? currentUser.name.split(' ')[0] : '';
+  document.getElementById('homeGreeting').textContent = `${greet}, ${name}! 👋`;
+  document.getElementById('homeDate').textContent = now.toLocaleDateString('hr-HR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+  const quotes = [
+    '"Svaki dan je nova šansa."',
+    '"Timski rad čini san ostvarivim."',
+    '"Uspjeh je zbroj malih napora."',
+    '"Zajedno smo jači."',
+    '"Kreativnost nema granica."',
+  ];
+  document.getElementById('homeWeatherQuote').textContent = quotes[now.getDate() % quotes.length];
+
+  renderHomeStats();
+  loadHomeNews();
+  await renderHomeQuizSection();
+}
+
+async function renderHomeStats() {
+  const today = new Date().toISOString().substring(0,10);
+  const reqs = _reqCache || [];
+  const onLeave = reqs.filter(r => r.status==='approved' && r.startDate<=today && r.endDate>=today);
+  const leaveEl = document.getElementById('homeOnLeave');
+  if (leaveEl) {
+    leaveEl.innerHTML = onLeave.length
+      ? onLeave.map(r => `<div style="color:var(--gold);font-weight:600;font-size:.88rem">${r.name}</div>`).join('')
+      : '<span style="color:var(--muted);font-size:.85rem">Svi su na poslu 💪</span>';
+  }
+
+  const bds = _bdCache || [];
+  const nextBdEl = document.getElementById('homeNextBd');
+  if (nextBdEl && bds.length) {
+    let soonest = null, minDays = 9999;
+    const now = new Date();
+    bds.forEach(b => {
+      const parts = (b.date||'').split('-');
+      const bMonth = parseInt(parts[1])-1, bDay = parseInt(parts[2]);
+      let bd = new Date(now.getFullYear(), bMonth, bDay);
+      if (bd < now) bd = new Date(now.getFullYear()+1, bMonth, bDay);
+      const diff = Math.round((bd - now) / 86400000);
+      if (diff < minDays) { minDays = diff; soonest = { ...b, daysLeft: diff }; }
+    });
+    if (soonest) {
+      const when = soonest.daysLeft === 0 ? '🎉 Danas!' : `za ${soonest.daysLeft} dana`;
+      nextBdEl.innerHTML = `<span style="font-weight:600;color:var(--text)">${soonest.name}</span> <span style="color:var(--muted);font-size:.82rem">${when}</span>`;
+    } else {
+      nextBdEl.innerHTML = '<span style="color:var(--muted);font-size:.85rem">Nema podataka</span>';
+    }
+  }
+
+  const myTasksEl = document.getElementById('homeMyTasks');
+  if (myTasksEl) {
+    const tasks = _taskCache || [];
+    const mine = tasks.filter(t => t.assignee === currentUser.name && t.done !== 'true' && t.done !== true);
+    myTasksEl.innerHTML = mine.length
+      ? `<span style="font-size:1.5rem;font-weight:700;color:var(--gold)">${mine.length}</span> <span style="color:var(--muted);font-size:.85rem">otvorenih zadataka</span>`
+      : '<span style="color:var(--green);font-size:.85rem">✓ Nema otvorenih taskova!</span>';
+  }
+}
+
+async function loadHomeNews() {
+  const newsEl = document.getElementById('homeNews');
+  if (!newsEl) return;
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: 'Dohvati 5 najnovijih vijesti s poslovni.hr/kompanije. Za svaku vrati JSON array s poljima: title (naslov na hr), summary (1 rečenica sažetak na hr, max 120 znakova), url. Vrati SAMO JSON array bez markdown ili objašnjenja.'
+        }]
+      })
+    });
+    const data = await response.json();
+    const textBlock = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    let articles = [];
+    try {
+      const match = textBlock.replace(/```json|```/g,'').match(/\[[\s\S]*\]/);
+      if (match) articles = JSON.parse(match[0]);
+    } catch(e) {}
+    if (articles.length) {
+      newsEl.innerHTML = articles.slice(0,5).map(a => `
+        <a href="${a.url||'https://www.poslovni.hr/kompanije'}" target="_blank"
+          style="display:block;text-decoration:none;padding:.7rem;border-radius:8px;background:var(--surface2);border:1px solid transparent;transition:border-color .15s"
+          onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
+          <div style="font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:.25rem;line-height:1.3">${a.title||''}</div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.4">${a.summary||''}</div>
+        </a>`).join('');
+    } else { newsEl.innerHTML = homeNewsFallback(); }
+  } catch(e) { newsEl.innerHTML = homeNewsFallback(); }
+}
+
+function homeNewsFallback() {
+  return `<a href="https://www.poslovni.hr/kompanije" target="_blank"
+    style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:1.5rem;background:var(--surface2);border-radius:8px;text-decoration:none;color:var(--muted);font-size:.85rem">
+    <span>📰</span> Otvori poslovni.hr vijesti →</a>`;
+}
+
+// ── QUIZ SECTION ─────────────────────────────────────────
+
+async function renderHomeQuizSection() {
+  const el = document.getElementById('homeQuiz');
+  if (!el) return;
+
+  el.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:1rem">Učitavanje...</div>';
+
+  const allAnswers = await getQuizAnswers();
+
+  // Check how many questions current user has answered
+  const myAnswers = allAnswers.filter(a => String(a.userId) === String(currentUser.id));
+  const answeredIds = new Set(myAnswers.map(a => a.questionId));
+  const missing = QUIZ_QUESTIONS_DEF.filter(q => !answeredIds.has(q.id));
+
+  // Show "my profile" form if fewer than 5 answered
+  if (myAnswers.length < 5) {
+    renderQuizProfileForm(el, myAnswers, missing);
+    return;
+  }
+
+  // Build a quiz question about someone else
+  const others = allAnswers.filter(a =>
+    String(a.userId) !== String(currentUser.id) && String(a.answer).trim() !== ''
+  );
+
+  if (others.length < 2) {
+    el.innerHTML = `<div style="text-align:center;padding:1rem">
+      <div style="font-size:1.5rem;margin-bottom:.5rem">⏳</div>
+      <div style="font-size:.88rem;color:var(--muted)">Čekamo da kolege ispune svoje profile za kviz!</div>
+      <button onclick="renderQuizProfileForm(document.getElementById('homeQuiz'), [], [])" style="margin-top:.8rem;background:var(--gold);color:#000;border:none;border-radius:8px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">Uredi moj profil</button>
+    </div>`;
+    return;
+  }
+
+  // Pick random question from others (not seen today)
+  const seenKey = 'hgr_quiz_seen_' + new Date().toISOString().substring(0,10);
+  const seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
+  const unseen = others.filter(a => !seen.includes(a.userId + '_' + a.questionId));
+  const pool = unseen.length ? unseen : others;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+
+  // Build wrong answers from same question, different users
+  const sameQ = allAnswers.filter(a =>
+    a.questionId === pick.questionId &&
+    String(a.userId) !== String(pick.userId) &&
+    String(a.answer).trim() !== '' &&
+    String(a.answer).trim() !== String(pick.answer).trim()
+  );
+
+  // Also add generic distractors if not enough
+  const genericDistractors = {
+    q_film: ['Titanic','Inception','The Godfather','Forrest Gump','Interstellar','Avatar','Gladiator','Top Gun','The Matrix','Schindler\'s List'],
+    q_boja: ['Plava','Crvena','Zelena','Ljubičasta','Narančasta','Žuta','Crna','Bijela','Tirkizna','Roza'],
+    q_destinacija: ['Japan','Bali','Pariz','New York','Santorini','Maldivi','Dubai','Barcelona','Rim','Lisabon'],
+    q_hrana: ['Pizza','Sushi','Pasta','Burger','Tacos','Ramen','Steak','Riba','Šnicla','Salata'],
+    q_hobby: ['Čitanje','Gaming','Planinarenje','Fotografija','Kuhanje','Putovanje','Glazba','Yoga','Tenis','Plivanje'],
+    q_glazba: ['Pop','Rock','Hip-hop','Jazz','Klasična','Electronic','R&B','Metal','Folk','Reggae'],
+    q_sport: ['Nogomet','Košarka','Tenis','Plivanje','Trčanje','Biciklizam','Odbojka','Skijanje','Golf','CrossFit'],
+    q_serija: ['Breaking Bad','Game of Thrones','Friends','The Office','Stranger Things','Black Mirror','Succession','Ted Lasso','Peaky Blinders','Squid Game'],
+    q_zemlja: ['Japan','Italija','Australija','Kanada','Norveška','Švicarska','Portugal','Novi Zeland','Island','Danska'],
+    q_zivotinja: ['Pas','Mačka','Delfin','Lav','Vuk','Sova','Ris','Konj','Lisica','Medvjed'],
+  };
+
+  let wrongPool = sameQ.map(a => String(a.answer).trim());
+  const gen = (genericDistractors[pick.questionId] || []).filter(d => d.toLowerCase() !== String(pick.answer).trim().toLowerCase());
+  while (wrongPool.length < 3 && gen.length) {
+    const idx = Math.floor(Math.random() * gen.length);
+    const d = gen.splice(idx, 1)[0];
+    if (!wrongPool.includes(d)) wrongPool.push(d);
+  }
+  // Dedupe and shuffle, pick 3
+  wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+  const choices = [String(pick.answer).trim(), ...wrongPool].sort(() => Math.random() - 0.5);
+
+  const qDef = QUIZ_QUESTIONS_DEF.find(q => q.id === pick.questionId);
+  const qLabel = qDef ? qDef.text.replace('tvoj','njihov').replace('tvoja','njihova').replace('tvoje','njihovo').replace('Koji je','Koji je').replace('Koja je','Koja je') : pick.questionId;
+
+  _quizLiveQuestion = pick;
+  _quizAnswered = false;
+
+  el.innerHTML = `
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:center">
+      <span>🎯 Pogodi odgovor kolege!</span>
+      <button onclick="renderHomeQuizSection()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem" title="Nova pitanja">↺ Novo</button>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:.8rem 1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.7rem">
+      <div class="user-avatar ${avatarClass(pick.userName)}" style="width:36px;height:36px;font-size:.85rem;flex-shrink:0">${pick.userName.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}</div>
+      <div>
+        <div style="font-weight:600;font-size:.88rem;color:var(--text)">${pick.userName}</div>
+        <div style="font-size:.76rem;color:var(--muted)">${qLabel}</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.45rem" id="quizLiveChoices">
+      ${choices.map((c,i) => `
+        <button onclick="quizLiveAnswer('${c.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')"
+          data-answer="${c.replace(/"/g,'&quot;')}"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.55rem .9rem;color:var(--text);font-size:.85rem;cursor:pointer;text-align:left;font-family:'Outfit',sans-serif;transition:all .15s;display:flex;align-items:center;gap:.6rem"
+          onmouseover="if(!this.disabled){this.style.borderColor='var(--gold)';this.style.background='rgba(201,162,39,.08)'}"
+          onmouseout="if(!this.disabled){this.style.borderColor='var(--border)';this.style.background='var(--surface2)'}">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;font-weight:600">${String.fromCharCode(65+i)}</span>
+          ${c}
+        </button>`).join('')}
+    </div>
+    <div style="margin-top:.8rem;text-align:right">
+      <button onclick="renderQuizProfileForm(document.getElementById('homeQuiz'),null,null)"
+        style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;text-decoration:underline">✏️ Uredi moje odgovore</button>
+    </div>
+  `;
+}
+
+function quizLiveAnswer(chosen) {
+  if (_quizAnswered) return;
+  _quizAnswered = true;
+  const correct = String(_quizLiveQuestion.answer).trim();
+  const isRight = chosen.trim() === correct;
+
+  const btns = document.querySelectorAll('#quizLiveChoices button');
+  btns.forEach(b => {
+    b.disabled = true;
+    b.onmouseover = null; b.onmouseout = null;
+    const val = b.dataset.answer;
+    if (val === correct) {
+      b.style.background = 'rgba(80,200,120,.18)'; b.style.borderColor = 'var(--green)'; b.style.color = 'var(--green)';
+    } else if (val === chosen && !isRight) {
+      b.style.background = 'rgba(220,53,69,.15)'; b.style.borderColor = 'var(--red)'; b.style.color = 'var(--red)';
+    }
+  });
+
+  // Mark as seen
+  const seenKey = 'hgr_quiz_seen_' + new Date().toISOString().substring(0,10);
+  const seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
+  seen.push(_quizLiveQuestion.userId + '_' + _quizLiveQuestion.questionId);
+  localStorage.setItem(seenKey, JSON.stringify(seen));
+
+  const el = document.getElementById('homeQuiz');
+  const fb = document.createElement('div');
+  fb.style.cssText = 'margin-top:.8rem;padding:.6rem .9rem;border-radius:8px;font-size:.85rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem';
+  fb.style.background = isRight ? 'rgba(80,200,120,.12)' : 'rgba(220,53,69,.1)';
+  fb.innerHTML = `
+    <span style="color:${isRight?'var(--green)':'var(--red)'}">
+      ${isRight ? '✓ Točno! 🎉' : `✗ Odgovor je: <b>${correct}</b>`}
+    </span>
+    <button onclick="renderHomeQuizSection()"
+      style="background:var(--gold);color:#000;border:none;border-radius:6px;padding:.35rem .85rem;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif">
+      Sljedeće →
+    </button>`;
+  el.appendChild(fb);
+}
+
+async function renderQuizProfileForm(el, myAnswers, missing) {
+  if (!el) el = document.getElementById('homeQuiz');
+  if (!myAnswers) {
+    const all = await getQuizAnswers();
+    myAnswers = all.filter(a => String(a.userId) === String(currentUser.id));
+  }
+  const answeredMap = {};
+  myAnswers.forEach(a => { answeredMap[a.questionId] = a.answer; });
+
+  el.innerHTML = `
+    <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:.3rem">📝 Moj profil za kviz</div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:.9rem">Kolege će pogađati tvoje odgovore! (min. 5 da se pojavi u kvizu)</div>
+    <div style="display:flex;flex-direction:column;gap:.55rem" id="quizProfileFields">
+      ${QUIZ_QUESTIONS_DEF.map(q => `
+        <div style="display:flex;flex-direction:column;gap:.2rem">
+          <label style="font-size:.73rem;color:var(--muted)">${q.text}</label>
+          <input id="qpf_${q.id}" value="${(answeredMap[q.id]||'').replace(/"/g,'&quot;')}"
+            placeholder="Tvoj odgovor..."
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.42rem .7rem;color:var(--text);font-size:.83rem;outline:none;font-family:'Outfit',sans-serif;transition:border-color .15s"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:flex-end">
+      <button onclick="renderHomeQuizSection()"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.45rem .9rem;color:var(--muted);font-size:.82rem;cursor:pointer;font-family:'Outfit',sans-serif">
+        Odustani
+      </button>
+      <button onclick="saveQuizProfile()"
+        style="background:var(--gold);color:#000;border:none;border-radius:7px;padding:.45rem 1.1rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif">
+        Spremi ✓
+      </button>
+    </div>
+    <div id="quizProfileStatus" style="font-size:.78rem;margin-top:.4rem;text-align:right"></div>
+  `;
+}
+
+async function saveQuizProfile() {
+  const statusEl = document.getElementById('quizProfileStatus');
+  if (statusEl) { statusEl.textContent = 'Spremanje...'; statusEl.style.color = 'var(--muted)'; }
+  let saved = 0;
+  for (const q of QUIZ_QUESTIONS_DEF) {
+    const input = document.getElementById('qpf_' + q.id);
+    if (!input) continue;
+    const val = input.value.trim();
+    if (!val) continue;
+    try {
+      await gasCall('saveQuizAnswer', {
+        userId: currentUser.id,
+        userName: currentUser.name,
+        questionId: q.id,
+        answer: val
+      });
+      saved++;
+    } catch(e) {}
+  }
+  _quizAnswersCache = null; // invalidate cache
+  if (statusEl) { statusEl.textContent = `✓ Spremljeno ${saved} odgovora!`; statusEl.style.color = 'var(--green)'; }
+  setTimeout(() => renderHomeQuizSection(), 1200);
+}
+
+
 // ── MINI BIRTHDAY CALENDAR ─────────────────────────────
 function renderBdCalendar(bds, containerIds) {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth(); // 0-indexed
+  const month = now.getMonth();
   const todayNum = now.getDate();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
 
-  // Build map of day -> birthday names for this month
+  // Build map of day -> full birthday info
   const bdMap = {};
   bds.forEach(b => {
     const parts = (b.date || '').split('-');
@@ -4392,7 +4817,7 @@ function renderBdCalendar(bds, containerIds) {
     const bDay = parseInt(parts[2]);
     if (bMonth === month && bDay >= 1 && bDay <= daysInMonth) {
       if (!bdMap[bDay]) bdMap[bDay] = [];
-      bdMap[bDay].push(b.name.split(' ')[0]); // first name only
+      bdMap[bDay].push({ name: b.name, client: b.client || '' });
     }
   });
 
@@ -4400,29 +4825,34 @@ function renderBdCalendar(bds, containerIds) {
   const dayNames = ['Po', 'Ut', 'Sr', 'Če', 'Pe', 'Su', 'Ne'];
 
   let cells = '';
-  // Empty cells before first day
-  for (let i = 0; i < firstDay; i++) {
-    cells += '<div></div>';
-  }
+  for (let i = 0; i < firstDay; i++) cells += '<div></div>';
+
   for (let d = 1; d <= daysInMonth; d++) {
     const isToday = d === todayNum;
     const hasBd = !!bdMap[d];
-    const names = hasBd ? bdMap[d].join(', ') : '';
-    const title = hasBd ? ` title="${names}"` : '';
-    cells += `<div${title} style="
-      position:relative;
-      aspect-ratio:1;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      border-radius:6px;
-      font-size:.7rem;
-      font-weight:${isToday?'700':'400'};
-      color:${isToday?'#000':hasBd?'var(--gold)':'var(--muted)'};
-      background:${isToday?'var(--gold)':hasBd?'rgba(201,162,39,.13)':'transparent'};
-      cursor:${hasBd?'default':'default'};
-      gap:1px;
-    ">
+    const tooltipData = hasBd
+      ? bdMap[d].map(b => b.name + (b.client ? ' ('+b.client+')' : '')).join('|')
+      : '';
+
+    cells += `<div
+      data-bd="${tooltipData}"
+      onmouseenter="bdCalTooltipShow(this, event)"
+      onmouseleave="bdCalTooltipHide()"
+      style="
+        position:relative;
+        aspect-ratio:1;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        border-radius:6px;
+        font-size:.7rem;
+        font-weight:${isToday ? '700' : '400'};
+        color:${isToday ? '#000' : hasBd ? 'var(--gold)' : 'var(--muted)'};
+        background:${isToday ? 'var(--gold)' : hasBd ? 'rgba(201,162,39,.13)' : 'transparent'};
+        transition:background .12s;
+        cursor:${hasBd ? 'default' : 'default'};
+        gap:1px;
+      ">
       <span>${d}</span>
-      ${hasBd ? `<span style="font-size:.55rem;line-height:1;color:${isToday?'#000':'var(--gold)'};overflow:hidden;max-width:90%;white-space:nowrap;text-overflow:ellipsis">🎂</span>` : ''}
+      ${hasBd ? `<span style="font-size:.55rem;line-height:1;color:${isToday?'#000':'var(--gold)'}">🎂</span>` : ''}
     </div>`;
   }
 
@@ -4441,6 +4871,57 @@ function renderBdCalendar(bds, containerIds) {
     const el = document.getElementById(id);
     if (el) el.innerHTML = html;
   });
+}
+
+// ── Birthday calendar tooltip ──
+let _bdTooltipEl = null;
+
+function bdCalTooltipShow(cell, event) {
+  const data = cell.dataset.bd;
+  if (!data) return;
+
+  bdCalTooltipHide();
+
+  const names = data.split('|');
+  const lines = names.map(n => `<div style="white-space:nowrap">🎂 ${n}</div>`).join('');
+
+  const tip = document.createElement('div');
+  tip.id = 'bdCalTooltip';
+  tip.innerHTML = lines;
+  tip.style.cssText = `
+    position:fixed;
+    background:var(--surface);
+    border:1px solid var(--gold);
+    border-radius:8px;
+    padding:.45rem .75rem;
+    font-size:.8rem;
+    color:var(--text);
+    font-family:'Outfit',sans-serif;
+    box-shadow:0 4px 20px rgba(0,0,0,.5);
+    z-index:9999;
+    pointer-events:none;
+    animation:fadeInUp .12s ease;
+  `;
+  document.body.appendChild(tip);
+  _bdTooltipEl = tip;
+
+  // Position near cursor
+  const rect = cell.getBoundingClientRect();
+  const tipW = 180;
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  let top = rect.top - tip.offsetHeight - 8;
+  if (left < 8) left = 8;
+  if (left + tipW > window.innerWidth - 8) left = window.innerWidth - tipW - 8;
+  if (top < 8) top = rect.bottom + 8;
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+  tip.style.width = tipW + 'px';
+}
+
+function bdCalTooltipHide() {
+  if (_bdTooltipEl) { _bdTooltipEl.remove(); _bdTooltipEl = null; }
+  const old = document.getElementById('bdCalTooltip');
+  if (old) old.remove();
 }
 
 // ── MINI DASHBOARD ─────────────────────────────────────
