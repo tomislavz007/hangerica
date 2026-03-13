@@ -419,6 +419,14 @@ select option{background:var(--surface2);}
   transition: color .15s, background .15s;
 }
 .sidebar-action-btn:hover { color: var(--text); background: var(--surface2); }
+.sidebar-logout-btn {
+  font-size: 1rem !important;
+  color: var(--muted) !important;
+}
+.sidebar-logout-btn:hover {
+  color: var(--red) !important;
+  background: rgba(224,85,85,.1) !important;
+}
 
 /* ── MAIN CONTENT AREA ── */
 #mainContentWrap {
@@ -1873,7 +1881,7 @@ button[onclick^="apprSubmitRequest"]:hover {
         </div>
         <div class="sidebar-actions">
           <button class="sidebar-action-btn" onclick="toggleThemePicker()" title="Tema">🎨</button>
-          <button class="sidebar-action-btn" onclick="doLogout()" title="Odjava" style="font-size:.75rem;font-weight:600;color:var(--muted)">→</button>
+          <button class="sidebar-action-btn sidebar-logout-btn" onclick="doLogout()" title="Odjava">⏻</button>
         </div>
       </div>
     </div>
