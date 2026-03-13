@@ -1996,6 +1996,16 @@ button[onclick^="apprSubmitRequest"]:hover {
           <div id="konzumLastOrdered" style="margin-top:.7rem;font-size:.7rem;color:var(--muted);text-align:right"></div>
         </div>
 
+        <!-- Citat dana -->
+        <div class="list-card" style="padding:1.4rem" id="quoteOfDayCard">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
+            <span style="font-size:1.1rem">💬</span>
+            <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Citat dana</div>
+          </div>
+          <div id="quoteText" style="font-size:.92rem;color:var(--text);line-height:1.6;font-style:italic;margin-bottom:.6rem">&ldquo;&rdquo;</div>
+          <div id="quoteAuthor" style="font-size:.75rem;color:var(--muted);text-align:right">—</div>
+        </div>
+
         <!-- Quiz -->
         <div class="list-card" style="padding:1.4rem">
           <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
@@ -3061,6 +3071,52 @@ async function doLogin(){
 }
 
 let _clockInterval = null;
+// ══════════════════════════════════════════
+// CITAT DANA
+// ══════════════════════════════════════════
+const CITATI = [
+  { t: 'Uspjeh nije konačan, neuspjeh nije fatalan — jedino je važna hrabrost da nastavite.', a: 'Winston Churchill' },
+  { t: 'Jedini način da odradite sjajan posao jest da volite ono što radite.', a: 'Steve Jobs' },
+  { t: 'Ne čekajte. Nikad neće biti savršeno vrijeme.', a: 'Napoleon Hill' },
+  { t: 'Tim koji zajedno slavi zajedno napreduje.', a: 'nepoznat' },
+  { t: 'Kvaliteta nije čin, nego navika.', a: 'Aristotel' },
+  { t: 'Svaki dan je nova prilika da postanete bolja verzija sebe.', a: 'nepoznat' },
+  { t: 'Veliki um raspravlja o idejama, prosječan o događajima, mali o osobama.', a: 'Eleanor Roosevelt' },
+  { t: 'Jedino što stoji između vas i vašeg cilja jest priča koju si stalno pričate zašto ne možete.', a: 'Jordan Belfort' },
+  { t: 'Kreativnost je inteligencija koja se zabavlja.', a: 'Albert Einstein' },
+  { t: 'Ako želiš ići brzo, idi sam. Ako želiš daleko, idi s drugima.', a: 'Afrička poslovica' },
+  { t: 'Inovacija je razlika između lidera i sljedbenika.', a: 'Steve Jobs' },
+  { t: 'Učite se od jučer, živite za danas, nadajte se za sutra.', a: 'Albert Einstein' },
+  { t: 'Budućnost pripada onima koji vjeruju u ljepotu svojih snova.', a: 'Eleanor Roosevelt' },
+  { t: 'Posao s entuzijazmom čini svaki ponedjeljak laganim.', a: 'nepoznat' },
+  { t: 'Veliki rezultati zahtijevaju veliki trud — ali i sjajan tim.', a: 'nepoznat' },
+  { t: 'Jedina beskorisna investicija je ona u znanje koje niste primijenili.', a: 'Benjamin Franklin' },
+  { t: 'Napredak je nemoguć bez promjene, a oni koji ne mogu promijeniti um ne mogu promijeniti ništa.', a: 'George Bernard Shaw' },
+  { t: 'Zamislite veliki san i imajte hrabrost živjeti ga.', a: 'Marcus Aurelius' },
+  { t: 'Strast je energija. Osjetite moć koja dolazi od fokusa na ono što vas uzbuđuje.', a: 'Oprah Winfrey' },
+  { t: 'Uspjeh je hodati od neuspjeha do neuspjeha bez gubitka entuzijazma.', a: 'Winston Churchill' },
+  { t: 'Ne mjerite se s drugima. Mjerite se s onim tko ste jučer bili.', a: 'Jordan Peterson' },
+  { t: 'Izvrstan tim može učiniti prosječnu ideju sjajnom, ali loš tim upropaštava i sjajnu ideju.', a: 'nepoznat' },
+  { t: 'Radite na sebi više nego na svom poslu.', a: 'Jim Rohn' },
+  { t: 'Svaki problem je prerušena prilika.', a: 'nepoznat' },
+  { t: 'Disciplina je most između ciljeva i postignuća.', a: 'Jim Rohn' },
+  { t: 'Ono što ne možete mjeriti, ne možete poboljšati.', a: 'Peter Drucker' },
+  { t: 'Kultura jede strategiju za doručak.', a: 'Peter Drucker' },
+  { t: 'Zaposlite ljude koji su pametniji od vas i dajte im slobodu da rade.', a: 'nepoznat' },
+  { t: 'Jedini ograničavajući faktor su vaša uvjerenja.', a: 'nepoznat' },
+  { t: 'Dugoročno razmišljanje je konkurentska prednost.', a: 'Jeff Bezos' },
+  { t: 'Vizija bez akcije je samo san. Akcija bez vizije samo gubi vrijeme.', a: 'Joel A. Barker' },
+];
+
+function renderQuoteOfDay() {
+  const dayIdx = new Date().getDay() * 4 + new Date().getDate() % CITATI.length;
+  const quote = CITATI[dayIdx % CITATI.length];
+  const qEl = document.getElementById('quoteText');
+  const aEl = document.getElementById('quoteAuthor');
+  if (qEl) qEl.innerHTML = `&ldquo;${quote.t}&rdquo;`;
+  if (aEl) aEl.textContent = `— ${quote.a}`;
+}
+
 function startClock(){
   if(_clockInterval) clearInterval(_clockInterval);
   const DAYS_HR = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
@@ -5903,6 +5959,7 @@ async function initHomeTab() {
   loadHomeNews();
   await renderHomeQuizSection();
   loadKonzumItems();
+  renderQuoteOfDay();
 }
 
 async function renderHomeStats() {
