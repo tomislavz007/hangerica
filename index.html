@@ -873,242 +873,812 @@ button[onclick^="apprSubmitRequest"]:hover {
 /* ═══════════════════════════════════════════
    MOBILE RESPONSIVE — max-width: 600px
    ═══════════════════════════════════════════ */
+
+/* ═══════════════════════════
+   COMPREHENSIVE MOBILE FIXES
+═══════════════════════════ */
 @media (max-width: 600px) {
 
-  /* ── GLOBAL ── */
-  body { font-size: .82rem; }
-  .page { padding: .6rem .75rem; max-width: 100%; }
+  /* ── PREVENT ALL OVERFLOW ── */
+  html, body { overflow-x: hidden !important; }
+  /* min-width:0 only on flex/grid children that need it */
+  .page, .main-content, #mainContentWrap, #appLayout,
+  .proj-row, .proj-row-mobile, .lnr-task-card, .lnr-list-item,
+  .req-row, .rr-emp, .rr-appr, .sidebar-item { min-width: 0; box-sizing: border-box; }
 
-  /* ── SIDEBAR → bottom tab bar on mobile ── */
-  #appSidebar {
+  /* ── PROJECTS FILTER BAR ── */
+  .proj-filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: .5rem !important;
+  }
+  .proj-filter-selects { flex-wrap: wrap !important; }
+  .proj-filter-select {
+    font-size: 16px !important;
+    flex: 1 !important;
+    min-width: 120px !important;
+  }
+  .btn-new-proj {
     width: 100% !important;
-    height: 56px !important;
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    text-align: center !important;
+    padding: .65rem 1rem !important;
+  }
+
+  /* ── PROJECTS MAIN LAYOUT ── */
+  .proj-main-layout {
+    flex-direction: column !important;
+    gap: .6rem !important;
+  }
+  #projSidePanel {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border) !important;
+    margin-top: .5rem !important;
+  }
+
+  /* ── PROJECT ROWS — clean stacked ── */
+  #projListHead { display: none !important; }
+  .proj-row, .proj-row-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: .85rem 1rem !important;
+    gap: .15rem !important;
+  }
+  .proj-row-mobile > * { text-align: left !important; }
+  .proj-name { font-size: .9rem !important; font-weight: 600 !important; }
+  .proj-client { font-size: .73rem !important; color: var(--muted) !important; }
+  .proj-col-person { font-size: .78rem !important; color: var(--text-secondary) !important; }
+  .proj-col-date   { font-size: .73rem !important; color: var(--muted) !important; }
+  /* Finance row — compact inline on mobile */
+  .proj-col-fin { font-size: .82rem !important; }
+  /* Show finance values as small inline row */
+  .proj-row-mobile .proj-col-fin { display: inline !important; margin-right: .5rem !important; }
+  .proj-col-actions {
+    margin-top: .2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: .4rem !important;
+    flex-wrap: wrap !important;
+  }
+  .proj-eur { font-size: .82rem !important; }
+
+  /* ── KPI / STATS GRID ── */
+  .stats-grid { grid-template-columns: repeat(2,1fr) !important; gap: .5rem !important; }
+  .proj-stats-grid { grid-template-columns: repeat(2,1fr) !important; gap: .5rem !important; }
+  .stat-box { padding: .8rem !important; }
+  .stat-box .val { font-size: 1.4rem !important; }
+  .stat-box .lbl { font-size: .6rem !important; }
+
+  /* ── MODALS ── */
+  .modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 1.1rem !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+  }
+  .modal [style*="grid-template-columns:1fr 1fr"],
+  .modal [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: .6rem !important;
+  }
+  .modal h3 { font-size: .95rem !important; margin-bottom: .8rem !important; }
+
+  /* ── INLINE GRID OVERRIDES ── */
+  #miniDashboard,
+  #miniDashboardAppr {
+    grid-template-columns: 1fr !important;
+    gap: .6rem !important;
+  }
+  /* Any 3-col inline grid → 2-col */
+  [style*="grid-template-columns:1fr 1fr 1fr"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── INPUT/SELECT FONT (prevents iOS zoom) ── */
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="date"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+  .lnr-select, .lnr-meta-select { font-size: 14px !important; }
+  .lnr-task-name-input { font-size: 16px !important; }
+
+  /* ── TOP BAR ── */
+  #topBar { padding: 0 .75rem !important; height: 44px !important; }
+  #topBarPageName {
+    font-size: .78rem !important;
+    max-width: 55vw !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  #lastUpdatedWrap { display: none !important; }
+
+  /* ── SIDEBAR → BOTTOM TAB BAR ── */
+  #appSidebar {
+    width: 100% !important; height: 56px !important;
+    top: auto !important; bottom: 0 !important;
+    left: 0 !important; right: 0 !important;
     flex-direction: row !important;
     border-right: none !important;
     border-top: 1px solid var(--border) !important;
     overflow: visible !important;
-    z-index: 500 !important;
+    z-index: 500 !important; padding: 0 !important;
   }
   .sidebar-logo-wrap { display: none !important; }
-  .sidebar-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    flex: 1 !important;
-    padding: 0 !important;
-    align-items: center !important;
-    justify-content: space-around !important;
-    overflow: hidden !important;
-  }
+  .sidebar-footer { display: none !important; }
   .sidebar-section-label { display: none !important; }
+  .sidebar-sub { display: none !important; }
+  .sidebar-nav {
+    display: flex !important; flex-direction: row !important;
+    flex: 1 !important; padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: space-around !important;
+    overflow: hidden !important; height: 56px !important;
+  }
   .sidebar-item {
     flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: .15rem !important;
-    padding: .35rem .5rem !important;
-    font-size: .58rem !important;
-    width: auto !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    flex: 1 !important;
-    height: 56px !important;
-    overflow: visible !important;
+    align-items: center !important; justify-content: center !important;
+    gap: .1rem !important; padding: .3rem .2rem !important;
+    font-size: .55rem !important; width: auto !important;
+    margin: 0 !important; border-radius: 0 !important;
+    flex: 1 !important; height: 56px !important; overflow: visible !important;
+    min-width: 0 !important;
   }
   .sidebar-item.active::before { display: none !important; }
-  .sidebar-item.active {
-    background: none !important;
-    color: var(--gold) !important;
-  }
+  .sidebar-item.active { background: none !important; color: var(--gold) !important; }
   .sidebar-item .si-icon { font-size: 1.1rem !important; }
-  .sidebar-sub { display: none !important; }
-  .sidebar-footer { display: none !important; }
-
-  /* Main content shifts up (no left margin, bottom padding for tab bar) */
+  .sidebar-item > span:not(.si-icon):not(.sidebar-badge) {
+    font-size: .55rem !important; white-space: nowrap !important;
+    overflow: hidden !important; text-overflow: ellipsis !important;
+    max-width: 100% !important; line-height: 1.2 !important;
+  }
   #mainContentWrap {
     margin-left: 0 !important;
-    padding-bottom: 60px !important;
+    padding-bottom: 64px !important;
   }
 
-  /* Sub tabs horizontal scroll */
-
-  /* ── SUB TABS ── */
-  .sub-tabs-wrap {
-    overflow-x: auto !important;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .sub-tabs-wrap::-webkit-scrollbar { display: none; }
-  .sub-tab { white-space: nowrap; flex-shrink: 0; }
-
-  /* ── CARDS ── */
-  .list-card { border-radius: 10px !important; }
-  .list-card h2 { font-size: .95rem !important; padding: .9rem 1rem !important; }
+  /* ── PAGE LAYOUT ── */
+  .page { padding: .6rem .75rem !important; max-width: 100% !important; }
 
   /* ── HOME TAB ── */
-  .home-stats-row {
+  .home-stats-row { grid-template-columns: 1fr !important; gap: .5rem !important; }
+  .home-main-grid { grid-template-columns: 1fr !important; gap: .6rem !important; }
+  .home-news-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: unset !important; gap: .5rem !important;
+  }
+  .two-col { grid-template-columns: 1fr !important; gap: .6rem !important; }
+  #konzumItemsList { max-height: 180px !important; }
+  #homeBdCalCard { order: -1; margin-top: .5rem !important; }
+
+  /* ── MOJI DANI ── */
+  .quota-card {
+    grid-template-columns: 1fr !important;
+    gap: .8rem !important; padding: 1rem !important;
+  }
+  .quota-card::before { display: none !important; }
+  .ring-wrap { margin: 0 auto !important; }
+  .ring-wrap svg { width: 120px !important; height: 120px !important; }
+  .qstat-val { font-size: 1.1rem !important; }
+  .list-head { display: none !important; }
+  .req-row, .rr-emp, .rr-appr {
+    grid-template-columns: 1fr !important;
+    padding: .7rem 1rem !important; gap: .25rem !important;
+  }
+  .status-badge { font-size: .62rem !important; }
+  .form-row2 { grid-template-columns: 1fr !important; gap: .5rem !important; }
+  .form-card { padding: 1rem !important; }
+  /* Calendar */
+  .cal-day { min-height: 40px !important; }
+  .cal-day-num { font-size: .65rem !important; }
+  .cal-chip { font-size: .52rem !important; padding: .05rem .3rem !important; }
+  .cal-header h2 { font-size: .9rem !important; }
+  .cal-month-label { font-size: .9rem !important; min-width: 100px !important; }
+  .cal-nav-btn { padding: .3rem .5rem !important; font-size: .75rem !important; }
+  /* Sub-tabs horizontal scroll */
+  .sub-tabs-wrap {
+    overflow-x: auto !important; scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .sub-tabs-wrap::-webkit-scrollbar { display: none !important; }
+  .sub-tab { white-space: nowrap !important; flex-shrink: 0 !important; }
+
+  /* ── TASK MANAGER (Linear) ── */
+  .lnr-task-header {
+    padding: .5rem .75rem !important;
+    top: 44px !important;
+    flex-wrap: wrap !important;
+    gap: .4rem !important;
+    min-height: auto !important;
+  }
+  .lnr-task-header-left {
+    gap: .3rem !important; flex-wrap: wrap !important; width: 100% !important;
+  }
+  .lnr-task-divider { display: none !important; }
+  .lnr-select { font-size: 14px !important; padding: .22rem .45rem !important; max-width: 130px !important; }
+  .lnr-btn-new-task { font-size: .72rem !important; padding: .3rem .65rem !important; }
+  .lnr-new-task-inner { padding: .75rem !important; }
+  .lnr-task-name-input { font-size: 16px !important; }
+  .lnr-new-task-meta { gap: .35rem !important; flex-wrap: wrap !important; }
+  .lnr-meta-select { font-size: 14px !important; padding: .25rem .5rem !important; }
+  /* Board: single column */
+  .lnr-board {
+    flex-direction: column !important;
+    overflow-x: visible !important; gap: .8rem !important;
+    min-height: auto !important;
+  }
+  .lnr-col { width: 100% !important; }
+  .lnr-col-header { font-size: .68rem !important; padding: .3rem .1rem .5rem !important; }
+  .lnr-task-card { padding: .6rem .75rem !important; }
+  .lnr-card-title { font-size: .8rem !important; }
+  .lnr-card-bottom { gap: .25rem !important; }
+  .lnr-card-id { font-size: .62rem !important; }
+  /* List view */
+  .lnr-list-item { padding: .45rem .5rem !important; gap: .35rem !important; }
+  .lnr-list-title { font-size: .78rem !important; }
+  .lnr-list-assignee { display: none !important; }
+  .lnr-list-id { min-width: 44px !important; font-size: .6rem !important; }
+  /* Detail panel: fullscreen */
+  .lnr-task-detail-panel {
+    width: 100% !important; left: 0 !important;
+    right: 0 !important; top: 44px !important;
+    z-index: 600 !important;
+  }
+  .lnr-detail-chat-wrap { height: 200px !important; }
+  .lnr-detail-title { font-size: .88rem !important; }
+  .lnr-detail-body { padding: .75rem !important; }
+
+  /* ── ADMIN TAB ── */
+  #adminUsersList { overflow-x: auto !important; }
+  #adminUsersList table {
+    min-width: 560px !important;
+    font-size: .75rem !important;
+    display: table !important;
+  }
+  #adminUsersList th, #adminUsersList td {
+    padding: .38rem .45rem !important;
+    white-space: nowrap !important;
+  }
+  #main-admin [style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important; gap: .6rem !important;
+  }
+  /* Theme cards — 1 per row on small screens */
+  .theme-cards-grid {
+    flex-direction: column !important;
+    gap: .6rem !important;
+  }
+  .theme-card {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: .75rem 1rem !important;
+  }
+  /* Birthday form — single col */
+  .bd-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: .5rem !important;
+  }
+  /* Admin user form — single col */
+  .admin-form-grid {
     grid-template-columns: 1fr !important;
     gap: .6rem !important;
   }
-  /* Home two-col layout → single col */
-  .home-main-grid { grid-template-columns: 1fr !important; }
-  /* News grid → single col */
-  .home-news-grid {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: unset !important;
-  }
-  /* Home quiz + birthday side panel stacking */
-  .two-col { grid-template-columns: 1fr !important; }
 
-  /* ── MOJI DANI TAB ── */
-  .quota-card {
-    grid-template-columns: 1fr !important;
-    gap: 1rem !important;
-  }
-  .quota-card::before { display: none !important; }
-  .ring-wrap { margin: 0 auto; }
-  .stats-grid { grid-template-columns: repeat(2,1fr) !important; }
-  #miniDashboard,
-  #miniDashboardAppr {
-    grid-template-columns: 1fr !important;
-    gap: .7rem !important;
-  }
-  .form-row2 { grid-template-columns: 1fr !important; }
-  /* Request list → hide columns, show stacked */
-  .list-head { display: none !important; }
-  .req-row,
-  .lh-emp, .lh-appr,
-  .rr-emp, .rr-appr {
-    grid-template-columns: 1fr !important;
-    padding: .8rem 1rem !important;
-    gap: .3rem !important;
-  }
-  .req-days { font-size: .88rem !important; }
-  .status-badge { font-size: .65rem !important; }
-  /* Calendar */
-  .cal-day { min-height: 44px !important; }
-  .cal-day-num { font-size: .68rem !important; }
-  .cal-chip { font-size: .55rem !important; }
-  .cal-header h2 { font-size: .92rem !important; }
-  .cal-month-label { font-size: .95rem !important; min-width: 120px !important; }
+  /* ── SECTION TITLES ── */
+  .st-text { font-size: .88rem !important; }
+  .st-sub { font-size: .7rem !important; }
+  .section-title { margin-bottom: .7rem !important; }
 
-  /* ── PROJECTS TAB ── */
-  /* Side panel full width on mobile */
-  #projSidePanel {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-left: none !important;
-    border-top: 1px solid var(--border) !important;
-  }
-  /* Projects layout → stack */
-  div[style*="display:flex"][style*="gap:1.2rem"] {
-    flex-direction: column !important;
-  }
-  /* Project list header → hidden */
-  #projListHead { display: none !important; }
-  .proj-row {
-    grid-template-columns: 1fr !important;
-    padding: .8rem 1rem !important;
-    gap: .3rem !important;
-  }
-  .proj-row > * { font-size: .8rem !important; }
-  /* Project stats */
-  div[style*="grid-template-columns:1fr 1fr 1fr"] {
-    grid-template-columns: 1fr 1fr !important;
+  /* ── TEAM GRID ── */
+  .team-grid { grid-template-columns: 1fr !important; }
+
+  /* ── MONTHLY TABLE — horizontal scroll ── */
+  .monthly-table { min-width: 420px !important; font-size: .78rem !important; display: table !important; }
+  .monthly-table th { padding: .5rem .7rem !important; font-size: .66rem !important; }
+  .monthly-table td { padding: .55rem .7rem !important; font-size: .78rem !important; }
+  /* Wrapper already has overflow-x:auto inline — just ensure it works */
+  [style*="overflow-x:auto"] { -webkit-overflow-scrolling: touch !important; }
+  #monthlyChartWrap, .monthly-table-wrap {
+    overflow-x: auto !important; -webkit-overflow-scrolling: touch !important;
   }
 
-  /* ── TASKS TAB ── */
-  /* Filter row stacking */
-  div[style*="grid-template-columns:2fr 1fr 1fr auto"] {
-    grid-template-columns: 1fr 1fr !important;
-    gap: .5rem !important;
+  /* ── ALL OTHER TABLES (except admin) ── */
+  table:not(#adminUsersList table):not(.monthly-table) {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
-  /* Task side chat → full width below */
-  #taskSideChat {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-left: none !important;
-    border-top: 1px solid var(--border) !important;
-  }
-
-  /* ── ADMIN TAB ── */
-  div[style*="grid-template-columns:1fr 1fr"][style*="margin-bottom:.9rem"] {
-    grid-template-columns: 1fr !important;
-  }
-  div[style*="grid-template-columns:1fr 1fr"][style*="margin-bottom:1rem"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* ── MODAL ── */
-  .modal {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    padding: 1.2rem !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-  }
-  .modal-row { font-size: .8rem !important; }
-
-  /* ── BUTTONS ── */
-  .btn-primary { padding: .6rem .9rem !important; font-size: .82rem !important; }
-  .btn-sm { padding: .22rem .55rem !important; font-size: .7rem !important; }
-
-  /* ── BIRTHDAY CALENDAR ── */
-  #homeBdCalCard { order: -1; }
-
-  /* ── HANGERICA BRAND ── */
-  #hangerBrand { display: none !important; }
 
   /* ── TOAST ── */
-  #toast { width: 88vw !important; text-align: center !important; }
+  #toast {
+    bottom: 72px !important;
+    left: 5vw !important; right: 5vw !important;
+    width: auto !important; text-align: center !important;
+  }
 
-  /* ── LOGIN ── */
+  /* ── THEME PICKER ── */
+  #themePicker {
+    left: .5rem !important; right: .5rem !important;
+    bottom: 64px !important; width: auto !important;
+  }
+
+  /* ── SEASONAL BANNER ── */
+  #seasonalBanner { font-size: .72rem !important; padding: .25rem .75rem !important; }
+
+  /* ── MISC ── */
+  .margin-badge { font-size: .62rem !important; }
+  .btn-primary { padding: .55rem .9rem !important; font-size: .82rem !important; }
+  .btn-sm { padding: .2rem .5rem !important; font-size: .68rem !important; }
   #loginCard {
     padding: 2rem 1.2rem !important;
     margin: 1rem .75rem !important;
-    width: auto !important;
-    max-width: 100% !important;
+    width: auto !important; max-width: 100% !important;
   }
+  .list-card { border-radius: 10px !important; overflow: hidden !important; }
+
+  /* Flex rows wrapping safety */
+  [style*="display:flex"][style*="justify-content:space-between"] {
+    flex-wrap: wrap !important; gap: .5rem !important;
+  }
+
+  /* ── COST ROW in project form ── */
+  .cost-row-item { grid-template-columns: 1fr auto auto !important; }
 }
 
+/* ═══════════════════════════════════════
+   LINEAR-STYLE TASK MANAGER
+   ═══════════════════════════════════════ */
 
-  /* ── TOPBAR ── */
-  #topBar { padding: 0 .75rem !important; height: 42px !important; }
-  #topBarTitle { font-size: .78rem !important; }
-  #lastUpdatedWrap { display: none !important; }
+/* Header bar */
+.lnr-task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .55rem 1.8rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 46px;
+  z-index: 100;
+  gap: .8rem;
+}
+.lnr-task-header-left { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.lnr-task-divider { width: 1px; height: 16px; background: var(--border); margin: 0 .2rem; }
 
-  /* ── THEME PICKER on mobile — full bottom ── */
-  #themePicker { left: .5rem !important; bottom: 64px !important; right: .5rem !important; width: auto !important; }
+/* View toggle buttons */
+.lnr-task-view-btns { display: flex; gap: 1px; background: var(--surface2); border-radius: var(--radius); padding: 2px; }
+.lnr-view-btn {
+  display: flex; align-items: center; gap: .35rem;
+  padding: .28rem .6rem; border-radius: 4px; border: none;
+  background: none; color: var(--muted); cursor: pointer;
+  font-size: .72rem; font-weight: 500; font-family: 'Inter',sans-serif;
+  transition: background .12s, color .12s;
+}
+.lnr-view-btn:hover { color: var(--text-secondary); }
+.lnr-view-btn.active { background: var(--surface3); color: var(--text); }
 
-  /* ── SEASONAL BANNER ── */
-  #seasonalBanner { font-size: .75rem !important; padding: .3rem .75rem !important; }
+/* Filters */
+.lnr-select {
+  background: none; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: .28rem .6rem; color: var(--text-secondary); font-family: 'Inter',sans-serif;
+  font-size: .75rem; outline: none; cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.lnr-select:hover { border-color: var(--border-strong); color: var(--text); }
+.lnr-select option { background: var(--surface2); }
 
-  /* ── QUOTA CARD on Moji dani ── */
-  .quota-card { padding: 1rem !important; }
-  .qstat-val { font-size: 1.1rem !important; }
+/* New task button */
+.lnr-btn-new-task {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .35rem .8rem; background: var(--gold); color: #0d0f18;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  font-size: .75rem; font-weight: 600; font-family: 'Inter',sans-serif;
+  white-space: nowrap; transition: opacity .12s;
+  flex-shrink: 0;
+}
+.lnr-btn-new-task:hover { opacity: .88; }
 
-  /* ── Stat boxes ── */
-  .stat-box .val { font-size: 1.5rem !important; }
-  .stat-box .lbl { font-size: .62rem !important; }
+/* New task panel */
+.lnr-new-task-panel {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  animation: slideDown .18s ease;
+}
+@keyframes slideDown {
+  from { opacity:0; transform: translateY(-8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.lnr-new-task-inner { padding: .8rem 1.8rem; max-width: 900px; }
+.lnr-task-name-input {
+  width: 100%; background: none; border: none; border-bottom: 1px solid var(--border);
+  padding: .4rem 0; color: var(--text); font-family: 'Inter',sans-serif;
+  font-size: .95rem; font-weight: 500; outline: none;
+  transition: border-color .15s;
+}
+.lnr-task-name-input:focus { border-bottom-color: var(--gold); }
+.lnr-task-name-input::placeholder { color: var(--muted); }
+.lnr-new-task-meta {
+  display: flex; gap: .5rem; margin-top: .7rem; flex-wrap: wrap; align-items: center;
+}
+.lnr-meta-select {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: .28rem .6rem; color: var(--text-secondary); font-family: 'Inter',sans-serif;
+  font-size: .75rem; outline: none; cursor: pointer;
+}
+.lnr-new-task-actions {
+  display: flex; align-items: center; gap: .5rem; margin-top: .7rem; justify-content: flex-end;
+}
+.lnr-btn-cancel {
+  padding: .35rem .8rem; background: none; border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--muted); cursor: pointer;
+  font-size: .78rem; font-family: 'Inter',sans-serif;
+  transition: border-color .12s, color .12s;
+}
+.lnr-btn-cancel:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+.lnr-btn-save {
+  padding: .35rem .9rem; background: var(--gold); color: #0d0f18;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  font-size: .78rem; font-weight: 600; font-family: 'Inter',sans-serif;
+}
 
-  /* ── Team card grid → 1 col ── */
-  .team-grid { grid-template-columns: 1fr !important; }
+/* ── BOARD VIEW ── */
+.lnr-board {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  min-height: calc(100vh - 200px);
+}
+.lnr-board::-webkit-scrollbar { height: 4px; }
+.lnr-board::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* ── Request form ── */
-  .form-card { padding: 1rem !important; }
+.lnr-col {
+  flex-shrink: 0;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+.lnr-col-header {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .4rem .2rem .6rem;
+  font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.lnr-col-count {
+  font-size: .68rem; color: var(--muted); font-weight: 400;
+  background: var(--surface2); border-radius: 10px;
+  padding: .08rem .4rem; margin-left: auto;
+}
+.lnr-col-status-icon { font-size: .9rem; flex-shrink: 0; }
 
-  /* ── Projects ── */
-  .proj-stats-grid { grid-template-columns: repeat(2,1fr) !important; }
-  .margin-badge { font-size: .65rem !important; }
+/* Status icons */
+.lnr-status-todo    { color: var(--muted); }
+.lnr-status-inprog  { color: var(--gold); }
+.lnr-status-done    { color: var(--green); }
 
-  /* ── Konzum list ── */
-  #konzumItemsList { max-height: 200px !important; }
+/* Task cards */
+.lnr-task-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .7rem .9rem;
+  cursor: pointer;
+  transition: border-color .12s, box-shadow .12s;
+  position: relative;
+  group: task;
+}
+.lnr-task-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.lnr-task-card.is-done { opacity: .55; }
+.lnr-task-card.is-done .lnr-card-title { text-decoration: line-through; color: var(--muted); }
 
-  /* ── Mini BD calendar in home ── */
-  #homeBdCalCard { margin-top: .5rem !important; }
+.lnr-card-top { display: flex; align-items: flex-start; gap: .5rem; margin-bottom: .4rem; }
+.lnr-card-status-btn {
+  width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--muted);
+  background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .12s, background .12s;
+  padding: 0;
+}
+.lnr-task-card[data-status="todo"] .lnr-card-status-btn { border-color: var(--muted); }
+.lnr-task-card[data-status="inprogress"] .lnr-card-status-btn {
+  border-color: var(--gold); background: rgba(201,162,39,.12);
+}
+.lnr-task-card[data-status="inprogress"] .lnr-card-status-btn::after {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold);
+}
+.lnr-task-card[data-status="done"] .lnr-card-status-btn {
+  border-color: var(--green); background: rgba(62,207,142,.12);
+}
+.lnr-task-card[data-status="done"] .lnr-card-status-btn::after {
+  content: '✓'; font-size: .6rem; color: var(--green); font-weight: 700; line-height: 1;
+}
+.lnr-card-title {
+  font-size: .82rem; font-weight: 500; color: var(--text);
+  line-height: 1.35; flex: 1;
+}
+.lnr-card-bottom {
+  display: flex; align-items: center; gap: .4rem; margin-top: .45rem;
+  flex-wrap: wrap;
+}
+.lnr-card-id {
+  font-size: .65rem; color: var(--muted); font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.lnr-card-proj {
+  font-size: .65rem; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100px;
+}
+.lnr-priority-badge {
+  font-size: .62rem; padding: .1rem .35rem; border-radius: 4px;
+  font-weight: 500; white-space: nowrap;
+}
+.lnr-priority-high   { background: rgba(224,85,85,.12);  color: var(--red); }
+.lnr-priority-medium { background: rgba(245,166,35,.12); color: var(--amber); }
+.lnr-priority-low    { background: rgba(94,124,226,.12); color: var(--blue); }
+
+.lnr-card-due {
+  font-size: .65rem; margin-left: auto; white-space: nowrap;
+}
+.lnr-card-due.overdue { color: var(--red); }
+.lnr-card-due.ok { color: var(--muted); }
+
+.lnr-card-assignee {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface3); color: var(--text-secondary);
+  font-size: .6rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  margin-left: auto; flex-shrink: 0;
+  border: 1.5px solid var(--border);
+}
+
+/* Hover reveal actions */
+.lnr-card-actions {
+  position: absolute; top: .45rem; right: .6rem;
+  display: none; gap: .2rem;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: .15rem .2rem;
+}
+.lnr-task-card:hover .lnr-card-actions { display: flex; }
+.lnr-card-action-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); padding: .18rem .3rem;
+  border-radius: 3px; font-size: .75rem; line-height: 1;
+  transition: color .1s, background .1s;
+}
+.lnr-card-action-btn:hover { color: var(--text); background: var(--surface3); }
+.lnr-card-action-btn.del:hover { color: var(--red); }
+
+/* ── LIST VIEW ── */
+.lnr-list-view { display: flex; flex-direction: column; gap: 0; }
+.lnr-list-group { margin-bottom: 1.2rem; }
+.lnr-list-group-header {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .6rem;
+  font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.lnr-list-group-header:hover { background: var(--surface2); border-radius: var(--radius) var(--radius) 0 0; }
+.lnr-list-item {
+  display: flex; align-items: center; gap: .7rem;
+  padding: .5rem .6rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.lnr-list-item:last-child { border-bottom: none; }
+.lnr-list-item:hover { background: var(--surface2); }
+.lnr-list-item.is-done .lnr-list-title { text-decoration: line-through; color: var(--muted); }
+.lnr-list-status {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1.5px solid var(--muted); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .6rem; cursor: pointer; transition: all .12s;
+  background: none;
+  padding: 0;
+}
+.lnr-list-item[data-status="inprogress"] .lnr-list-status {
+  border-color: var(--gold); background: rgba(201,162,39,.12); color: var(--gold);
+}
+.lnr-list-item[data-status="done"] .lnr-list-status {
+  border-color: var(--green); background: rgba(62,207,142,.12); color: var(--green);
+}
+.lnr-list-id { font-size: .65rem; color: var(--muted); min-width: 52px; font-variant-numeric: tabular-nums; }
+.lnr-list-title { flex: 1; font-size: .82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lnr-list-assignee { font-size: .72rem; color: var(--muted); min-width: 70px; white-space: nowrap; }
+.lnr-list-due { font-size: .72rem; min-width: 60px; text-align: right; }
+.lnr-list-actions { display: none; gap: .15rem; }
+.lnr-list-item:hover .lnr-list-actions { display: flex; }
+
+/* ── TASK DETAIL PANEL ── */
+.lnr-task-detail-panel {
+  position: fixed;
+  top: 46px; right: 0; bottom: 0;
+  width: 380px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  z-index: 400;
+  display: none;
+  flex-direction: column;
+  box-shadow: -8px 0 24px rgba(0,0,0,.3);
+  animation: slideInRight .18s ease;
+}
+.lnr-task-detail-panel.open { display: flex; }
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.lnr-detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .8rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.lnr-detail-id {
+  font-size: .72rem; color: var(--muted); font-weight: 600;
+  letter-spacing: .04em; font-variant-numeric: tabular-nums;
+}
+.lnr-detail-close {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 1rem; padding: .2rem .4rem; border-radius: 4px;
+  transition: color .12s, background .12s;
+}
+.lnr-detail-close:hover { color: var(--text); background: var(--surface2); }
+.lnr-detail-body {
+  padding: 1rem; overflow-y: auto; flex: 1; min-height: 0;
+}
+.lnr-detail-title {
+  font-size: .95rem; font-weight: 600; color: var(--text);
+  line-height: 1.4; margin-bottom: 1rem;
+  padding: .4rem .5rem; border-radius: var(--radius);
+  border: 1px solid transparent;
+  transition: border-color .12s;
+}
+.lnr-detail-title:hover { border-color: var(--border); }
+.lnr-detail-title[contenteditable="true"]:focus {
+  outline: none; border-color: var(--gold); background: var(--surface2);
+}
+.lnr-detail-meta-grid {
+  display: flex; flex-direction: column; gap: .15rem; margin-bottom: 1rem;
+}
+.lnr-detail-meta-row {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .35rem .5rem; border-radius: var(--radius);
+  font-size: .78rem; cursor: pointer;
+  transition: background .1s;
+}
+.lnr-detail-meta-row:hover { background: var(--surface2); }
+.lnr-detail-meta-key { color: var(--muted); min-width: 90px; font-size: .75rem; }
+.lnr-detail-meta-val { color: var(--text); font-weight: 500; }
+.lnr-detail-note-label {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin-bottom: .4rem; margin-top: .2rem;
+}
+.lnr-detail-note {
+  font-size: .82rem; color: var(--text-secondary); line-height: 1.55;
+  padding: .5rem .5rem; border-radius: var(--radius);
+  border: 1px solid transparent; min-height: 60px;
+  transition: border-color .12s;
+}
+.lnr-detail-note:empty::before { content: "Nema napomene..."; color: var(--muted); }
+.lnr-detail-actions {
+  display: flex; gap: .5rem; margin-top: 1rem; flex-wrap: wrap;
+}
+.lnr-detail-action-btn {
+  flex: 1; padding: .45rem .6rem; border-radius: var(--radius);
+  font-size: .78rem; font-weight: 500; cursor: pointer;
+  font-family: 'Inter',sans-serif; transition: all .12s;
+  border: 1px solid var(--border); background: var(--surface2); color: var(--text-secondary);
+  text-align: center;
+}
+.lnr-detail-action-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.lnr-detail-action-btn.primary { background: var(--gold); color: #0d0f18; border-color: var(--gold); }
+.lnr-detail-action-btn.primary:hover { opacity: .88; }
+.lnr-detail-action-btn.danger:hover { border-color: var(--red); color: var(--red); background: rgba(224,85,85,.06); }
+.lnr-detail-chat-wrap {
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--border);
+  height: 240px; flex-shrink: 0;
+}
+
+/* Drag over for board columns */
+.lnr-col.drag-over { outline: 2px dashed var(--gold); outline-offset: -2px; border-radius: var(--radius-lg); }
+
+/* Mobile — see comprehensive block below */
+
+/* ── PROJ-ROW MOBILE HELPER CLASSES ── */
+.proj-col-person { font-size: .82rem; }
+.proj-col-date   { font-size: .81rem; color: var(--muted); }
+.proj-col-fin    { }
+.proj-col-actions { }
+
+/* ── THEME CARDS ── */
+.theme-cards-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.theme-card {
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  min-width: 160px;
+  transition: opacity .15s;
+}
+.theme-card:hover { opacity: .85; }
+
+/* ── BIRTHDAY FORM GRID ── */
+.bd-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .8rem;
+  margin-bottom: .8rem;
+}
+
+/* ── ADMIN USER FORM GRID ── */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* ── PROJECTS LAYOUT CLASSES ── */
+.proj-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-bottom: 1.2rem;
+}
+.proj-filter-selects {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.proj-filter-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .45rem .8rem;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: .82rem;
+  outline: none;
+}
+.btn-new-proj {
+  padding: .6rem 1.2rem;
+  font-size: .85rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.proj-main-layout {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
 
 /* Medium screens (tablets) */
 @media (max-width: 900px) and (min-width: 601px) {
@@ -1613,77 +2183,108 @@ button[onclick^="apprSubmitRequest"]:hover {
 
   <!-- TAB: Tasks -->
   <div class="main-content" id="main-tasks" style="display:none">
-    <div class="page">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.8rem">
-        <div class="section-title"><div><div class="st-text">Task manager</div><div class="st-sub">Upravljajte zadacima po projektima</div></div></div>
-        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
-          <select id="taskFilterProject" onchange="renderTasks()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;outline:none;max-width:220px">
-            <option value="">Svi projekti</option>
-          </select>
-          <select id="taskFilterStatus" onchange="this.dataset.userSet='1';renderTasks()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;outline:none">
-            <option value="">Svi statusi</option>
-            <option value="open">Otvoreni</option>
-            <option value="done">Završeni</option>
-          </select>
+    <!-- Linear-style task header bar -->
+    <div class="lnr-task-header">
+      <div class="lnr-task-header-left">
+        <div class="lnr-task-view-btns">
+          <button class="lnr-view-btn active" id="taskViewBoard" onclick="setTaskView('board',this)" title="Board">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="4" height="12" rx="1" fill="currentColor"/><rect x="7" y="1" width="4" height="12" rx="1" fill="currentColor" opacity=".5"/><rect x="13" y="1" width="1" height="12" rx=".5" fill="currentColor" opacity=".25"/></svg>
+            Board
+          </button>
+          <button class="lnr-view-btn" id="taskViewList" onclick="setTaskView('list',this)" title="List">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="1.5" rx=".75" fill="currentColor"/><rect x="1" y="6.25" width="12" height="1.5" rx=".75" fill="currentColor" opacity=".6"/><rect x="1" y="10.5" width="8" height="1.5" rx=".75" fill="currentColor" opacity=".35"/></svg>
+            List
+          </button>
         </div>
+        <div class="lnr-task-divider"></div>
+        <select id="taskFilterProject" onchange="renderTasks()" class="lnr-select">
+          <option value="">Svi projekti</option>
+        </select>
+        <select id="taskFilterPriority" onchange="renderTasks()" class="lnr-select">
+          <option value="">Svi prioriteti</option>
+          <option value="high">🔴 Visok</option>
+          <option value="medium">🟡 Srednji</option>
+          <option value="low">🔵 Nizak</option>
+        </select>
+        <!-- hidden compat select -->
+        <select id="taskFilterStatus" onchange="this.dataset.userSet='1';renderTasks()" style="display:none">
+          <option value="">Svi statusi</option>
+          <option value="open">Otvoreni</option>
+          <option value="done">Završeni</option>
+        </select>
       </div>
+      <button class="lnr-btn-new-task" onclick="openNewTaskPanel()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Novi task
+      </button>
+    </div>
 
-      <!-- Add task form -->
-      <div class="list-card" style="padding:1.2rem;margin-bottom:1.2rem">
-        <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:.7rem;align-items:end">
-          <div>
-            <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem">Task</div>
-            <input id="newTaskName" placeholder="Naziv taska..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.88rem;outline:none;font-family:'Inter',sans-serif">
-          </div>
-          <div>
-            <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem">Projekt</div>
-            <select id="newTaskProject" onchange="updateTaskAssignees()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.88rem;outline:none;font-family:'Inter',sans-serif">
-              <option value="">Odaberi projekt...</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem">Zadužena osoba</div>
-            <select id="newTaskAssignee" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.88rem;outline:none;font-family:'Inter',sans-serif">
-              <option value="">Odaberi osobu...</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem">Rok</div>
-            <input id="newTaskDue" type="date" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.88rem;outline:none;font-family:'Inter',sans-serif">
-          </div>
+    <!-- New task slide-down panel -->
+    <div class="lnr-new-task-panel" id="newTaskPanel" style="display:none">
+      <div class="lnr-new-task-inner">
+        <div class="lnr-new-task-row">
+          <input id="newTaskName" placeholder="Naziv taska..." class="lnr-task-name-input"
+            onkeydown="if(event.key==='Enter'){addTask()}">
         </div>
-        <div style="margin-top:.7rem;display:flex;gap:.7rem;align-items:center">
-          <input id="newTaskNote" placeholder="Napomena (opcionalno)..." style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Inter',sans-serif">
-          <button onclick="addTask()" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.6rem 1.2rem;font-weight:600;cursor:pointer;font-size:.88rem;font-family:'Inter',sans-serif;white-space:nowrap">+ Dodaj task</button>
+        <div class="lnr-new-task-meta">
+          <select id="newTaskProject" onchange="updateTaskAssignees()" class="lnr-meta-select">
+            <option value="">Projekt...</option>
+          </select>
+          <select id="newTaskAssignee" class="lnr-meta-select">
+            <option value="">Osoba...</option>
+          </select>
+          <select id="newTaskPriority" class="lnr-meta-select">
+            <option value="">Prioritet</option>
+            <option value="high">🔴 Visok</option>
+            <option value="medium">🟡 Srednji</option>
+            <option value="low">🔵 Nizak</option>
+          </select>
+          <input id="newTaskDue" type="date" class="lnr-meta-select" style="color:var(--text-secondary)">
+          <input id="newTaskNote" placeholder="Napomena..." class="lnr-meta-select" style="flex:1;min-width:120px">
         </div>
-        <div id="taskFormErr" style="color:var(--red);font-size:.82rem;margin-top:.4rem"></div>
+        <div class="lnr-new-task-actions">
+          <div id="taskFormErr" style="color:var(--red);font-size:.78rem"></div>
+          <button onclick="closeNewTaskPanel()" class="lnr-btn-cancel">Odustani</button>
+          <button onclick="addTask()" class="lnr-btn-save">Spremi task</button>
+        </div>
       </div>
+    </div>
 
-      <!-- Tasks list + side chat for Iva -->
-      <div style="display:flex;gap:1rem;align-items:flex-start">
-        <div style="flex:1;min-width:0">
-          <div id="tasksList" style="display:flex;flex-direction:column;gap:.5rem">
-            <div id="taskSkeletonInit"></div>
-          </div>
-        </div>
-        <!-- Side chat panel — shown only when task project has chat (Iva) -->
-        <div id="taskSideChat" style="display:none;width:300px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:sticky;top:1rem">
-          <div style="padding:.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">💬 Chat projekta</div>
-              <div id="taskSideChatProjName" style="font-size:.88rem;font-weight:600;color:var(--text);margin-top:.15rem"></div>
-            </div>
-            <button onclick="closeTaskSideChat()" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:.2rem .3rem">✕</button>
-          </div>
-          <div id="taskChatMessages" style="height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:.45rem;padding:.7rem 1rem"></div>
-          <div style="padding:.6rem 1rem;border-top:1px solid var(--border);display:flex;gap:.4rem">
-            <input id="taskChatInput" type="text" placeholder="Poruka..." maxlength="500"
-              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.42rem .7rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.83rem;outline:none"
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTaskChat()}" />
-            <button onclick="sendTaskChat()" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.42rem .85rem;font-weight:700;cursor:pointer;font-size:.83rem">→</button>
-          </div>
+    <!-- Board / List view -->
+    <div class="page" style="padding-top:.8rem">
+      <div id="tasksList">
+        <div id="taskSkeletonInit"></div>
+      </div>
+    </div>
+
+    <!-- Task detail side panel -->
+    <div class="lnr-task-detail-panel" id="taskDetailPanel">
+      <div class="lnr-detail-header">
+        <div class="lnr-detail-id" id="taskDetailId">—</div>
+        <button onclick="closeTaskDetail()" class="lnr-detail-close">✕</button>
+      </div>
+      <div class="lnr-detail-body">
+        <div class="lnr-detail-title" id="taskDetailTitle" contenteditable="false"></div>
+        <div class="lnr-detail-meta-grid" id="taskDetailMeta"></div>
+        <div class="lnr-detail-note-label">Napomena</div>
+        <div class="lnr-detail-note" id="taskDetailNote"></div>
+        <div class="lnr-detail-actions" id="taskDetailActions"></div>
+      </div>
+      <!-- Chat inside detail panel -->
+      <div class="lnr-detail-chat-wrap">
+        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:.8rem 1rem .4rem;border-top:1px solid var(--border)">💬 Chat projekta</div>
+        <div id="taskChatMessages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.4rem;padding:.4rem 1rem;min-height:0"></div>
+        <div style="padding:.6rem .8rem;border-top:1px solid var(--border);display:flex;gap:.4rem">
+          <input id="taskChatInput" type="text" placeholder="Poruka..." maxlength="500"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.38rem .65rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;outline:none"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTaskChat()}" />
+          <button onclick="sendTaskChat()" style="background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.38rem .75rem;font-weight:700;cursor:pointer;font-size:.8rem">→</button>
         </div>
       </div>
+    </div>
+    <!-- Hidden compat side chat -->
+    <div id="taskSideChat" style="display:none">
+      <div id="taskSideChatProjName"></div>
     </div>
   </div>
 
@@ -1697,20 +2298,20 @@ button[onclick^="apprSubmitRequest"]:hover {
       </div>
 
       <!-- Filter bar + New project button -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-          <select id="projFilterMonth" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;outline:none">
+      <div class="proj-filter-bar">
+        <div class="proj-filter-selects">
+          <select id="projFilterMonth" onchange="renderProjects()" class="proj-filter-select">
             <option value="">Svi mjeseci</option>
           </select>
-          <select id="projFilterPerson" onchange="renderProjects()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;outline:none;display:none">
+          <select id="projFilterPerson" onchange="renderProjects()" class="proj-filter-select" style="display:none">
             <option value="">Sve osobe</option>
           </select>
         </div>
-        <button class="btn-primary" onclick="openProjForm()" style="padding:.6rem 1.2rem;font-size:.85rem">+ Novi projekt</button>
+        <button class="btn-primary btn-new-proj" onclick="openProjForm()">+ Novi projekt</button>
       </div>
 
       <!-- Main area: list + side chat panel -->
-      <div style="display:flex;gap:1rem;align-items:flex-start">
+      <div class="proj-main-layout">
 
         <!-- Project list -->
         <div style="flex:1;min-width:0">
@@ -1934,17 +2535,17 @@ button[onclick^="apprSubmitRequest"]:hover {
     <!-- Theme Settings -->
     <div class="list-card" style="padding:1.5rem;margin-bottom:1.5rem">
       <div class="section-title" style="margin-bottom:1.2rem"><div><div class="st-text">Izgled aplikacije</div></div></div>
-      <div style="display:flex;gap:1rem;flex-wrap:wrap">
-        <div onclick="setTheme('dark')" id="themeBtn_dark" style="cursor:pointer;border-radius:12px;padding:1rem 1.4rem;border:2px solid var(--gold);background:#0d0f18;display:flex;align-items:center;gap:.7rem;min-width:160px">
-          <div style="width:28px;height:28px;border-radius:50%;background:#c9a227"></div>
+      <div class="theme-cards-grid">
+        <div onclick="setTheme('dark')" id="themeBtn_dark" class="theme-card" style="border:2px solid var(--gold);background:#0d0f18">
+          <div style="width:28px;height:28px;border-radius:50%;background:#c9a227;flex-shrink:0"></div>
           <div><div style="color:#ede9e3;font-size:.88rem;font-weight:600">Dark Gold</div><div style="color:#6b6f80;font-size:.75rem">Trenutna tema</div></div>
         </div>
-        <div onclick="setTheme('light')" id="themeBtn_light" style="cursor:pointer;border-radius:12px;padding:1rem 1.4rem;border:2px solid var(--border);background:#f5f5f0;display:flex;align-items:center;gap:.7rem;min-width:160px">
-          <div style="width:28px;height:28px;border-radius:50%;background:#c9a227"></div>
+        <div onclick="setTheme('light')" id="themeBtn_light" class="theme-card" style="border:2px solid var(--border);background:#f5f5f0">
+          <div style="width:28px;height:28px;border-radius:50%;background:#c9a227;flex-shrink:0"></div>
           <div><div style="color:#1a1a1a;font-size:.88rem;font-weight:600">Light</div><div style="color:#888880;font-size:.75rem">Svijetla tema</div></div>
         </div>
-        <div onclick="setTheme('hanger')" id="themeBtn_hanger" style="cursor:pointer;border-radius:12px;padding:1rem 1.4rem;border:2px solid var(--border);background:#0f0f0f;display:flex;align-items:center;gap:.7rem;min-width:160px">
-          <div style="width:28px;height:28px;border-radius:50%;background:#e8521a"></div>
+        <div onclick="setTheme('hanger')" id="themeBtn_hanger" class="theme-card" style="border:2px solid var(--border);background:#0f0f0f">
+          <div style="width:28px;height:28px;border-radius:50%;background:#e8521a;flex-shrink:0"></div>
           <div><div style="color:#f0ede8;font-size:.88rem;font-weight:600">Hanger</div><div style="color:#888880;font-size:.75rem">Brand narančasta</div></div>
         </div>
       </div>
@@ -1954,7 +2555,7 @@ button[onclick^="apprSubmitRequest"]:hover {
       <div class="section-title" style="margin-bottom:1.2rem"><div><div class="st-text">Upravljanje rođendanima</div><div class="st-sub">Zaposlenici i klijenti</div></div></div>
       <div style="background:var(--surface2);border-radius:12px;padding:1.2rem;margin-bottom:1.2rem;border:1px solid var(--border)">
         <h3 style="margin-bottom:.8rem;font-size:.95rem;color:var(--text)">Dodaj rođendan</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+        <div class="bd-form-grid">
           <input id="bdName" placeholder="Ime i prezime" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.9rem;outline:none">
           <input id="bdDate" type="date" placeholder="Datum rođenja" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.9rem;outline:none">
           <input id="bdClient" placeholder="Klijent (opcionalno)" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-size:.9rem;outline:none">
@@ -1973,7 +2574,7 @@ button[onclick^="apprSubmitRequest"]:hover {
       <div class="section-title" style="margin-bottom:1.5rem"><div><div class="st-text">Upravljanje korisnicima</div><div class="st-sub">Dodajte, uredite ili uklonite korisnike</div></div></div>
       <div style="background:var(--surface2);border-radius:12px;padding:1.5rem;margin-bottom:2rem;border:1px solid var(--border)">
         <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text)">Dodaj novog korisnika</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div class="admin-form-grid">
           <div class="fg"><label>Ime i prezime</label><input type="text" id="newUserName" placeholder="npr. Ana Anić"></div>
           <div class="fg"><label>Email</label><input type="email" id="newUserEmail" placeholder="ana@hanger.hr"></div>
           <div class="fg"><label>Username (za prijavu)</label><input type="text" id="newUserId" placeholder="npr. ana"></div>
@@ -2354,7 +2955,7 @@ function initApp(){
   const MAIN_TABS=[
     { id:'home', label:'🏠 Home' },
     { id:'moji-dani', label:'📋 Moji dani' },
-    ...(canAccessProjects ? [{ id:'project', label:'📊 Projects' }] : []),
+    ...(canAccessProjects ? [{ id:'project', label:'📊 Projekti' }] : []),
     { id:'tasks', label:'✅ Tasks' },
     ...(isAdmin ? [{ id:'admin', label:'⚙️ Admin' }] : []),
   ];
@@ -2385,7 +2986,7 @@ function initApp(){
   const TAB_LABELS = {
     'home': 'Home',
     'moji-dani': 'Moji dani',
-    'project': 'Projects',
+    'project': 'Projekti',
     'tasks': 'Tasks',
     'admin': 'Admin',
   };
@@ -2483,8 +3084,13 @@ function showSubTab(subId){
   const map = currentUser.role==='employee' ? SUB_TAB_MAP_EMP : SUB_TAB_MAP_APPR;
   const tabId = map[subId];
   if(!tabId) return;
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+tabId).classList.add('active');
+  // Clear all tab-content visibility (both class and inline style)
+  document.querySelectorAll('.tab-content').forEach(t=>{
+    t.classList.remove('active');
+    t.style.display = 'none';
+  });
+  const target = document.getElementById('tab-'+tabId);
+  if(target){ target.style.display = ''; target.classList.add('active'); }
 
   // For employee: toggle sections within tab-moj
   if(currentUser.role==='employee' && tabId==='moj'){
@@ -2500,17 +3106,29 @@ function showSubTab(subId){
 }
 
 function switchSubTab(subId, btn){
+  // Deactivate both horizontal sub-tabs AND sidebar sub-items
   document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.sidebar-sub-item').forEach(b=>b.classList.remove('active'));
+  // Activate the clicked button
   btn.classList.add('active');
+  // Also activate the matching counterpart
+  document.querySelectorAll('.sub-tab[data-id="'+subId+'"], .sidebar-sub-item[data-id="'+subId+'"]').forEach(b=>{
+    if(b !== btn) b.classList.add('active');
+  });
   showSubTab(subId);
 }
 
 const PAGE_NAMES = {
-  'home':'Home','moji-dani':'Moji dani','project':'Projects','tasks':'Tasks','admin':'Admin'
+  'home':'Home','moji-dani':'Moji dani','project':'Projekti','tasks':'Tasks','admin':'Admin'
 };
 function switchMainTab(mainId, btn){
   document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  // Always clear sub-item highlights when switching main tabs
+  if(mainId !== 'moji-dani'){
+    document.querySelectorAll('.sidebar-sub-item').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+  }
   // Update top bar title
   const tbn = document.getElementById('topBarPageName');
   if(tbn) tbn.textContent = PAGE_NAMES[mainId]||mainId;
@@ -2533,7 +3151,8 @@ function switchMainTab(mainId, btn){
     subWrap.classList.remove('visible');
     const sidebarSubClose = document.getElementById('sidebarSubMojiDani');
     if(sidebarSubClose) sidebarSubClose.classList.remove('open');
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
+    document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
     if(homeEl) homeEl.style.display='block';
     window.scrollTo({top:0, behavior:'instant'});
     initHomeTab();
@@ -2549,7 +3168,10 @@ function switchMainTab(mainId, btn){
     window.scrollTo({top:0, behavior:'instant'});
   } else if(mainId==='admin'){
     subWrap.classList.remove('visible');
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
+    document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+    const sidebarSub4 = document.getElementById('sidebarSubMojiDani');
+    if(sidebarSub4) sidebarSub4.classList.remove('open');
     const adminEl=document.getElementById('tabAdmin');
     if(adminEl){
       // Keep admin panel inside mainContentWrap
@@ -2570,7 +3192,10 @@ function switchMainTab(mainId, btn){
     return;
   } else if(mainId==='project'){
     subWrap.classList.remove('visible');
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
+    document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+    const sidebarSub2 = document.getElementById('sidebarSubMojiDani');
+    if(sidebarSub2) sidebarSub2.classList.remove('open');
     if(projEl) projEl.style.display='block';
     const sw=document.getElementById('projStatsWrap');
     if(sw) sw.style.display='block';
@@ -2578,7 +3203,10 @@ function switchMainTab(mainId, btn){
     requestAnimationFrame(()=>{ setTimeout(()=>renderProjects(), 10); });
   } else if(mainId==='tasks'){
     subWrap.classList.remove('visible');
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
+    document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+    const sidebarSub3 = document.getElementById('sidebarSubMojiDani');
+    if(sidebarSub3) sidebarSub3.classList.remove('open');
     if(tasksEl2){ tasksEl2.style.display='block'; initTasksTab(); }
     window.scrollTo({top:0, behavior:'instant'});
   }
@@ -3383,15 +4011,15 @@ function renderProjects(){
     const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
     const isFakt=p.fakturirano==='true'||p.fakturirano===true;
     const blind=isFinanceBlind();
-    return`<div class="proj-row" style="grid-template-columns:${blind?'2fr 1.5fr 1fr 1fr':'2fr 1.2fr 1fr 1fr 1fr 1fr 1fr'}" onclick="openProjDetail('${p.id}')">
+    return`<div class="proj-row proj-row-mobile" style="grid-template-columns:${blind?'2fr 1.5fr 1fr 1fr':'2fr 1.2fr 1fr 1fr 1fr 1fr 1fr'}" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
-      <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
-      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
-      ${blind?'\'':`<div class="proj-eur">${fmtEur(invoiced)}</div>`}
-      ${blind?'\'':`<div class="proj-eur red">${fmtEur(totalCost)}</div>`}
-      ${blind?'\'':`<div class="proj-eur green">${fmtEur(profit)}</div>`}
-      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-        ${blind?'\'':`<span class="margin-badge ${mCls}">${margin}%</span>`}
+      <div class="proj-col-person">${p.persons||p.person||'—'}</div>
+      <div class="proj-col-date">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
+      ${blind?'':`<div class="proj-eur proj-col-fin">${fmtEur(invoiced)}</div>`}
+      ${blind?'':`<div class="proj-eur red proj-col-fin">${fmtEur(totalCost)}</div>`}
+      ${blind?'':`<div class="proj-eur green proj-col-fin">${fmtEur(profit)}</div>`}
+      <div class="proj-col-actions" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+        ${blind?'':`<span class="margin-badge ${mCls}">${margin}%</span>`}
         ${(canEdit&&!blind)?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
           <input type="checkbox" ${isFakt?'checked':''} onchange="toggleFakturirano('${p.id}',this.checked)" style="accent-color:var(--green);width:13px;height:13px;cursor:pointer">
           ${isFakt?'✓ Fakt.':'Fakt.'}
@@ -4277,14 +4905,14 @@ function renderProjects(){
     const mCls=margin>=50?'high':margin>=25?'mid':'low';
     const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
     const isFakt=p.fakturirano==='true'||p.fakturirano===true;
-    return`<div class="proj-row" onclick="openProjDetail('${p.id}')">
+    return`<div class="proj-row proj-row-mobile" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
-      <div style="font-size:.82rem">${p.persons||p.person||'—'}</div>
-      <div style="font-size:.81rem;color:var(--muted)">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
-      <div class="proj-eur">${fmtEur(invoiced)}</div>
-      <div class="proj-eur red">${fmtEur(totalCost)}</div>
-      <div class="proj-eur green">${fmtEur(profit)}</div>
-      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <div class="proj-col-person">${p.persons||p.person||'—'}</div>
+      <div class="proj-col-date">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
+      <div class="proj-eur proj-col-fin">${fmtEur(invoiced)}</div>
+      <div class="proj-eur red proj-col-fin">${fmtEur(totalCost)}</div>
+      <div class="proj-eur green proj-col-fin">${fmtEur(profit)}</div>
+      <div class="proj-col-actions" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
         <span class="margin-badge ${mCls}">${margin}%</span>
         ${canEdit?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
           <input type="checkbox" ${isFakt?'checked':''} onchange="toggleFakturirano('${p.id}',this.checked)" style="accent-color:var(--green);width:13px;height:13px;cursor:pointer">
@@ -6049,6 +6677,181 @@ function updateTaskAssignees(){
   renderTasks();
 }
 
+// ── TASK VIEW STATE ──
+let _taskView = 'board'; // 'board' | 'list'
+let _openTaskId = null;
+
+function setTaskView(view, btn) {
+  _taskView = view;
+  document.querySelectorAll('.lnr-view-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderTasks();
+}
+
+function openNewTaskPanel() {
+  const p = document.getElementById('newTaskPanel');
+  if (!p) return;
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  if (p.style.display === 'block') {
+    setTimeout(() => document.getElementById('newTaskName')?.focus(), 50);
+  }
+}
+function closeNewTaskPanel() {
+  const p = document.getElementById('newTaskPanel');
+  if (p) p.style.display = 'none';
+}
+
+// Status cycle: todo → inprogress → done → todo
+function cycleTaskStatus(taskId, e) {
+  e.stopPropagation();
+  if (!_taskCache) return;
+  const idx = _taskCache.findIndex(t => String(t.id) === String(taskId));
+  if (idx < 0) return;
+  const t = _taskCache[idx];
+  const current = t.status || (t.done === 'true' || t.done === true ? 'done' : 'todo');
+  const next = current === 'todo' ? 'inprogress' : current === 'inprogress' ? 'done' : 'todo';
+  _taskCache[idx].status = next;
+  _taskCache[idx].done = (next === 'done') ? 'true' : 'false';
+  // Update card in DOM without full re-render
+  const card = document.querySelector(`[data-taskid="${taskId}"]`);
+  if (card) {
+    card.dataset.status = next;
+    card.classList.toggle('is-done', next === 'done');
+  }
+  // Update list item too
+  const li = document.querySelector(`.lnr-list-item[data-taskid="${taskId}"]`);
+  if (li) {
+    li.dataset.status = next;
+    li.classList.toggle('is-done', next === 'done');
+    const btn = li.querySelector('.lnr-list-status');
+    if (btn) btn.textContent = next === 'done' ? '✓' : next === 'inprogress' ? '◑' : '';
+  }
+  // Update detail panel if open
+  if (_openTaskId === String(taskId)) openTaskDetail(taskId);
+  gasCall('updateTask', { data: { id: taskId, status: next, done: next === 'done' ? 'true' : 'false' } });
+  if (next === 'done') toast('✓ Task završen!');
+}
+
+function openTaskDetail(taskId) {
+  if (!_taskCache) return;
+  const t = _taskCache.find(t => String(t.id) === String(taskId));
+  if (!t) return;
+  _openTaskId = String(taskId);
+  const projs = getProjects();
+  const proj = projs.find(p => String(p.id) === String(t.projectId));
+  const status = t.status || (t.done === 'true' || t.done === true ? 'done' : 'todo');
+  const statusLabels = { todo: '○ Nije počelo', inprogress: '◑ U tijeku', done: '✓ Završeno' };
+  const priorityLabels = { high: '🔴 Visok', medium: '🟡 Srednji', low: '🔵 Nizak' };
+  const dueLabel = t.due ? new Date(t.due + 'T12:00:00').toLocaleDateString('hr-HR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+  document.getElementById('taskDetailId').textContent = 'HGR-' + String(t.id).replace('task_','').slice(-4);
+  const titleEl = document.getElementById('taskDetailTitle');
+  titleEl.textContent = t.name || '—';
+  titleEl.contentEditable = 'false';
+
+  document.getElementById('taskDetailMeta').innerHTML = `
+    <div class="lnr-detail-meta-row" onclick="cycleTaskStatus('${t.id}', event)">
+      <span class="lnr-detail-meta-key">Status</span>
+      <span class="lnr-detail-meta-val">${statusLabels[status] || status}</span>
+    </div>
+    <div class="lnr-detail-meta-row">
+      <span class="lnr-detail-meta-key">Projekt</span>
+      <span class="lnr-detail-meta-val">${proj ? proj.name : '—'}</span>
+    </div>
+    <div class="lnr-detail-meta-row">
+      <span class="lnr-detail-meta-key">Zadužen/a</span>
+      <span class="lnr-detail-meta-val">${t.assignee || '—'}</span>
+    </div>
+    <div class="lnr-detail-meta-row">
+      <span class="lnr-detail-meta-key">Prioritet</span>
+      <span class="lnr-detail-meta-val">${priorityLabels[t.priority] || '—'}</span>
+    </div>
+    <div class="lnr-detail-meta-row">
+      <span class="lnr-detail-meta-key">Rok</span>
+      <span class="lnr-detail-meta-val${t.due && status !== 'done' && new Date(t.due) < new Date() ? ' style="color:var(--red)"' : ''}">${dueLabel}</span>
+    </div>
+    <div class="lnr-detail-meta-row">
+      <span class="lnr-detail-meta-key">Kreirao/la</span>
+      <span class="lnr-detail-meta-val" style="color:var(--muted)">${t.createdBy || '—'}</span>
+    </div>`;
+
+  document.getElementById('taskDetailNote').textContent = t.note || '';
+
+  document.getElementById('taskDetailActions').innerHTML = `
+    <button class="lnr-detail-action-btn" onclick="openTaskDetailEdit('${t.id}')">✏️ Uredi</button>
+    <button class="lnr-detail-action-btn danger" onclick="deleteTask('${t.id}');closeTaskDetail()">🗑 Obriši</button>`;
+
+  // Open chat for this project
+  if (t.projectId) openTaskSideChat(String(t.projectId), proj ? proj.name : '');
+
+  const panel = document.getElementById('taskDetailPanel');
+  panel.classList.add('open');
+}
+
+function closeTaskDetail() {
+  const panel = document.getElementById('taskDetailPanel');
+  panel.classList.remove('open');
+  _openTaskId = null;
+}
+
+function openTaskDetailEdit(taskId) {
+  if (!_taskCache) return;
+  const t = _taskCache.find(t => String(t.id) === String(taskId));
+  if (!t) return;
+  const projs = getProjects();
+  const PERSONS = ['Bruno Sušak','Tomislava Obrč','Magdalena Tenčić','Domagoj Bošnjak','Iva Žmirak','Dario Oxenham','Tomislav Zeljko'];
+  const projOpts = projs.map(p => `<option value="${p.id}" ${String(p.id)===String(t.projectId)?'selected':''}>${p.name}</option>`).join('');
+  const personOpts = PERSONS.map(p => `<option value="${p}" ${p===t.assignee?'selected':''}>${p}</option>`).join('');
+
+  document.getElementById('taskDetailMeta').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:.5rem;padding:.2rem 0">
+      <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:.2rem">Naziv</div>
+        <input id="tde-name" value="${(t.name||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Inter',sans-serif" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:.2rem">Projekt</div>
+          <select id="tde-proj" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.82rem;outline:none;font-family:'Inter',sans-serif">${projOpts}</select></div>
+        <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:.2rem">Zadužen/a</div>
+          <select id="tde-assignee" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.82rem;outline:none;font-family:'Inter',sans-serif"><option value="">—</option>${personOpts}</select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:.2rem">Prioritet</div>
+          <select id="tde-priority" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.82rem;outline:none;font-family:'Inter',sans-serif">
+            <option value="" ${!t.priority?'selected':''}>—</option>
+            <option value="high" ${t.priority==='high'?'selected':''}>🔴 Visok</option>
+            <option value="medium" ${t.priority==='medium'?'selected':''}>🟡 Srednji</option>
+            <option value="low" ${t.priority==='low'?'selected':''}>🔵 Nizak</option>
+          </select></div>
+        <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:.2rem">Rok</div>
+          <input id="tde-due" type="date" value="${t.due||''}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.82rem;outline:none;font-family:'Inter',sans-serif"></div>
+      </div>
+      <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:.2rem">Napomena</div>
+        <input id="tde-note" value="${(t.note||'').replace(/"/g,'&quot;')}" placeholder="Napomena..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.82rem;outline:none;font-family:'Inter',sans-serif">
+      </div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.3rem">
+        <button onclick="openTaskDetail('${t.id}')" class="lnr-btn-cancel">Odustani</button>
+        <button onclick="saveTaskDetailEdit('${t.id}')" class="lnr-btn-save">Spremi</button>
+      </div>
+    </div>`;
+}
+
+async function saveTaskDetailEdit(taskId) {
+  if (!_taskCache) return;
+  const name = document.getElementById('tde-name')?.value.trim();
+  const projectId = document.getElementById('tde-proj')?.value;
+  const assignee = document.getElementById('tde-assignee')?.value;
+  const priority = document.getElementById('tde-priority')?.value;
+  const due = document.getElementById('tde-due')?.value;
+  const note = document.getElementById('tde-note')?.value.trim();
+  if (!name) { toast('Naziv ne može biti prazan.'); return; }
+  const idx = _taskCache.findIndex(t => String(t.id) === String(taskId));
+  if (idx >= 0) _taskCache[idx] = { ..._taskCache[idx], name, projectId, assignee, priority, due, note };
+  gasCall('updateTask', { data: { id: taskId, name, projectId, assignee, priority, due, note } });
+  toast('✓ Spremljeno!');
+  openTaskDetail(taskId);
+  renderTasks();
+}
+
 async function renderTasks(){
   const el=document.getElementById('tasksList');
   if(!el) return;
@@ -6060,120 +6863,135 @@ async function renderTasks(){
   projs.forEach(p=>projMap[String(p.id)]=p);
 
   const filterProj=document.getElementById('taskFilterProject')?.value||'';
-  // Iva sees only open tasks by default (not finance blind users generally)
-  const filterStatusEl = document.getElementById('taskFilterStatus');
-  // Auto-set to 'open' for Iva if no filter chosen yet
+  const filterPriority=document.getElementById('taskFilterPriority')?.value||'';
+  const filterStatusEl=document.getElementById('taskFilterStatus');
   if(filterStatusEl && !filterStatusEl.dataset.userSet && isFinanceBlind()) {
-    if(!filterStatusEl.value) filterStatusEl.value = 'open';
+    if(!filterStatusEl.value) filterStatusEl.value='open';
   }
   const filterStatus=filterStatusEl?.value||'';
 
-  // Filter tasks — employee sees only tasks on their projects or assigned to them
   let myTasks=tasks.filter(t=>{
     const proj=projMap[String(t.projectId)];
     if(!proj) return currentUser.role==='approver';
-    const onProject=currentUser.role==='approver'||personIncludes(proj,currentUser.name)||proj.person===currentUser.name||t.assignee===currentUser.name;
-    return onProject;
+    return currentUser.role==='approver'||personIncludes(proj,currentUser.name)||proj.person===currentUser.name||t.assignee===currentUser.name;
   });
 
   if(filterProj) myTasks=myTasks.filter(t=>String(t.projectId)===filterProj);
+  if(filterPriority) myTasks=myTasks.filter(t=>t.priority===filterPriority);
   if(filterStatus) myTasks=myTasks.filter(t=> filterStatus==='done'?(t.done==='true'||t.done===true):(t.done!=='true'&&t.done!==true));
 
-  // Group by project
-  const grouped={};
-  myTasks.forEach(t=>{
-    const key=String(t.projectId||'ostalo');
-    if(!grouped[key]) grouped[key]=[];
-    grouped[key].push(t);
-  });
-
   if(!myTasks.length){
-    const msg = filterStatus==='done' ? 'Nema završenih taskova.' : 'Nema otvorenih taskova! 🎉';
-    el.innerHTML=`<div class="empty-state"><div class="es-icon">🎯</div><div class="es-title">${msg}</div><div class="es-sub">Promijeni filter za prikaz svih taskova.</div></div>`;
+    el.innerHTML=`<div class="empty-state"><div class="es-icon">🎯</div><div class="es-title">Nema taskova</div><div class="es-sub">Promijeni filter ili dodaj novi task.</div></div>`;
     return;
   }
 
-  el.innerHTML=Object.entries(grouped).map(([projId,ptasks])=>{
-    const proj=projMap[projId];
-    const projName=proj?proj.name+' <span style="color:var(--muted);font-size:.78rem">— '+(proj.client||'')+'</span>':'Ostalo';
-    const done=ptasks.filter(t=>t.done==='true'||t.done===true).length;
+  // Helper: get task status
+  const getStatus = t => t.status || (t.done==='true'||t.done===true ? 'done' : 'todo');
 
-    const PERSONS=['Bruno Sušak','Tomislava Obrč','Magdalena Tenčić','Domagoj Bošnjak','Iva Žmirak','Dario Oxenham','Tomislav Zeljko'];
-    const taskRows=ptasks.map(t=>{
-      const isDone=t.done==='true'||t.done===true;
-      const isOverdue=t.due&&!isDone&&new Date(t.due)<new Date();
-      const dueLabel=t.due?new Date(t.due+'T12:00:00').toLocaleDateString('hr-HR',{day:'numeric',month:'short'}):'';
-      const tid=t.id;
-      const assigneeShort=t.assignee?t.assignee.split(' ')[0]:'—';
+  // Helper: task card HTML
+  const taskCard = (t, view) => {
+    const proj = projMap[String(t.projectId)];
+    const status = getStatus(t);
+    const isDone = status === 'done';
+    const isOverdue = t.due && !isDone && new Date(t.due) < new Date();
+    const dueLabel = t.due ? new Date(t.due+'T12:00:00').toLocaleDateString('hr-HR',{day:'numeric',month:'short'}) : '';
+    const assigneeInitials = t.assignee ? t.assignee.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : '?';
+    const taskNum = String(t.id).replace('task_','').slice(-4);
+    const priorityBadge = t.priority ? `<span class="lnr-priority-badge lnr-priority-${t.priority}">${t.priority==='high'?'↑ Visok':t.priority==='medium'?'→ Srednji':'↓ Nizak'}</span>` : '';
 
-      // Normal view row
-      const normalRow=`<div id="task-view-${tid}" style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:.6rem;align-items:center;padding:.6rem .8rem;border-radius:8px;background:var(--surface2);${isDone?'opacity:.6':''}">
-        <input type="checkbox" ${isDone?'checked':''} onchange="toggleTaskDone('${tid}',this.checked)"
-          style="accent-color:var(--green);width:16px;height:16px;cursor:pointer;flex-shrink:0">
-        <div style="min-width:0">
-          <div style="font-size:.88rem;color:var(--text);${isDone?'text-decoration:line-through;color:var(--muted)':''};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name||'—'}</div>
-          ${t.note?`<div style="font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.note}</div>`:''}
-        </div>
-        <div style="font-size:.78rem;color:var(--muted);white-space:nowrap">${assigneeShort}</div>
-        <div style="font-size:.76rem;color:${isOverdue?'var(--red)':isDone?'var(--green)':'var(--muted)'};white-space:nowrap">${dueLabel}</div>
-        <button onclick="openTaskEdit('${tid}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:.1rem .4rem;transition:color .15s" title="Uredi" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">✏️</button>
-        <button onclick="deleteTask('${tid}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:.1rem .3rem;transition:color .15s" title="Obriši" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">✕</button>
-      </div>`;
-
-      // Edit view row (hidden by default)
-      const personOptions=PERSONS.map(p=>`<option value="${p}" ${p===t.assignee?'selected':''}>${p.split(' ')[0]} ${p.split(' ')[1]}</option>`).join('');
-      const editRow=`<div id="task-edit-${tid}" style="display:none;padding:.8rem;border-radius:8px;background:var(--surface2);border:1px solid var(--gold);gap:.5rem;flex-direction:column">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
-          <div>
-            <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Naziv</div>
-            <input id="te-name-${tid}" value="${(t.name||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Inter',sans-serif">
-          </div>
-          <div>
-            <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Zadužena osoba</div>
-            <select id="te-assignee-${tid}" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Inter',sans-serif">
-              <option value="">—</option>${personOptions}
-            </select>
-          </div>
-          <div>
-            <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Rok</div>
-            <input id="te-due-${tid}" type="date" value="${t.due||''}" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Inter',sans-serif">
-          </div>
-        </div>
-        <div>
-          <div style="font-size:.7rem;color:var(--muted);margin-bottom:.25rem">Napomena</div>
-          <input id="te-note-${tid}" value="${(t.note||'').replace(/"/g,'&quot;')}" placeholder="Napomena..." style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;font-family:'Inter',sans-serif">
-        </div>
-        <div style="display:flex;gap:.5rem;justify-content:flex-end">
-          <button onclick="closeTaskEdit('${tid}')" style="background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:.4rem .9rem;color:var(--muted);font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif">Odustani</button>
-          <button onclick="saveTaskEdit('${tid}')" style="background:var(--gold);border:none;border-radius:6px;padding:.4rem .9rem;color:#000;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Spremi</button>
+    if(view==='list') {
+      return `<div class="lnr-list-item${isDone?' is-done':''}" data-taskid="${t.id}" data-status="${status}"
+          onclick="openTaskDetail('${t.id}')">
+        <button class="lnr-list-status" onclick="cycleTaskStatus('${t.id}',event)" title="Promijeni status">
+          ${status==='done'?'✓':status==='inprogress'?'◑':''}
+        </button>
+        <span class="lnr-list-id">HGR-${taskNum}</span>
+        <span class="lnr-list-title">${t.name||'—'}</span>
+        ${priorityBadge}
+        <span class="lnr-list-assignee">${t.assignee?t.assignee.split(' ')[0]:'—'}</span>
+        <span class="lnr-card-due ${isOverdue?'overdue':'ok'}">${dueLabel}</span>
+        <div class="lnr-list-actions">
+          <button class="lnr-card-action-btn" onclick="openTaskDetailEdit('${t.id}');event.stopPropagation()" title="Uredi">✏️</button>
+          <button class="lnr-card-action-btn del" onclick="deleteTask('${t.id}');event.stopPropagation()" title="Obriši">✕</button>
         </div>
       </div>`;
+    }
 
-      return`<div class="task-draggable" draggable="true" data-taskid="${tid}"
-        ondragstart="taskDragStart(event,'${tid}')"
-        ondragover="taskDragOver(event)"
-        ondragleave="taskDragLeave(event)"
-        ondrop="taskDrop(event,'${projId}')"
-        ondragend="taskDragEnd(event)">
-        ${normalRow}${editRow}
-      </div>`;
-    }).join('');
-
-    return`<div class="list-card" style="padding:1.2rem;margin-bottom:.8rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
-        <div style="font-size:.9rem;font-weight:600;color:var(--text)">${projName}</div>
-        <div style="display:flex;align-items:center;gap:.6rem">
-          <span style="font-size:.75rem;color:var(--muted)">${done}/${ptasks.length} završeno</span>
-          <button onclick="openTaskSideChat('${projId}','${proj?proj.name.replace(/'/g,"\\'"):'Projekt'}')"
-            style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.25rem .6rem;font-size:.75rem;color:var(--muted);cursor:pointer;white-space:nowrap"
-            title="Otvori chat ovog projekta">💬 Chat</button>
-        </div>
+    return `<div class="lnr-task-card${isDone?' is-done':''}" data-taskid="${t.id}" data-status="${status}"
+        onclick="openTaskDetail('${t.id}')" draggable="true"
+        ondragstart="boardDragStart(event,'${t.id}','${status}')"
+        ondragend="boardDragEnd(event)">
+      <div class="lnr-card-actions">
+        <button class="lnr-card-action-btn" onclick="openTaskDetailEdit('${t.id}');event.stopPropagation()" title="Uredi">✏️</button>
+        <button class="lnr-card-action-btn del" onclick="deleteTask('${t.id}');event.stopPropagation()" title="Obriši">✕</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:.4rem">${taskRows}</div>
+      <div class="lnr-card-top">
+        <button class="lnr-card-status-btn" onclick="cycleTaskStatus('${t.id}',event)" title="Promijeni status"></button>
+        <span class="lnr-card-title">${t.name||'—'}</span>
+      </div>
+      <div class="lnr-card-bottom">
+        <span class="lnr-card-id">HGR-${taskNum}</span>
+        <span class="lnr-card-proj" title="${proj?proj.name:''}">${proj?proj.name:''}</span>
+        ${priorityBadge}
+        ${dueLabel?`<span class="lnr-card-due ${isOverdue?'overdue':'ok'}">${dueLabel}</span>`:''}
+        <span class="lnr-card-assignee" title="${t.assignee||''}">${assigneeInitials}</span>
+      </div>
     </div>`;
-  }).join('');
+  };
 
-  // Auto-otvori chat za Ivu na prvom projektu koji ima njen task (ako nije već otvoren)
+  if(_taskView==='board') {
+    const cols = [
+      { status:'todo',       label:'Todo',       icon:'○' },
+      { status:'inprogress', label:'U tijeku',   icon:'◑' },
+      { status:'done',       label:'Završeno',   icon:'✓' },
+    ];
+    const colTasks = {};
+    cols.forEach(c=>{ colTasks[c.status]=[]; });
+    myTasks.forEach(t=>{
+      const s=getStatus(t);
+      if(colTasks[s]) colTasks[s].push(t);
+      else colTasks['todo'].push(t);
+    });
+
+    el.innerHTML=`<div class="lnr-board">${cols.map(c=>`
+      <div class="lnr-col" data-col-status="${c.status}"
+        ondragover="boardColDragOver(event,'${c.status}')"
+        ondragleave="boardColDragLeave(event)"
+        ondrop="boardColDrop(event,'${c.status}')">
+        <div class="lnr-col-header lnr-status-${c.status==='todo'?'todo':c.status==='inprogress'?'inprog':'done'}">
+          <span class="lnr-col-status-icon">${c.icon}</span>
+          ${c.label}
+          <span class="lnr-col-count">${colTasks[c.status].length}</span>
+        </div>
+        ${colTasks[c.status].map(t=>taskCard(t,'board')).join('')}
+      </div>`).join('')}
+    </div>`;
+  } else {
+    // List view grouped by project
+    const grouped={};
+    myTasks.forEach(t=>{
+      const key=String(t.projectId||'ostalo');
+      if(!grouped[key]) grouped[key]=[];
+      grouped[key].push(t);
+    });
+
+    el.innerHTML=`<div class="lnr-list-view">${Object.entries(grouped).map(([projId,ptasks])=>{
+      const proj=projMap[projId];
+      const projName=proj?proj.name:'Ostalo';
+      const done=ptasks.filter(t=>getStatus(t)==='done').length;
+      return `<div class="lnr-list-group">
+        <div class="lnr-list-group-header">
+          <span>${projName}</span>
+          <span class="lnr-col-count">${done}/${ptasks.length} završeno</span>
+          <button onclick="openTaskSideChat('${projId}','${projName.replace(/'/g,"\'")}')"
+            style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.18rem .5rem;font-size:.68rem;color:var(--muted);cursor:pointer">💬 Chat</button>
+        </div>
+        ${ptasks.map(t=>taskCard(t,'list')).join('')}
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  // Auto-open chat for Iva
   if (isFinanceBlind() && !_taskChatProjId) {
     const myAssigned = myTasks.filter(t => t.assignee === currentUser.name);
     if (myAssigned.length) {
@@ -6184,21 +7002,61 @@ async function renderTasks(){
   }
 }
 
+// ── BOARD DRAG & DROP (status change) ──
+let _boardDragTaskId = null;
+let _boardDragStatus = null;
+
+function boardDragStart(e, taskId, status) {
+  _boardDragTaskId = taskId;
+  _boardDragStatus = status;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { e.target.classList.add('task-dragging'); }, 0);
+}
+function boardDragEnd(e) {
+  e.target.classList.remove('task-dragging');
+  document.querySelectorAll('.lnr-col').forEach(c => c.classList.remove('drag-over'));
+}
+function boardColDragOver(e, colStatus) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.lnr-col').forEach(c => c.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+function boardColDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function boardColDrop(e, newStatus) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!_boardDragTaskId || !_taskCache) return;
+  if (_boardDragStatus === newStatus) return;
+  const idx = _taskCache.findIndex(t => String(t.id) === String(_boardDragTaskId));
+  if (idx < 0) return;
+  _taskCache[idx].status = newStatus;
+  _taskCache[idx].done = newStatus === 'done' ? 'true' : 'false';
+  gasCall('updateTask', { data: { id: _boardDragTaskId, status: newStatus, done: newStatus==='done'?'true':'false' } });
+  if (newStatus === 'done') toast('✓ Task završen!');
+  renderTasks();
+  _boardDragTaskId = null;
+}
+
+// ── ADD TASK ──
 async function addTask(){
-  const name=document.getElementById('newTaskName').value.trim();
-  const projectId=document.getElementById('newTaskProject').value;
-  const assignee=document.getElementById('newTaskAssignee').value;
-  const due=document.getElementById('newTaskDue').value;
-  const note=document.getElementById('newTaskNote').value.trim();
+  const name=document.getElementById('newTaskName')?.value.trim();
+  const projectId=document.getElementById('newTaskProject')?.value;
+  const assignee=document.getElementById('newTaskAssignee')?.value;
+  const priority=document.getElementById('newTaskPriority')?.value||'';
+  const due=document.getElementById('newTaskDue')?.value;
+  const note=document.getElementById('newTaskNote')?.value?.trim()||'';
   const errEl=document.getElementById('taskFormErr');
 
-  if(!name||!projectId){ errEl.textContent='Naziv i projekt su obavezni.'; return; }
-  errEl.textContent='';
+  if(!name||!projectId){ if(errEl) errEl.textContent='Naziv i projekt su obavezni.'; return; }
+  if(errEl) errEl.textContent='';
 
   const task={
     id:'task_'+Date.now(),
-    projectId, name, assignee, due, note,
-    done:'false',
+    projectId, name, assignee, priority, due, note,
+    status:'todo', done:'false',
     createdBy:currentUser.name,
     createdAt:new Date().toISOString()
   };
@@ -6208,8 +7066,9 @@ async function addTask(){
   document.getElementById('newTaskName').value='';
   document.getElementById('newTaskNote').value='';
   document.getElementById('newTaskDue').value='';
+  if(document.getElementById('newTaskPriority')) document.getElementById('newTaskPriority').value='';
+  closeNewTaskPanel();
   renderTasks();
-
   gasCall('saveTask',{data:task}).then(r=>console.log('saveTask:',r));
   toast('Task dodan!');
 }
@@ -6270,63 +7129,27 @@ function taskDrop(e, projId){
     .then(r=>console.log('reorderTasks:',r));
 }
 
-function openTaskEdit(taskId){
-  const viewEl=document.getElementById('task-view-'+taskId);
-  const editEl=document.getElementById('task-edit-'+taskId);
-  if(viewEl) viewEl.style.display='none';
-  if(editEl){ editEl.style.display='flex'; editEl.querySelector('input')?.focus(); }
-}
-
-function closeTaskEdit(taskId){
-  const viewEl=document.getElementById('task-view-'+taskId);
-  const editEl=document.getElementById('task-edit-'+taskId);
-  if(viewEl) viewEl.style.display='';
-  if(editEl) editEl.style.display='none';
-}
-
-async function saveTaskEdit(taskId){
-  if(!_taskCache) return;
-  const name=document.getElementById('te-name-'+taskId)?.value.trim();
-  const assignee=document.getElementById('te-assignee-'+taskId)?.value;
-  const due=document.getElementById('te-due-'+taskId)?.value;
-  const note=document.getElementById('te-note-'+taskId)?.value.trim();
-
-  if(!name){ toast('Naziv ne može biti prazan.'); return; }
-
-  const idx=_taskCache.findIndex(t=>String(t.id)===String(taskId));
-  if(idx>=0){
-    _taskCache[idx]={..._taskCache[idx], name, assignee, due, note};
-  }
-
-  renderTasks();
-  gasCall('updateTask',{data:{id:taskId, name, assignee, due, note}}).then(r=>console.log('updateTask:',r));
-  toast('✓ Task spremljen!');
-}
-
+// Compat shims — new system uses openTaskDetailEdit / cycleTaskStatus
+function openTaskEdit(taskId){ openTaskDetail(taskId); }
+function closeTaskEdit(taskId){ closeTaskDetail(); }
+async function saveTaskEdit(taskId){ saveTaskDetailEdit(taskId); }
 async function toggleTaskDone(taskId, checked){
   if(!_taskCache) return;
   const idx=_taskCache.findIndex(t=>String(t.id)===String(taskId));
-  if(idx>=0) _taskCache[idx].done=checked?'true':'false';
-
-  // Update visually in-place — don't re-render (task stays visible)
-  const viewRow = document.getElementById('task-view-'+taskId);
-  if(viewRow){
-    viewRow.style.opacity = checked ? '.55' : '1';
-    const nameEl = viewRow.querySelector('div > div:first-child');
-    if(nameEl) nameEl.style.textDecoration = checked ? 'line-through' : '';
-    if(nameEl) nameEl.style.color = checked ? 'var(--muted)' : 'var(--text)';
-    // Update due date color
-    const dueCols = viewRow.querySelectorAll('div[style*="font-size:.76rem"]');
-    dueCols.forEach(d => { if(checked) d.style.color='var(--green)'; });
+  if(idx>=0){
+    const newStatus = checked ? 'done' : 'todo';
+    _taskCache[idx].done = checked ? 'true' : 'false';
+    _taskCache[idx].status = newStatus;
+    gasCall('updateTask',{data:{id:taskId, done:checked?'true':'false', status:newStatus}});
+    if(checked) toast('✓ Task završen!');
+    renderTasks();
   }
-
-  gasCall('updateTask',{data:{id:taskId,done:checked?'true':'false'}}).then(r=>console.log('updateTask:',r));
-  if(checked) toast('✓ Task završen! Ostaje vidljiv — filtriraj po "Završeni" za pregled.');
 }
 
 async function deleteTask(taskId){
   if(!_taskCache) return;
   _taskCache=_taskCache.filter(t=>String(t.id)!==String(taskId));
+  if(_openTaskId===String(taskId)) closeTaskDetail();
   renderTasks();
   gasCall('deleteTask',{taskId}).then(r=>console.log('deleteTask:',r));
   toast('Task obrisan.');
