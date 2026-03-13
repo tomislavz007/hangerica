@@ -4954,7 +4954,7 @@ async function renderHomeQuizSection() {
     el.innerHTML = `<div style="text-align:center;padding:1rem">
       <div style="font-size:1.5rem;margin-bottom:.5rem">⏳</div>
       <div style="font-size:.88rem;color:var(--muted)">Čekamo da kolege ispune svoje profile za kviz!</div>
-      <button onclick="renderQuizProfileForm(document.getElementById('homeQuiz'), [], [])" style="margin-top:.8rem;background:var(--gold);color:#000;border:none;border-radius:8px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">Uredi moj profil</button>
+      <button onclick="renderQuizProfileForm(document.getElementById('homeQuiz'), null, null, true)" style="margin-top:.8rem;background:var(--gold);color:#000;border:none;border-radius:8px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">Uredi moj profil</button>
     </div>`;
     return;
   }
@@ -5053,7 +5053,7 @@ async function renderHomeQuizSection() {
         </button>`).join('')}
     </div>
     <div style="margin-top:.8rem;text-align:right">
-      <button onclick="renderQuizProfileForm(document.getElementById('homeQuiz'),null,null)"
+      <button onclick="renderQuizProfileForm(document.getElementById('homeQuiz'),null,null,true)"
         style="background:none;border:none;color:var(--muted);font-size:.75rem;cursor:pointer;text-decoration:underline">✏️ Uredi moje odgovore</button>
     </div>
   `;
@@ -5164,7 +5164,7 @@ async function saveQuizRefresh(questionIds) {
   renderHomeQuizSection();
 }
 
-async function renderQuizProfileForm(el, myAnswers, missing) {
+async function renderQuizProfileForm(el, myAnswers, missing, editMode) {
   if (!el) el = document.getElementById('homeQuiz');
   if (!myAnswers) {
     const all = await getQuizAnswers();
@@ -5173,11 +5173,31 @@ async function renderQuizProfileForm(el, myAnswers, missing) {
   const answeredMap = {};
   myAnswers.forEach(a => { answeredMap[a.questionId] = a.answer; });
 
+  // editMode = show all questions with current answers (full profile edit)
+  // otherwise = show only unanswered questions
+  const questionsToShow = editMode
+    ? QUIZ_QUESTIONS_DEF
+    : (missing && missing.length > 0 ? missing : QUIZ_QUESTIONS_DEF.filter(q => !answeredMap[q.id]));
+
+  const subtitle = editMode
+    ? 'Uredi sve svoje odgovore (kolege ih pogađaju u kvizu!)'
+    : 'Kolege će pogađati tvoje odgovore! (min. 5 da se pojavi u kvizu)';
+
+  if (questionsToShow.length === 0 && !editMode) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:.5rem 0">
+        <div style="font-size:1.3rem;margin-bottom:.4rem">✅</div>
+        <div style="font-size:.85rem;color:var(--muted)">Odgovorio/la si na sva pitanja!</div>
+        <button onclick="renderHomeQuizSection()" style="margin-top:.8rem;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.45rem .9rem;color:var(--muted);font-size:.82rem;cursor:pointer;font-family:'Outfit',sans-serif">Natrag</button>
+      </div>`;
+    return;
+  }
+
   el.innerHTML = `
     <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:.3rem">📝 Moj profil za kviz</div>
-    <div style="font-size:.75rem;color:var(--muted);margin-bottom:.9rem">Kolege će pogađati tvoje odgovore! (min. 5 da se pojavi u kvizu)</div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:.9rem">${subtitle}</div>
     <div style="display:flex;flex-direction:column;gap:.55rem" id="quizProfileFields">
-      ${QUIZ_QUESTIONS_DEF.map(q => `
+      ${questionsToShow.map(q => `
         <div style="display:flex;flex-direction:column;gap:.2rem">
           <label style="font-size:.73rem;color:var(--muted)">${q.text}</label>
           <input id="qpf_${q.id}" value="${(answeredMap[q.id]||'').replace(/"/g,'&quot;')}"
