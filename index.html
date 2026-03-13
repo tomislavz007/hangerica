@@ -1491,7 +1491,7 @@ button[onclick^="apprSubmitRequest"]:hover {
 .lnr-list-group { margin-bottom: 1.2rem; }
 .lnr-list-group-header {
   display: flex; align-items: center; gap: .5rem;
-  padding: .5rem .6rem;
+  padding: .5rem .4rem;
   font-size: .72rem; font-weight: 600;
   text-transform: uppercase; letter-spacing: .06em;
   color: var(--text-secondary);
@@ -1501,12 +1501,27 @@ button[onclick^="apprSubmitRequest"]:hover {
 }
 .lnr-list-group-header:hover { background: var(--surface2); border-radius: var(--radius) var(--radius) 0 0; }
 .lnr-list-item {
-  display: flex; align-items: center; gap: .7rem;
-  padding: .5rem .6rem;
+  display: flex; align-items: center; gap: .45rem;
+  padding: .5rem .6rem .5rem .5rem;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background .1s;
+  position: relative;
 }
+.lnr-list-item:last-child { border-bottom: none; }
+.lnr-list-item:hover { background: var(--surface2); }
+.lnr-list-item.is-done .lnr-list-title { text-decoration: line-through; color: var(--muted); }
+/* Drag highlight */
+.lnr-list-item.list-drag-left  { border-left: 2px solid var(--muted); }
+.lnr-list-item.list-drag-right { border-right: 2px solid var(--gold); }
+.lnr-list-item.list-dragging   { opacity: .4; }
+/* Status next/prev indicators on drag */
+.lnr-list-status-hint {
+  position: absolute; right: .5rem; top: 50%; transform: translateY(-50%);
+  font-size: .65rem; color: var(--gold); pointer-events: none;
+  opacity: 0; transition: opacity .12s;
+}
+.lnr-list-item.list-drag-right .lnr-list-status-hint { opacity: 1; }
 .lnr-list-item:last-child { border-bottom: none; }
 .lnr-list-item:hover { background: var(--surface2); }
 .lnr-list-item.is-done .lnr-list-title { text-decoration: line-through; color: var(--muted); }
@@ -1531,13 +1546,7 @@ button[onclick^="apprSubmitRequest"]:hover {
 .lnr-list-actions { display: none; gap: .15rem; }
 .lnr-list-item:hover .lnr-list-actions { display: flex; }
 .lnr-list-rownum {
-  font-size: .62rem;
-  color: var(--muted);
-  min-width: 18px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  opacity: .6;
-  flex-shrink: 0;
+  display: none;
 }
 
 /* ── TASK DETAIL PANEL ── */
@@ -2319,7 +2328,7 @@ button[onclick^="apprSubmitRequest"]:hover {
     </div>
 
     <!-- Board / List view -->
-    <div class="page" style="padding-top:.8rem">
+    <div style="padding:.8rem 1.2rem 1.2rem">
       <div id="tasksList">
         <div id="taskSkeletonInit"></div>
       </div>
@@ -6997,8 +7006,14 @@ async function renderTasks(){
     const priorityBadge = t.priority ? `<span class="lnr-priority-badge lnr-priority-${t.priority}">${t.priority==='high'?'↑ Visok':t.priority==='medium'?'→ Srednji':'↓ Nizak'}</span>` : '';
 
     if(view==='list') {
+      const nextStatus = status==='todo'?'U tijeku':status==='inprogress'?'Završeno':'';
       return `<div class="lnr-list-item${isDone?' is-done':''}" data-taskid="${t.id}" data-status="${status}"
-          onclick="openTaskDetail('${t.id}')">
+          onclick="openTaskDetail('${t.id}')" draggable="true"
+          ondragstart="listItemDragStart(event,'${t.id}','${status}')"
+          ondragend="listItemDragEnd(event)"
+          ondragover="listItemDragOver(event)"
+          ondragleave="listItemDragLeave(event)"
+          ondrop="listItemDrop(event,'${t.id}','${status}')">
         <span class="lnr-list-rownum">${t._listIdx!==undefined?t._listIdx+1:''}</span>
         <button class="lnr-list-status" onclick="cycleTaskStatus('${t.id}',event)" title="Promijeni status">
           ${status==='done'?'✓':status==='inprogress'?'◑':''}
@@ -7012,6 +7027,7 @@ async function renderTasks(){
           <button class="lnr-card-action-btn" onclick="openTaskDetailEdit('${t.id}');event.stopPropagation()" title="Uredi">✏️</button>
           <button class="lnr-card-action-btn del" onclick="deleteTask('${t.id}');event.stopPropagation()" title="Obriši">✕</button>
         </div>
+        ${nextStatus ? `<span class="lnr-list-status-hint">→ ${nextStatus}</span>` : ''}
       </div>`;
     }
 
@@ -7107,6 +7123,13 @@ async function renderTasks(){
         ${ptasks.map(t=>taskCard(t,'list')).join('')}
       </div>`;
     }).join('')}</div>`;
+
+    // Attach touch swipe listeners
+    el.querySelectorAll('.lnr-list-item').forEach(item => {
+      const tid = item.dataset.taskid;
+      const st  = item.dataset.status;
+      if(tid) _attachListSwipe(item, tid, st);
+    });
   }
 
   // Auto-open chat for Iva
@@ -7277,6 +7300,107 @@ function _showDropIndicator(e, targetEl) {
 
 function _clearDropIndicator() {
   if (_dragIndicator) { _dragIndicator.remove(); _dragIndicator = null; }
+}
+
+// ── LIST VIEW HORIZONTAL DRAG (change status) ──
+let _listDragTaskId = null;
+let _listDragStartX = 0;
+let _listDragEl = null;
+
+// ── LIST VIEW TOUCH SWIPE (mobile) ──
+function _attachListSwipe(el, taskId, status) {
+  let startX = 0, startY = 0, moved = false;
+  el.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    moved = false;
+  }, { passive: true });
+  el.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      moved = true;
+      el.classList.remove('list-drag-left','list-drag-right');
+      if(dx > 0) el.classList.add('list-drag-right');
+      else el.classList.add('list-drag-left');
+    }
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    el.classList.remove('list-drag-left','list-drag-right');
+    if(!moved || Math.abs(dx) < 40) return;
+    e.preventDefault();
+    const task = _taskCache && _taskCache.find(t => String(t.id) === String(taskId));
+    if(!task) return;
+    const curStatus = task.status || (task.done==='true'?'done':'todo');
+    const STATUS_ORDER = ['todo','inprogress','done'];
+    const curIdx = STATUS_ORDER.indexOf(curStatus);
+    let newStatus = curStatus;
+    if(dx > 0 && curIdx < STATUS_ORDER.length - 1) newStatus = STATUS_ORDER[curIdx + 1];
+    else if(dx < 0 && curIdx > 0) newStatus = STATUS_ORDER[curIdx - 1];
+    if(newStatus === curStatus) return;
+    task.status = newStatus;
+    task.done = newStatus === 'done' ? 'true' : 'false';
+    gasCall('updateTask', { data: { id: String(taskId), status: newStatus, done: task.done } });
+    const labels = { todo:'Todo', inprogress:'U tijeku', done:'Završeno' };
+    toast(`→ ${labels[newStatus]}`);
+    renderTasks();
+  });
+}
+
+function listItemDragStart(e, taskId, status) {
+  _listDragTaskId = taskId;
+  _listDragStartX = e.clientX;
+  _listDragEl = e.currentTarget;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', taskId);
+  setTimeout(() => { if(_listDragEl) _listDragEl.classList.add('list-dragging'); }, 0);
+}
+function listItemDragEnd(e) {
+  document.querySelectorAll('.lnr-list-item').forEach(el => {
+    el.classList.remove('list-dragging','list-drag-left','list-drag-right');
+  });
+  _listDragTaskId = null;
+  _listDragEl = null;
+}
+function listItemDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const item = e.currentTarget;
+  const rect = item.getBoundingClientRect();
+  const mid = rect.left + rect.width / 2;
+  item.classList.remove('list-drag-left','list-drag-right');
+  if (e.clientX > mid) item.classList.add('list-drag-right');
+  else item.classList.add('list-drag-left');
+}
+function listItemDragLeave(e) {
+  e.currentTarget.classList.remove('list-drag-left','list-drag-right');
+}
+function listItemDrop(e, targetTaskId, targetStatus) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.remove('list-drag-left','list-drag-right');
+  if (!_listDragTaskId || !_taskCache) return;
+  const dragId = String(_listDragTaskId);
+  const rect = e.currentTarget.getBoundingClientRect();
+  const dropRight = e.clientX > rect.left + rect.width / 2;
+
+  // Determine new status based on drop direction
+  const dragTask = _taskCache.find(t => String(t.id) === dragId);
+  if (!dragTask) return;
+  const curStatus = dragTask.status || (dragTask.done==='true'?'done':'todo');
+  const STATUS_ORDER = ['todo','inprogress','done'];
+  const curIdx = STATUS_ORDER.indexOf(curStatus);
+  let newStatus = curStatus;
+  if (dropRight && curIdx < STATUS_ORDER.length - 1) newStatus = STATUS_ORDER[curIdx + 1];
+  else if (!dropRight && curIdx > 0) newStatus = STATUS_ORDER[curIdx - 1];
+  if (newStatus === curStatus) return; // no change
+  dragTask.status = newStatus;
+  dragTask.done = newStatus === 'done' ? 'true' : 'false';
+  gasCall('updateTask', { data: { id: dragId, status: newStatus, done: dragTask.done } });
+  const labels = { todo:'Todo', inprogress:'U tijeku', done:'Završeno' };
+  toast(`→ ${labels[newStatus]}`);
+  renderTasks();
 }
 
 // Column-level drag (for empty columns)
