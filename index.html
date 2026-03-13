@@ -668,6 +668,245 @@ button[onclick^="apprSubmitRequest"]:hover {
   font-size:.82rem;font-weight:500;transition:transform .28s ease;z-index:999;pointer-events:none;}
 #toast.show{transform:translateX(-50%) translateY(0);}
 #toast.error{background:var(--red);}
+
+
+/* HOME LAYOUT CLASSES */
+.home-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+}
+.home-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1rem;
+  align-items: start;
+}
+.home-news-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  grid-template-rows: auto auto;
+  gap: .75rem;
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE — max-width: 600px
+   ═══════════════════════════════════════════ */
+@media (max-width: 600px) {
+
+  /* ── GLOBAL ── */
+  body { font-size: .82rem; }
+  .page { padding: .6rem .75rem; max-width: 100%; }
+
+  /* ── HEADER ── */
+  header { padding: .5rem .75rem !important; }
+  .header-logo { height: 26px !important; }
+  .header-right { gap: .5rem !important; }
+  .header-right > span,
+  .header-right > div[style*="font-size"] { font-size: .72rem !important; }
+
+  /* ── MAIN TABS (scrollable horizontal) ── */
+  .main-tabs {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+    padding: 0 .4rem;
+  }
+  .main-tabs::-webkit-scrollbar { display: none; }
+  .main-tab {
+    padding: .65rem .9rem !important;
+    font-size: .78rem !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── SUB TABS ── */
+  .sub-tabs-wrap {
+    overflow-x: auto !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sub-tabs-wrap::-webkit-scrollbar { display: none; }
+  .sub-tab { white-space: nowrap; flex-shrink: 0; }
+
+  /* ── CARDS ── */
+  .list-card { border-radius: 10px !important; }
+  .list-card h2 { font-size: .95rem !important; padding: .9rem 1rem !important; }
+
+  /* ── HOME TAB ── */
+  .home-stats-row {
+    grid-template-columns: 1fr !important;
+    gap: .6rem !important;
+  }
+  /* Home two-col layout → single col */
+  .home-main-grid { grid-template-columns: 1fr !important; }
+  /* News grid → single col */
+  .home-news-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: unset !important;
+  }
+  /* Home quiz + birthday side panel stacking */
+  .two-col { grid-template-columns: 1fr !important; }
+
+  /* ── MOJI DANI TAB ── */
+  .quota-card {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  .quota-card::before { display: none !important; }
+  .ring-wrap { margin: 0 auto; }
+  .stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+  #miniDashboard,
+  #miniDashboardAppr {
+    grid-template-columns: 1fr !important;
+    gap: .7rem !important;
+  }
+  .form-row2 { grid-template-columns: 1fr !important; }
+  /* Request list → hide columns, show stacked */
+  .list-head { display: none !important; }
+  .req-row,
+  .lh-emp, .lh-appr,
+  .rr-emp, .rr-appr {
+    grid-template-columns: 1fr !important;
+    padding: .8rem 1rem !important;
+    gap: .3rem !important;
+  }
+  .req-days { font-size: .88rem !important; }
+  .status-badge { font-size: .65rem !important; }
+  /* Calendar */
+  .cal-day { min-height: 44px !important; }
+  .cal-day-num { font-size: .68rem !important; }
+  .cal-chip { font-size: .55rem !important; }
+  .cal-header h2 { font-size: .92rem !important; }
+  .cal-month-label { font-size: .95rem !important; min-width: 120px !important; }
+
+  /* ── PROJECTS TAB ── */
+  /* Side panel full width on mobile */
+  #projSidePanel {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border) !important;
+  }
+  /* Projects layout → stack */
+  div[style*="display:flex"][style*="gap:1.2rem"] {
+    flex-direction: column !important;
+  }
+  /* Project list header → hidden */
+  #projListHead { display: none !important; }
+  .proj-row {
+    grid-template-columns: 1fr !important;
+    padding: .8rem 1rem !important;
+    gap: .3rem !important;
+  }
+  .proj-row > * { font-size: .8rem !important; }
+  /* Project stats */
+  div[style*="grid-template-columns:1fr 1fr 1fr"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── TASKS TAB ── */
+  /* Filter row stacking */
+  div[style*="grid-template-columns:2fr 1fr 1fr auto"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: .5rem !important;
+  }
+  /* Task side chat → full width below */
+  #taskSideChat {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border) !important;
+  }
+
+  /* ── ADMIN TAB ── */
+  div[style*="grid-template-columns:1fr 1fr"][style*="margin-bottom:.9rem"] {
+    grid-template-columns: 1fr !important;
+  }
+  div[style*="grid-template-columns:1fr 1fr"][style*="margin-bottom:1rem"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── MODAL ── */
+  .modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 1.2rem !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  .modal-row { font-size: .8rem !important; }
+
+  /* ── BUTTONS ── */
+  .btn-primary { padding: .6rem .9rem !important; font-size: .82rem !important; }
+  .btn-sm { padding: .22rem .55rem !important; font-size: .7rem !important; }
+
+  /* ── BIRTHDAY CALENDAR ── */
+  #homeBdCalCard { order: -1; }
+
+  /* ── HANGERICA BRAND ── */
+  #hangerBrand { display: none !important; }
+
+  /* ── TOAST ── */
+  #toast { width: 88vw !important; text-align: center !important; }
+
+  /* ── LOGIN ── */
+  #loginCard {
+    padding: 2rem 1.2rem !important;
+    margin: 1rem .75rem !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+}
+
+
+  /* ── HEADER extras ── */
+  #lastUpdatedWrap { display: none !important; }
+  .user-chip { gap: .3rem !important; }
+  #userName { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .75rem !important; }
+  .user-avatar { width: 26px !important; height: 26px !important; font-size: .72rem !important; }
+  .role-badge { display: none !important; }
+  .btn-logout { padding: .35rem .6rem !important; font-size: .78rem !important; }
+
+  /* ── SEASONAL BANNER ── */
+  #seasonalBanner { font-size: .75rem !important; padding: .3rem .75rem !important; }
+
+  /* ── QUOTA CARD on Moji dani ── */
+  .quota-card { padding: 1rem !important; }
+  .qstat-val { font-size: 1.1rem !important; }
+
+  /* ── Stat boxes ── */
+  .stat-box .val { font-size: 1.5rem !important; }
+  .stat-box .lbl { font-size: .62rem !important; }
+
+  /* ── Team card grid → 1 col ── */
+  .team-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Request form ── */
+  .form-card { padding: 1rem !important; }
+
+  /* ── Projects ── */
+  .proj-stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .margin-badge { font-size: .65rem !important; }
+
+  /* ── Konzum list ── */
+  #konzumItemsList { max-height: 200px !important; }
+
+  /* ── Mini BD calendar in home ── */
+  #homeBdCalCard { margin-top: .5rem !important; }
+
+/* Medium screens (tablets) */
+@media (max-width: 900px) and (min-width: 601px) {
+  .page { padding: .7rem 1rem; }
+  .home-news-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .home-stats-row { grid-template-columns: 1fr 1fr 1fr !important; }
+  .home-main-grid { grid-template-columns: 1fr !important; }
+  .stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .proj-row { font-size: .82rem !important; }
+}
 </style>
 </head>
 <body>
@@ -733,7 +972,7 @@ button[onclick^="apprSubmitRequest"]:hover {
       </div>
 
       <!-- Top row: stats + news -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.4rem" id="homeStatsRow">
+      <div class="home-stats-row" id="homeStatsRow">
         <div class="list-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:.4rem">
           <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">🏖️ Na godišnjem danas</div>
           <div id="homeOnLeave" style="font-size:.9rem;color:var(--text);margin-top:.3rem">—</div>
@@ -749,7 +988,7 @@ button[onclick^="apprSubmitRequest"]:hover {
       </div>
 
       <!-- Middle row: news + quiz -->
-      <div style="display:grid;grid-template-columns:1fr 380px;gap:1rem;align-items:start">
+      <div class="home-main-grid">
 
         <!-- Poslovni.hr vijesti -->
         <div class="list-card" style="padding:1.4rem">
@@ -764,7 +1003,7 @@ button[onclick^="apprSubmitRequest"]:hover {
               <a href="https://lidermedia.hr/" target="_blank" title="Lider Media" style="font-size:.72rem;color:var(--muted);text-decoration:none;padding:.18rem .5rem;border-radius:4px;border:1px solid var(--border)">Lider</a>
             </div>
           </div>
-          <div id="homeNews" style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto;gap:.75rem">
+          <div id="homeNews" class="home-news-grid">
             <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem">Učitavanje vijesti...</div>
           </div>
         </div>
