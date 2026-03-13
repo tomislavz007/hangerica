@@ -353,6 +353,30 @@ select option{background:var(--surface2);}
 .sidebar-sub-item:hover { background: var(--surface2); color: var(--text-secondary); }
 .sidebar-sub-item.active { color: var(--gold); background: var(--gold-dim); }
 
+/* Sidebar clock */
+.sidebar-clock {
+  text-align: center;
+  padding: .5rem .5rem .35rem;
+  margin-bottom: .35rem;
+  border-radius: var(--radius);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+.sidebar-clock-time {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: .04em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.sidebar-clock-date {
+  font-size: .62rem;
+  color: var(--text-secondary);
+  margin-top: .1rem;
+  letter-spacing: .02em;
+}
+
 /* Sidebar footer — user */
 .sidebar-footer {
   padding: .7rem .6rem;
@@ -1506,6 +1530,15 @@ button[onclick^="apprSubmitRequest"]:hover {
 .lnr-list-due { font-size: .72rem; min-width: 60px; text-align: right; }
 .lnr-list-actions { display: none; gap: .15rem; }
 .lnr-list-item:hover .lnr-list-actions { display: flex; }
+.lnr-list-rownum {
+  font-size: .62rem;
+  color: var(--muted);
+  min-width: 18px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: .6;
+  flex-shrink: 0;
+}
 
 /* ── TASK DETAIL PANEL ── */
 .lnr-task-detail-panel {
@@ -1600,6 +1633,37 @@ button[onclick^="apprSubmitRequest"]:hover {
 
 /* Drag over for board columns */
 .lnr-col.drag-over { outline: 2px dashed var(--gold); outline-offset: -2px; border-radius: var(--radius-lg); }
+
+/* Card-level drag states */
+.lnr-task-card.task-dragging {
+  opacity: .35;
+  transform: scale(.97);
+  cursor: grabbing !important;
+}
+.lnr-task-card.drag-card-over {
+  outline: 2px solid var(--gold);
+  outline-offset: -1px;
+}
+.lnr-col-drop-end {
+  min-height: 40px;
+  border-radius: var(--radius);
+  transition: background .12s;
+}
+.lnr-col-drop-end.drag-card-over {
+  background: var(--gold-dim);
+  outline: 1px dashed var(--gold);
+  outline-offset: -1px;
+}
+.lnr-col-cards {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  position: relative;
+}
+.lnr-drop-line {
+  pointer-events: none;
+  transition: top .08s;
+}
 
 /* Mobile — see comprehensive block below */
 
@@ -1731,6 +1795,10 @@ button[onclick^="apprSubmitRequest"]:hover {
     </div>
     <div class="sidebar-footer">
       <div id="seasonalBannerSide" style="font-size:.7rem;color:var(--gold);padding:.3rem .5rem;margin-bottom:.4rem;text-align:center;display:none"></div>
+      <div class="sidebar-clock">
+        <div class="sidebar-clock-time" id="sidebarClock">--:--:--</div>
+        <div class="sidebar-clock-date" id="sidebarDate">—</div>
+      </div>
       <div class="sidebar-user">
         <div class="sidebar-avatar" id="userAvatar">?</div>
         <div class="sidebar-user-info">
@@ -2915,6 +2983,32 @@ async function doLogin(){
   }
 }
 
+let _clockInterval = null;
+function startClock(){
+  if(_clockInterval) clearInterval(_clockInterval);
+  const DAYS_HR = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
+  const MONTHS_HR = ['siječnja','veljače','ožujka','travnja','svibnja','lipnja',
+                     'srpnja','kolovoza','rujna','listopada','studenoga','prosinca'];
+  function tick(){
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    const el = document.getElementById('sidebarClock');
+    const dt = document.getElementById('sidebarDate');
+    if(el) el.textContent = `${h}:${m}:${s}`;
+    if(dt){
+      const day = DAYS_HR[now.getDay()];
+      const date = now.getDate();
+      const month = MONTHS_HR[now.getMonth()];
+      const year = now.getFullYear();
+      dt.textContent = `${day}, ${date}. ${month} ${year}.`;
+    }
+  }
+  tick();
+  _clockInterval = setInterval(tick, 1000);
+}
+
 function doLogout(){
   sessionStorage.removeItem('hgr_token');
   sessionStorage.removeItem('hgr_uid');
@@ -2946,6 +3040,9 @@ function initApp(){
   const rb=document.getElementById('userRole');
   rb.textContent=currentUser.role==='approver'?'Odobravatelj':'Zaposlenik';
   rb.className='sidebar-user-role';
+
+  // ── Start real-time clock ──
+  startClock();
 
   // ── Build main tabs ──
   const mainTabsEl=document.getElementById('mainTabs');
@@ -6902,6 +6999,7 @@ async function renderTasks(){
     if(view==='list') {
       return `<div class="lnr-list-item${isDone?' is-done':''}" data-taskid="${t.id}" data-status="${status}"
           onclick="openTaskDetail('${t.id}')">
+        <span class="lnr-list-rownum">${t._listIdx!==undefined?t._listIdx+1:''}</span>
         <button class="lnr-list-status" onclick="cycleTaskStatus('${t.id}',event)" title="Promijeni status">
           ${status==='done'?'✓':status==='inprogress'?'◑':''}
         </button>
@@ -6918,9 +7016,7 @@ async function renderTasks(){
     }
 
     return `<div class="lnr-task-card${isDone?' is-done':''}" data-taskid="${t.id}" data-status="${status}"
-        onclick="openTaskDetail('${t.id}')" draggable="true"
-        ondragstart="boardDragStart(event,'${t.id}','${status}')"
-        ondragend="boardDragEnd(event)">
+        onclick="openTaskDetail('${t.id}')" draggable="true" style="cursor:grab">
       <div class="lnr-card-actions">
         <button class="lnr-card-action-btn" onclick="openTaskDetailEdit('${t.id}');event.stopPropagation()" title="Uredi">✏️</button>
         <button class="lnr-card-action-btn del" onclick="deleteTask('${t.id}');event.stopPropagation()" title="Obriši">✕</button>
@@ -6952,6 +7048,15 @@ async function renderTasks(){
       if(colTasks[s]) colTasks[s].push(t);
       else colTasks['todo'].push(t);
     });
+    // Sort each column by boardPos (free-form order), fallback to sortOrder then createdAt
+    cols.forEach(c=>{
+      colTasks[c.status].sort((a,b)=>{
+        const ap = a.boardPos !== undefined ? Number(a.boardPos) : (a.sortOrder !== undefined ? Number(a.sortOrder) : Infinity);
+        const bp = b.boardPos !== undefined ? Number(b.boardPos) : (b.sortOrder !== undefined ? Number(b.sortOrder) : Infinity);
+        if(ap !== bp) return ap - bp;
+        return (a.createdAt||'') < (b.createdAt||'') ? -1 : 1;
+      });
+    });
 
     el.innerHTML=`<div class="lnr-board">${cols.map(c=>`
       <div class="lnr-col" data-col-status="${c.status}"
@@ -6963,13 +7068,26 @@ async function renderTasks(){
           ${c.label}
           <span class="lnr-col-count">${colTasks[c.status].length}</span>
         </div>
-        ${colTasks[c.status].map(t=>taskCard(t,'board')).join('')}
+        <div class="lnr-col-cards" data-col-status="${c.status}">
+          ${colTasks[c.status].map(t=>taskCard(t,'board')).join('')}
+          <div class="lnr-col-drop-end" data-col-status="${c.status}"></div>
+        </div>
       </div>`).join('')}
     </div>`;
+    // Attach card-level drag events after render
+    requestAnimationFrame(()=>attachCardDragEvents());
   } else {
-    // List view grouped by project
+    // List view grouped by project — sorted by sortOrder/boardPos then createdAt
     const grouped={};
-    myTasks.forEach(t=>{
+    // Sort all tasks for list view: by sortOrder then boardPos then createdAt
+    const listTasks = [...myTasks].sort((a,b)=>{
+      const as = a.sortOrder !== undefined ? Number(a.sortOrder) : (a.boardPos !== undefined ? Number(a.boardPos) : Infinity);
+      const bs = b.sortOrder !== undefined ? Number(b.sortOrder) : (b.boardPos !== undefined ? Number(b.boardPos) : Infinity);
+      if(as !== bs) return as - bs;
+      return (a.createdAt||'') < (b.createdAt||'') ? -1 : 1;
+    });
+    listTasks.forEach((t,i)=>{
+      t._listIdx = i; // row number for display
       const key=String(t.projectId||'ostalo');
       if(!grouped[key]) grouped[key]=[];
       grouped[key].push(t);
@@ -7002,21 +7120,179 @@ async function renderTasks(){
   }
 }
 
-// ── BOARD DRAG & DROP (status change) ──
+// ══════════════════════════════════════════
+// BOARD FREE-FORM DRAG & DROP
+// Cards can be reordered within columns AND moved between columns.
+// Positions are saved as `boardPos` on each task and persisted to GAS.
+// List view always shows tasks sorted by sortOrder/boardPos.
+// ══════════════════════════════════════════
 let _boardDragTaskId = null;
 let _boardDragStatus = null;
+let _dragIndicator = null;  // visual drop line
 
-function boardDragStart(e, taskId, status) {
-  _boardDragTaskId = taskId;
-  _boardDragStatus = status;
+// Called after board renders — attaches drag events to every card
+function attachCardDragEvents() {
+  document.querySelectorAll('.lnr-task-card').forEach(card => {
+    card.addEventListener('dragstart', _cardDragStart);
+    card.addEventListener('dragend',   _cardDragEnd);
+  });
+  // Drop zones: cards + empty-col sentinels
+  document.querySelectorAll('.lnr-task-card, .lnr-col-drop-end').forEach(el => {
+    el.addEventListener('dragover',  _cardDragOver);
+    el.addEventListener('dragleave', _cardDragLeave);
+    el.addEventListener('drop',      _cardDrop);
+  });
+}
+
+function _cardDragStart(e) {
+  _boardDragTaskId = this.dataset.taskid;
+  _boardDragStatus = this.dataset.status;
   e.dataTransfer.effectAllowed = 'move';
-  setTimeout(() => { e.target.classList.add('task-dragging'); }, 0);
+  e.dataTransfer.setData('text/plain', _boardDragTaskId);
+  setTimeout(() => this.classList.add('task-dragging'), 0);
+}
+
+function _cardDragEnd(e) {
+  this.classList.remove('task-dragging');
+  _clearDropIndicator();
+  document.querySelectorAll('.lnr-col').forEach(c => c.classList.remove('drag-over'));
+  document.querySelectorAll('.lnr-task-card, .lnr-col-drop-end').forEach(c => c.classList.remove('drag-card-over'));
+}
+
+function _cardDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (String(this.dataset.taskid) === String(_boardDragTaskId)) return;
+  // Highlight target card
+  document.querySelectorAll('.lnr-task-card, .lnr-col-drop-end').forEach(c => c.classList.remove('drag-card-over'));
+  this.classList.add('drag-card-over');
+  // Show drop indicator line
+  _showDropIndicator(e, this);
+}
+
+function _cardDragLeave(e) {
+  this.classList.remove('drag-card-over');
+}
+
+function _cardDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  _clearDropIndicator();
+  document.querySelectorAll('.lnr-task-card, .lnr-col-drop-end').forEach(c => c.classList.remove('drag-card-over'));
+  document.querySelectorAll('.lnr-col').forEach(c => c.classList.remove('drag-over'));
+
+  if (!_boardDragTaskId || !_taskCache) return;
+  const dragId = String(_boardDragTaskId);
+
+  // Determine target col from the drop target
+  const targetEl = this;
+  const isEndZone = targetEl.classList.contains('lnr-col-drop-end');
+  const newStatus = targetEl.dataset.colStatus || targetEl.dataset.status;
+  if (!newStatus) return;
+
+  // Determine insert position (before or after based on mouse Y)
+  let insertBeforeId = null;
+  if (!isEndZone) {
+    const targetId = String(targetEl.dataset.taskid);
+    if (targetId === dragId) return;
+    const rect = targetEl.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      insertBeforeId = targetId; // insert above target
+    } else {
+      insertBeforeId = null; // insert after — handled by moving drag after target below
+    }
+    // Actually, use index-based: find target index and whether above/below
+    const allCardsInCol = [...document.querySelectorAll(`.lnr-col[data-col-status="${newStatus}"] .lnr-task-card`)];
+    const targetIdx = allCardsInCol.indexOf(targetEl);
+    const insertIdx = e.clientY < rect.top + rect.height / 2 ? targetIdx : targetIdx + 1;
+    _applyBoardDrop(dragId, newStatus, insertIdx, allCardsInCol.map(c=>c.dataset.taskid));
+    return;
+  }
+  // Drop on end zone — append to end of column
+  const allCardsInCol = [...document.querySelectorAll(`.lnr-col[data-col-status="${newStatus}"] .lnr-task-card`)];
+  _applyBoardDrop(dragId, newStatus, allCardsInCol.length, allCardsInCol.map(c=>c.dataset.taskid));
+}
+
+function _applyBoardDrop(dragId, newStatus, insertIdx, colCardIds) {
+  if (!_taskCache) return;
+
+  const dragIdx = _taskCache.findIndex(t => String(t.id) === dragId);
+  if (dragIdx < 0) return;
+
+  // Update status
+  const oldStatus = _taskCache[dragIdx].status || (_taskCache[dragIdx].done==='true'?'done':'todo');
+  _taskCache[dragIdx].status  = newStatus;
+  _taskCache[dragIdx].done    = newStatus === 'done' ? 'true' : 'false';
+
+  // Build new order: remove drag from its old position in colCardIds, insert at insertIdx
+  const filteredIds = colCardIds.filter(id => String(id) !== dragId);
+  filteredIds.splice(insertIdx, 0, dragId);
+
+  // Assign boardPos within this status group
+  // All tasks NOT in this status keep their existing boardPos
+  // Tasks in this status get new boardPos = index * 1000
+  let boardPosCounter = 0;
+  filteredIds.forEach(id => {
+    const i = _taskCache.findIndex(t => String(t.id) === String(id));
+    if (i >= 0) _taskCache[i].boardPos = (boardPosCounter++) * 1000;
+  });
+
+  // Persist
+  gasCall('updateTask', {
+    data: { id: dragId, status: newStatus, done: newStatus==='done'?'true':'false',
+            boardPos: _taskCache[dragIdx].boardPos }
+  });
+  // Also batch-save new positions for all cards in this col
+  filteredIds.forEach((id,pos) => {
+    if (String(id) !== dragId) {
+      gasCall('updateTask', { data: { id, boardPos: pos * 1000 } });
+    }
+  });
+
+  if (newStatus === 'done' && oldStatus !== 'done') toast('✓ Task završen!');
+  renderTasks();
+  _boardDragTaskId = null;
+}
+
+function _showDropIndicator(e, targetEl) {
+  _clearDropIndicator();
+  const rect = targetEl.getBoundingClientRect();
+  const colCards = targetEl.closest('.lnr-col-cards');
+  if (!colCards) return;
+  const above = e.clientY < rect.top + rect.height / 2;
+
+  const line = document.createElement('div');
+  line.className = 'lnr-drop-line';
+  line.style.cssText = 'position:absolute;left:0;right:0;height:2px;background:var(--gold);border-radius:1px;pointer-events:none;z-index:100';
+
+  // Position relative to colCards
+  const colRect = colCards.getBoundingClientRect();
+  const y = above ? (rect.top - colRect.top - 1) : (rect.bottom - colRect.top + 1);
+  line.style.top = y + 'px';
+  colCards.style.position = 'relative';
+  colCards.appendChild(line);
+  _dragIndicator = line;
+}
+
+function _clearDropIndicator() {
+  if (_dragIndicator) { _dragIndicator.remove(); _dragIndicator = null; }
+}
+
+// Column-level drag (for empty columns)
+function boardDragStart(e, taskId, status) {
+  _boardDragTaskId = taskId; _boardDragStatus = status;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el=e.target; if(el) el.classList.add('task-dragging'); }, 0);
 }
 function boardDragEnd(e) {
-  e.target.classList.remove('task-dragging');
+  if(e.target) e.target.classList.remove('task-dragging');
+  _clearDropIndicator();
   document.querySelectorAll('.lnr-col').forEach(c => c.classList.remove('drag-over'));
 }
 function boardColDragOver(e, colStatus) {
+  // Only highlight col if dragging over the header/empty area
+  if (e.target.closest('.lnr-task-card')) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   document.querySelectorAll('.lnr-col').forEach(c => c.classList.remove('drag-over'));
@@ -7026,18 +7302,13 @@ function boardColDragLeave(e) {
   e.currentTarget.classList.remove('drag-over');
 }
 function boardColDrop(e, newStatus) {
+  // Only handle if NOT dropped on a card (cards handle themselves)
+  if (e.target.closest('.lnr-task-card') || e.target.closest('.lnr-col-drop-end')) return;
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
   if (!_boardDragTaskId || !_taskCache) return;
-  if (_boardDragStatus === newStatus) return;
-  const idx = _taskCache.findIndex(t => String(t.id) === String(_boardDragTaskId));
-  if (idx < 0) return;
-  _taskCache[idx].status = newStatus;
-  _taskCache[idx].done = newStatus === 'done' ? 'true' : 'false';
-  gasCall('updateTask', { data: { id: _boardDragTaskId, status: newStatus, done: newStatus==='done'?'true':'false' } });
-  if (newStatus === 'done') toast('✓ Task završen!');
-  renderTasks();
-  _boardDragTaskId = null;
+  const allCardsInCol = [...document.querySelectorAll(`.lnr-col[data-col-status="${newStatus}"] .lnr-task-card`)];
+  _applyBoardDrop(String(_boardDragTaskId), newStatus, allCardsInCol.length, allCardsInCol.map(c=>c.dataset.taskid));
 }
 
 // ── ADD TASK ──
