@@ -2733,9 +2733,8 @@ button[onclick^="apprSubmitRequest"]:hover {
     <div class="modal-info" id="modalInfo"></div>
     <div class="modal-actions" id="modalActions"></div>
   </div>
+</div>
 
-<!-- Custom confirm dialog -->
-<!-- Theme picker dropdown -->
 <!-- ══ MODAL: Nova objava ══ -->
 <div id="annModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6000;align-items:center;justify-content:center">
   <div style="background:var(--surface2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:1.4rem;width:min(480px,92vw);max-height:90vh;overflow-y:auto">
@@ -8625,6 +8624,12 @@ checkRegistrationToken();
     localStorage.removeItem('hgr_expires');
   }
 })();
+
+// ── Premjesti modale na body razinu (fix za display:none parent) ──
+['annModal','pollModal','confirmDialog','themePicker'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el && el.parentElement !== document.body) document.body.appendChild(el);
+});
 
 // ── PWA Service Worker ──────────────────────────────────
 if('serviceWorker' in navigator){
