@@ -7418,6 +7418,8 @@ function cycleTaskStatus(taskId, e) {
   if (_openTaskId === String(taskId)) openTaskDetail(taskId);
   gasCall('updateTask', { data: { id: taskId, status: next, done: next === 'done' ? 'true' : 'false' } });
   if (next === 'done') toast('✓ Task završen!');
+  // Osvježi Home stats widget (broj otvorenih taskova)
+  renderHomeStats();
 }
 
 function openTaskDetail(taskId) {
@@ -7853,6 +7855,7 @@ function _applyBoardDrop(dragId, newStatus, insertIdx, colCardIds) {
 
   if (newStatus === 'done' && oldStatus !== 'done') toast('✓ Task završen!');
   renderTasks();
+  renderHomeStats();
   _boardDragTaskId = null;
 }
 
@@ -7923,6 +7926,7 @@ function _attachListSwipe(el, taskId, status) {
     const labels = { todo:'Todo', inprogress:'U tijeku', done:'Završeno' };
     toast(`→ ${labels[newStatus]}`);
     renderTasks();
+    renderHomeStats();
   });
 }
 
@@ -7992,6 +7996,7 @@ function listItemDrop(e, targetTaskId, targetStatus) {
   const labels = { todo:'Todo', inprogress:'U tijeku', done:'Završeno' };
   toast(`→ ${labels[newStatus]}`);
   renderTasks();
+  renderHomeStats();
 }
 
 // Column-level drag (for empty columns)
@@ -8129,6 +8134,7 @@ async function toggleTaskDone(taskId, checked){
     gasCall('updateTask',{data:{id:taskId, done:checked?'true':'false', status:newStatus}});
     if(checked) toast('✓ Task završen!');
     renderTasks();
+    renderHomeStats();
   }
 }
 
