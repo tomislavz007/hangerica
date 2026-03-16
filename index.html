@@ -353,6 +353,62 @@ select option{background:var(--surface2);}
 .sidebar-sub-item:hover { background: var(--surface2); color: var(--text-secondary); }
 .sidebar-sub-item.active { color: var(--gold); background: var(--gold-dim); }
 
+/* ── Oglasna ploča ── */
+.board-post {
+  border-radius: var(--radius); padding: .6rem .75rem;
+  border-left: 3px solid var(--border-strong); background: var(--surface2); position: relative;
+}
+.board-post.type-warn  { border-left-color: var(--amber); }
+.board-post.type-party { border-left-color: var(--green); }
+.board-post.type-task  { border-left-color: var(--blue);  }
+.board-post.type-info  { border-left-color: var(--muted); }
+.board-post-title { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: .2rem; }
+.board-post-body  { font-size: .75rem; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
+.board-post-meta  { font-size: .65rem; color: var(--muted); margin-top: .35rem; display: flex; justify-content: space-between; align-items: center; }
+.board-del-btn    { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.75rem; padding:0; line-height:1; display:none; }
+.board-post:hover .board-del-btn { display:inline; }
+
+/* ── Timski chat ── */
+.tc-msg { display: flex; gap: .4rem; align-items: flex-start; }
+.tc-msg.me { flex-direction: row-reverse; }
+.tc-avatar-s {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #0d0f18; font-size: .58rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tc-bubble { background: var(--surface2); border-radius: 10px 10px 10px 2px; padding: .35rem .6rem; max-width: 80%; }
+.tc-msg.me .tc-bubble { background: var(--gold-dim); border-radius: 10px 10px 2px 10px; }
+.tc-name { font-size: .6rem; color: var(--muted); margin-bottom: .1rem; font-weight: 600; }
+.tc-text { font-size: .78rem; color: var(--text); line-height: 1.4; word-break: break-word; }
+.tc-time { font-size: .6rem; color: var(--muted); margin-top: .1rem; text-align: right; }
+
+/* ── Ankete ── */
+.poll-item { background: var(--surface2); border-radius: var(--radius); padding: .75rem; }
+.poll-q    { font-size: .84rem; font-weight: 700; color: var(--text); margin-bottom: .6rem; }
+.poll-opt  {
+  display: flex; align-items: center; gap: .5rem; padding: .35rem .5rem;
+  border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border);
+  margin-bottom: .3rem; position: relative; overflow: hidden; transition: border-color .15s;
+}
+.poll-opt:hover:not(.voted) { border-color: var(--gold); }
+.poll-opt-bar { position: absolute; left:0; top:0; bottom:0; background: var(--gold-dim); z-index:0; transition: width .4s ease; }
+.poll-opt.winner .poll-opt-bar { background: rgba(201,162,39,.25); }
+.poll-opt-label { font-size: .78rem; color: var(--text); z-index:1; flex:1; }
+.poll-opt-pct   { font-size: .7rem; color: var(--muted); z-index:1; font-weight:600; }
+.poll-meta { font-size: .65rem; color: var(--muted); margin-top: .4rem; display:flex; justify-content:space-between; }
+.poll-del-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.72rem; padding:0; }
+
+/* ── Instagram skeleton ── */
+.ig-skeleton { aspect-ratio:1; border-radius:var(--radius); background:var(--surface2); animation:igPulse 1.4s ease-in-out infinite; }
+@keyframes igPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+.ig-post { aspect-ratio:1; border-radius:var(--radius); overflow:hidden; position:relative; cursor:pointer; display:block; text-decoration:none; }
+.ig-post img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .2s; }
+.ig-post:hover img { transform:scale(1.04); }
+.ig-post-overlay { position:absolute; inset:0; background:rgba(0,0,0,.55); opacity:0; transition:opacity .2s; display:flex; align-items:flex-end; padding:.5rem; }
+.ig-post:hover .ig-post-overlay { opacity:1; }
+.ig-post-caption { font-size:.65rem; color:#fff; line-height:1.3; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
 /* Sidebar clock */
 .sidebar-clock {
   text-align: center;
@@ -1269,7 +1325,7 @@ button[onclick^="apprSubmitRequest"]:hover {
 
   /* ── TOAST ── */
   #toast {
-    bottom: 72px !important;
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
     left: 5vw !important; right: 5vw !important;
     width: auto !important; text-align: center !important;
   }
@@ -2006,6 +2062,78 @@ button[onclick^="apprSubmitRequest"]:hover {
           <div id="quoteAuthor" style="font-size:.75rem;color:var(--muted);text-align:right">—</div>
         </div>
 
+        <!-- ══ OGLASNA PLOČA ══ -->
+        <div class="list-card" style="padding:1.4rem" id="boardCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+            <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem">
+              <span>📢</span> Oglasna ploča
+            </div>
+            <button id="boardNewBtn" onclick="openBoardForm()" style="display:none;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.28rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Objava</button>
+          </div>
+          <!-- forma za novu objavu (admin) -->
+          <div id="boardForm" style="display:none;background:var(--surface2);border-radius:var(--radius);padding:.8rem;margin-bottom:.8rem">
+            <input id="boardTitle" placeholder="Naslov objave..." style="width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:.3rem 0;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;margin-bottom:.5rem">
+            <textarea id="boardBody" placeholder="Tekst objave..." rows="3" style="width:100%;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .5rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;outline:none;resize:none;box-sizing:border-box;margin-bottom:.5rem"></textarea>
+            <div style="display:flex;gap:.4rem;justify-content:flex-end">
+              <select id="boardType" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.25rem .5rem;color:var(--text-secondary);font-size:.72rem;font-family:'Inter',sans-serif">
+                <option value="info">ℹ️ Info</option>
+                <option value="warn">⚠️ Važno</option>
+                <option value="party">🎉 Čestitka</option>
+                <option value="task">✅ Zadatak</option>
+              </select>
+              <button onclick="closeBoardForm()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.25rem .6rem;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">Odustani</button>
+              <button onclick="saveBoardPost()" style="background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.25rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Objavi</button>
+            </div>
+          </div>
+          <div id="boardList" style="display:flex;flex-direction:column;gap:.55rem">
+            <div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.8rem 0">Učitavanje...</div>
+          </div>
+        </div>
+
+        <!-- ══ TIMSKI CHAT ══ -->
+        <div class="list-card" style="padding:1.4rem" id="teamChatCard">
+          <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
+            <span>💬</span> Timski chat
+          </div>
+          <div id="teamChatMsgs" style="height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:.45rem;padding-right:.2rem;margin-bottom:.7rem">
+            <div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.8rem 0">Učitavanje...</div>
+          </div>
+          <div style="display:flex;gap:.4rem">
+            <input id="teamChatInput" type="text" placeholder="Poruka timu..." maxlength="400"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.38rem .6rem;color:var(--text);font-size:.8rem;font-family:'Inter',sans-serif;outline:none"
+              onkeydown="if(event.key==='Enter')sendTeamChat()">
+            <button onclick="sendTeamChat()" style="background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.38rem .8rem;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">→</button>
+          </div>
+        </div>
+
+        <!-- ══ ANKETE ══ -->
+        <div class="list-card" style="padding:1.4rem" id="pollsCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+            <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem">
+              <span>🗳️</span> Ankete
+            </div>
+            <button id="pollNewBtn" onclick="openPollForm()" style="display:none;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.28rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Anketa</button>
+          </div>
+          <!-- forma za novu anketu (admin) -->
+          <div id="pollForm" style="display:none;background:var(--surface2);border-radius:var(--radius);padding:.8rem;margin-bottom:.8rem">
+            <input id="pollQuestion" placeholder="Pitanje..." style="width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:.3rem 0;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;margin-bottom:.6rem">
+            <div id="pollOptionsWrap" style="display:flex;flex-direction:column;gap:.35rem;margin-bottom:.5rem">
+              <input class="poll-opt-input" placeholder="Opcija 1..." style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.28rem .5rem;color:var(--text);font-size:.78rem;font-family:'Inter',sans-serif;outline:none">
+              <input class="poll-opt-input" placeholder="Opcija 2..." style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.28rem .5rem;color:var(--text);font-size:.78rem;font-family:'Inter',sans-serif;outline:none">
+            </div>
+            <div style="display:flex;gap:.4rem;margin-bottom:.5rem">
+              <button onclick="addPollOption()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.22rem .55rem;font-size:.7rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">+ Opcija</button>
+            </div>
+            <div style="display:flex;gap:.4rem;justify-content:flex-end">
+              <button onclick="closePollForm()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.25rem .6rem;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">Odustani</button>
+              <button onclick="savePoll()" style="background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.25rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Kreiraj</button>
+            </div>
+          </div>
+          <div id="pollsList" style="display:flex;flex-direction:column;gap:.8rem">
+            <div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.8rem 0">Učitavanje...</div>
+          </div>
+        </div>
+
         <!-- Quiz -->
         <div class="list-card" style="padding:1.4rem">
           <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
@@ -2013,6 +2141,51 @@ button[onclick^="apprSubmitRequest"]:hover {
           </div>
           <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Pogodi čiji je odgovor!</div>
           <div id="homeQuiz" style="min-height:200px"></div>
+        </div>
+
+        <!-- ══ OGLASNA PLOČA ══ -->
+        <div class="list-card" style="padding:1.4rem" id="announcementsCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <div style="display:flex;align-items:center;gap:.5rem">
+              <span style="font-size:1.15rem">📢</span>
+              <span style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Oglasna ploča</span>
+            </div>
+            <button id="annNewBtn" onclick="openAnnModal()" style="display:none;background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Nova objava</button>
+          </div>
+          <div id="annList" style="display:flex;flex-direction:column;gap:.6rem">
+            <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:.8rem">Učitavanje...</div>
+          </div>
+        </div>
+
+        <!-- ══ TIMSKI CHAT ══ -->
+        <div class="list-card" style="padding:1.4rem" id="teamChatCard">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
+            <span style="font-size:1.15rem">💬</span>
+            <span style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Timski chat</span>
+            <span id="teamChatBadge" style="display:none;background:var(--red);color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:20px"></span>
+          </div>
+          <div id="teamChatMsgs" style="display:flex;flex-direction:column;gap:.35rem;max-height:280px;overflow-y:auto;margin-bottom:.8rem;scroll-behavior:smooth"></div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input id="teamChatInput" type="text" placeholder="Napiši poruku..." maxlength="500"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .7rem;color:var(--text);font-size:.83rem;font-family:'Inter',sans-serif;outline:none"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendTeamChat();event.preventDefault()}">
+            <button onclick="sendTeamChat()" style="background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.42rem .85rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">↑</button>
+          </div>
+        </div>
+
+        <!-- ══ ANKETE ══ -->
+        <div class="list-card" style="padding:1.4rem" id="pollsCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <div style="display:flex;align-items:center;gap:.5rem">
+              <span style="font-size:1.15rem">🗳️</span>
+              <span style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Ankete</span>
+            </div>
+            <button id="pollNewBtn" onclick="openPollModal()" style="display:none;background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Nova anketa</button>
+          </div>
+          <div id="pollList" style="display:flex;flex-direction:column;gap:.8rem">
+            <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:.8rem">Učitavanje...</div>
+          </div>
         </div>
 
 
@@ -2639,6 +2812,60 @@ button[onclick^="apprSubmitRequest"]:hover {
 
 <!-- Custom confirm dialog -->
 <!-- Theme picker dropdown -->
+<!-- ══ MODAL: Nova objava ══ -->
+<div id="annModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6000;align-items:center;justify-content:center">
+  <div style="background:var(--surface2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:1.4rem;width:min(480px,92vw);max-height:90vh;overflow-y:auto">
+    <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:1rem">📢 Nova objava</div>
+    <div style="display:flex;gap:.4rem;margin-bottom:.7rem;flex-wrap:wrap" id="annEmojiPicker">
+      <span class="ann-emoji-btn active" onclick="selectAnnEmoji(this,'📢')">📢</span>
+      <span class="ann-emoji-btn" onclick="selectAnnEmoji(this,'🎉')">🎉</span>
+      <span class="ann-emoji-btn" onclick="selectAnnEmoji(this,'⚠️')">⚠️</span>
+      <span class="ann-emoji-btn" onclick="selectAnnEmoji(this,'📅')">📅</span>
+      <span class="ann-emoji-btn" onclick="selectAnnEmoji(this,'🏆')">🏆</span>
+      <span class="ann-emoji-btn" onclick="selectAnnEmoji(this,'💡')">💡</span>
+      <span class="ann-emoji-btn" onclick="selectAnnEmoji(this,'❤️')">❤️</span>
+      <span class="ann-emoji-btn" onclick="selectAnnEmoji(this,'🎂')">🎂</span>
+    </div>
+    <input id="annTitleInput" type="text" placeholder="Naslov objave..." maxlength="100"
+      style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .7rem;color:var(--text);font-size:.88rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:.6rem;box-sizing:border-box">
+    <textarea id="annBodyInput" placeholder="Tekst objave..." rows="4" maxlength="800"
+      style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .7rem;color:var(--text);font-size:.85rem;font-family:'Inter',sans-serif;outline:none;resize:vertical;margin-bottom:.7rem;box-sizing:border-box"></textarea>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--text-secondary);margin-bottom:1rem;cursor:pointer">
+      <input type="checkbox" id="annPinCheck"> 📌 Prikvači na vrh
+    </label>
+    <div id="annModalErr" style="color:var(--red);font-size:.78rem;margin-bottom:.5rem"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button onclick="closeAnnModal()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .9rem;color:var(--muted);cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif">Odustani</button>
+      <button onclick="submitAnn()" style="background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.4rem .9rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Objavi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Nova anketa ══ -->
+<div id="pollModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:6000;align-items:center;justify-content:center">
+  <div style="background:var(--surface2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:1.4rem;width:min(480px,92vw);max-height:90vh;overflow-y:auto">
+    <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:1rem">🗳️ Nova anketa</div>
+    <input id="pollQuestionInput" type="text" placeholder="Pitanje ankete..." maxlength="200"
+      style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .7rem;color:var(--text);font-size:.88rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:.8rem;box-sizing:border-box">
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem">Opcije (min. 2):</div>
+    <div id="pollOptionsWrap" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.6rem">
+      <input class="poll-opt-inp" type="text" placeholder="Opcija 1" maxlength="100"
+        style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.83rem;font-family:'Inter',sans-serif;outline:none">
+      <input class="poll-opt-inp" type="text" placeholder="Opcija 2" maxlength="100"
+        style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.83rem;font-family:'Inter',sans-serif;outline:none">
+      <input class="poll-opt-inp" type="text" placeholder="Opcija 3 (opcionalno)" maxlength="100"
+        style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.83rem;font-family:'Inter',sans-serif;outline:none">
+      <input class="poll-opt-inp" type="text" placeholder="Opcija 4 (opcionalno)" maxlength="100"
+        style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.83rem;font-family:'Inter',sans-serif;outline:none">
+    </div>
+    <div id="pollModalErr" style="color:var(--red);font-size:.78rem;margin-bottom:.5rem"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button onclick="closePollModal()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .9rem;color:var(--muted);cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif">Odustani</button>
+      <button onclick="submitPoll()" style="background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.4rem .9rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Kreiraj anketu</button>
+    </div>
+  </div>
+</div>
+
 <div id="themePicker" style="display:none;position:fixed;bottom:70px;left:calc(var(--sidebar-w) + .5rem);background:var(--surface2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:.8rem;z-index:5000;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:190px">
   <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.08em">Odaberi temu</div>
   <div style="display:flex;flex-direction:column;gap:.4rem">
