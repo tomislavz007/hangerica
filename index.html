@@ -2008,6 +2008,37 @@ button[onclick^="apprSubmitRequest"]:hover {
             <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem">Učitavanje vijesti...</div>
           </div>
         </div>
+        <!-- ══ OGLASNA PLOČA ══ — iznad rođendana -->
+        <div class="list-card" style="padding:1.4rem" id="announcementsCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <div style="display:flex;align-items:center;gap:.5rem">
+              <span style="font-size:1.15rem">📢</span>
+              <span style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Oglasna ploča</span>
+            </div>
+            <button id="annNewBtn" onclick="openAnnModal()" style="display:none;background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Nova objava</button>
+          </div>
+          <div id="annList" style="display:flex;flex-direction:column;gap:.6rem">
+            <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:.8rem">Učitavanje...</div>
+          </div>
+        </div>
+
+        <!-- ══ TIMSKI CHAT ══ — iznad rođendana -->
+        <div class="list-card" style="padding:1.4rem" id="teamChatCard">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
+            <span style="font-size:1.15rem">💬</span>
+            <span style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Timski chat</span>
+            <span id="teamChatBadge" style="display:none;background:var(--red);color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:20px"></span>
+          </div>
+          <div id="teamChatMsgs" style="display:flex;flex-direction:column;gap:.35rem;max-height:280px;overflow-y:auto;margin-bottom:.8rem;scroll-behavior:smooth"></div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input id="teamChatInput" type="text" placeholder="Napiši poruku..." maxlength="500"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .7rem;color:var(--text);font-size:.83rem;font-family:'Inter',sans-serif;outline:none"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendTeamChat();event.preventDefault()}">
+            <button onclick="sendTeamChat()" style="background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.42rem .85rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">↑</button>
+          </div>
+        </div>
+
         <!-- Birthday Calendar -->
         <div class="list-card" style="padding:1.4rem" id="homeBdCalCard">
           <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
@@ -2058,78 +2089,6 @@ button[onclick^="apprSubmitRequest"]:hover {
           <div id="quoteAuthor" style="font-size:.75rem;color:var(--muted);text-align:right">—</div>
         </div>
 
-        <!-- ══ OGLASNA PLOČA ══ -->
-        <div class="list-card" style="padding:1.4rem" id="boardCard">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
-            <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem">
-              <span>📢</span> Oglasna ploča
-            </div>
-            <button id="boardNewBtn" onclick="openBoardForm()" style="display:none;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.28rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Objava</button>
-          </div>
-          <!-- forma za novu objavu (admin) -->
-          <div id="boardForm" style="display:none;background:var(--surface2);border-radius:var(--radius);padding:.8rem;margin-bottom:.8rem">
-            <input id="boardTitle" placeholder="Naslov objave..." style="width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:.3rem 0;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;margin-bottom:.5rem">
-            <textarea id="boardBody" placeholder="Tekst objave..." rows="3" style="width:100%;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .5rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;outline:none;resize:none;box-sizing:border-box;margin-bottom:.5rem"></textarea>
-            <div style="display:flex;gap:.4rem;justify-content:flex-end">
-              <select id="boardType" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.25rem .5rem;color:var(--text-secondary);font-size:.72rem;font-family:'Inter',sans-serif">
-                <option value="info">ℹ️ Info</option>
-                <option value="warn">⚠️ Važno</option>
-                <option value="party">🎉 Čestitka</option>
-                <option value="task">✅ Zadatak</option>
-              </select>
-              <button onclick="closeBoardForm()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.25rem .6rem;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">Odustani</button>
-              <button onclick="saveBoardPost()" style="background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.25rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Objavi</button>
-            </div>
-          </div>
-          <div id="boardList" style="display:flex;flex-direction:column;gap:.55rem">
-            <div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.8rem 0">Učitavanje...</div>
-          </div>
-        </div>
-
-        <!-- ══ TIMSKI CHAT ══ -->
-        <div class="list-card" style="padding:1.4rem" id="teamChatCard">
-          <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
-            <span>💬</span> Timski chat
-          </div>
-          <div id="teamChatMsgs" style="height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:.45rem;padding-right:.2rem;margin-bottom:.7rem">
-            <div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.8rem 0">Učitavanje...</div>
-          </div>
-          <div style="display:flex;gap:.4rem">
-            <input id="teamChatInput" type="text" placeholder="Poruka timu..." maxlength="400"
-              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.38rem .6rem;color:var(--text);font-size:.8rem;font-family:'Inter',sans-serif;outline:none"
-              onkeydown="if(event.key==='Enter')sendTeamChat()">
-            <button onclick="sendTeamChat()" style="background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.38rem .8rem;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">→</button>
-          </div>
-        </div>
-
-        <!-- ══ ANKETE ══ -->
-        <div class="list-card" style="padding:1.4rem" id="pollsCard">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
-            <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem">
-              <span>🗳️</span> Ankete
-            </div>
-            <button id="pollNewBtn" onclick="openPollForm()" style="display:none;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.28rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Anketa</button>
-          </div>
-          <!-- forma za novu anketu (admin) -->
-          <div id="pollForm" style="display:none;background:var(--surface2);border-radius:var(--radius);padding:.8rem;margin-bottom:.8rem">
-            <input id="pollQuestion" placeholder="Pitanje..." style="width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:.3rem 0;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;margin-bottom:.6rem">
-            <div id="pollOptionsWrap" style="display:flex;flex-direction:column;gap:.35rem;margin-bottom:.5rem">
-              <input class="poll-opt-input" placeholder="Opcija 1..." style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.28rem .5rem;color:var(--text);font-size:.78rem;font-family:'Inter',sans-serif;outline:none">
-              <input class="poll-opt-input" placeholder="Opcija 2..." style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.28rem .5rem;color:var(--text);font-size:.78rem;font-family:'Inter',sans-serif;outline:none">
-            </div>
-            <div style="display:flex;gap:.4rem;margin-bottom:.5rem">
-              <button onclick="addPollOption()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.22rem .55rem;font-size:.7rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">+ Opcija</button>
-            </div>
-            <div style="display:flex;gap:.4rem;justify-content:flex-end">
-              <button onclick="closePollForm()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.25rem .6rem;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">Odustani</button>
-              <button onclick="savePoll()" style="background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.25rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Kreiraj</button>
-            </div>
-          </div>
-          <div id="pollsList" style="display:flex;flex-direction:column;gap:.8rem">
-            <div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.8rem 0">Učitavanje...</div>
-          </div>
-        </div>
-
         <!-- Quiz -->
         <div class="list-card" style="padding:1.4rem">
           <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
@@ -2137,37 +2096,6 @@ button[onclick^="apprSubmitRequest"]:hover {
           </div>
           <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Pogodi čiji je odgovor!</div>
           <div id="homeQuiz" style="min-height:200px"></div>
-        </div>
-
-        <!-- ══ OGLASNA PLOČA ══ -->
-        <div class="list-card" style="padding:1.4rem" id="announcementsCard">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-            <div style="display:flex;align-items:center;gap:.5rem">
-              <span style="font-size:1.15rem">📢</span>
-              <span style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Oglasna ploča</span>
-            </div>
-            <button id="annNewBtn" onclick="openAnnModal()" style="display:none;background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Nova objava</button>
-          </div>
-          <div id="annList" style="display:flex;flex-direction:column;gap:.6rem">
-            <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:.8rem">Učitavanje...</div>
-          </div>
-        </div>
-
-        <!-- ══ TIMSKI CHAT ══ -->
-        <div class="list-card" style="padding:1.4rem" id="teamChatCard">
-          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
-            <span style="font-size:1.15rem">💬</span>
-            <span style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">Timski chat</span>
-            <span id="teamChatBadge" style="display:none;background:var(--red);color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:20px"></span>
-          </div>
-          <div id="teamChatMsgs" style="display:flex;flex-direction:column;gap:.35rem;max-height:280px;overflow-y:auto;margin-bottom:.8rem;scroll-behavior:smooth"></div>
-          <div style="display:flex;gap:.5rem;align-items:center">
-            <input id="teamChatInput" type="text" placeholder="Napiši poruku..." maxlength="500"
-              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .7rem;color:var(--text);font-size:.83rem;font-family:'Inter',sans-serif;outline:none"
-              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendTeamChat();event.preventDefault()}">
-            <button onclick="sendTeamChat()" style="background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.42rem .85rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">↑</button>
-          </div>
         </div>
 
         <!-- ══ ANKETE ══ -->
@@ -3085,7 +3013,7 @@ let modalReqId=null;
 // ══════════════════════════════════════════
 // GOOGLE SHEETS API
 // ══════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby8v0Qywm_9fFFwuV5KJqvA066silYg_rJbata3PSdYxVK0h6XLfv1kGK9MP2hBDQKHuQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwgCGrGxCOc7NSIJ7k9btujC6Eb3XDQe_7_UTnYv4ogsKv_mWWwvWBFcVz9dUS9jP_rHg/exec';
 
 // Cache za zahtjeve (async → sync bridge)
 let _reqCache = null;
@@ -3338,6 +3266,287 @@ function renderQuoteOfDay() {
   const aEl = document.getElementById('quoteAuthor');
   if (qEl) qEl.innerHTML = `&ldquo;${quote.t}&rdquo;`;
   if (aEl) aEl.textContent = `— ${quote.a}`;
+}
+
+// ══════════════════════════════════════════
+// OGLASNA PLOČA
+// ══════════════════════════════════════════
+let _annCache = [];
+let _annEmojiSelected = '📢';
+
+function openAnnModal() {
+  document.getElementById('annModal').style.display = 'flex';
+  document.getElementById('annTitleInput').value = '';
+  document.getElementById('annBodyInput').value = '';
+  document.getElementById('annModalErr').textContent = '';
+  document.getElementById('annPinCheck').checked = false;
+  _annEmojiSelected = '📢';
+  document.querySelectorAll('.ann-emoji-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.ann-emoji-btn')?.classList.add('active');
+  setTimeout(() => document.getElementById('annTitleInput')?.focus(), 50);
+}
+function closeAnnModal() {
+  document.getElementById('annModal').style.display = 'none';
+}
+function selectAnnEmoji(btn, emoji) {
+  _annEmojiSelected = emoji;
+  document.querySelectorAll('.ann-emoji-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+async function submitAnn() {
+  const title = document.getElementById('annTitleInput').value.trim();
+  const body  = document.getElementById('annBodyInput').value.trim();
+  const pin   = document.getElementById('annPinCheck').checked;
+  const errEl = document.getElementById('annModalErr');
+  if (!title) { errEl.textContent = 'Naslov je obavezan.'; return; }
+  errEl.textContent = '';
+  const ann = {
+    id: 'ann_' + Date.now(),
+    emoji: _annEmojiSelected,
+    title, body,
+    pinned: pin ? 'true' : 'false',
+    authorId: currentUser.id,
+    authorName: currentUser.name,
+    createdAt: new Date().toISOString()
+  };
+  try {
+    await gasCall('saveAnnouncement', { data: ann });
+    _annCache.unshift(ann);
+    closeAnnModal();
+    renderAnnList();
+  } catch(e) { errEl.textContent = 'Greška pri spremanju.'; }
+}
+async function deleteAnn(id) {
+  if (!confirm('Obrisati objavu?')) return;
+  await gasCall('deleteAnnouncement', { id });
+  _annCache = _annCache.filter(a => a.id !== id);
+  renderAnnList();
+}
+async function loadAnnouncements() {
+  try {
+    const data = await gasCall('getAnnouncements');
+    _annCache = Array.isArray(data) ? data : [];
+  } catch(e) { _annCache = []; }
+  renderAnnList();
+  // Pokaži admin gumb
+  const isAdmin = currentUser?.isAdmin === true || currentUser?.isAdmin === 'true';
+  const btn = document.getElementById('annNewBtn');
+  if (btn) btn.style.display = isAdmin ? 'block' : 'none';
+}
+function renderAnnList() {
+  const el = document.getElementById('annList');
+  if (!el) return;
+  const sorted = [..._annCache].sort((a,b) => {
+    if (a.pinned === 'true' && b.pinned !== 'true') return -1;
+    if (b.pinned === 'true' && a.pinned !== 'true') return 1;
+    return (b.createdAt||'') > (a.createdAt||'') ? 1 : -1;
+  });
+  const isAdmin = currentUser?.isAdmin === true || currentUser?.isAdmin === 'true';
+  if (!sorted.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:.8rem">Nema objava.</div>';
+    return;
+  }
+  el.innerHTML = sorted.map(a => {
+    const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString('hr-HR', {day:'numeric',month:'short'}) : '';
+    return `<div style="border-radius:var(--radius);padding:.65rem .8rem;background:var(--surface2);border-left:3px solid ${a.pinned==='true'?'var(--gold)':'var(--border-strong)'}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem">
+        <div style="font-size:.85rem;font-weight:700;color:var(--text)">${a.emoji||'📢'} ${a.title||''}</div>
+        <div style="display:flex;align-items:center;gap:.3rem;flex-shrink:0">
+          ${a.pinned==='true'?'<span style="font-size:.65rem;color:var(--gold)">📌</span>':''}
+          ${isAdmin?`<button onclick="deleteAnn('${a.id}')" title="Obriši" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0;line-height:1">✕</button>`:''}
+        </div>
+      </div>
+      ${a.body?`<div style="font-size:.78rem;color:var(--text-secondary);margin-top:.3rem;line-height:1.5;white-space:pre-wrap">${a.body}</div>`:''}
+      <div style="font-size:.65rem;color:var(--muted);margin-top:.4rem">${a.authorName||''} · ${date}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// TIMSKI CHAT
+// ══════════════════════════════════════════
+let _teamChatCache = [];
+let _teamChatPollInterval = null;
+const TEAM_CHAT_PROJECT_ID = '__team__';
+
+async function loadTeamChat() {
+  try {
+    const data = await gasCall('getChatMessages', { projectId: TEAM_CHAT_PROJECT_ID });
+    _teamChatCache = Array.isArray(data) ? data : [];
+  } catch(e) { _teamChatCache = []; }
+  renderTeamChat();
+  // Pollanje svakih 20s
+  if (!_teamChatPollInterval) {
+    _teamChatPollInterval = setInterval(async () => {
+      try {
+        const data = await gasCall('getChatMessages', { projectId: TEAM_CHAT_PROJECT_ID });
+        _teamChatCache = Array.isArray(data) ? data : [];
+        renderTeamChat(false); // ne scrollaj na dno svaki put
+      } catch(e) {}
+    }, 20000);
+  }
+}
+function renderTeamChat(scrollBottom = true) {
+  const el = document.getElementById('teamChatMsgs');
+  if (!el) return;
+  const msgs = _teamChatCache.slice(-50); // zadnjih 50
+  if (!msgs.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.78rem;text-align:center;padding:1rem">Još nema poruka. Budi prvi! 👋</div>';
+    return;
+  }
+  el.innerHTML = msgs.map(m => {
+    const isMe = m.userId === currentUser?.id;
+    const initials = (m.userName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('hr-HR',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="display:flex;gap:.4rem;align-items:flex-end;${isMe?'flex-direction:row-reverse':''}">
+      <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0d0f18;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
+      <div style="max-width:78%">
+        ${!isMe?`<div style="font-size:.62rem;color:var(--muted);margin-bottom:.1rem;font-weight:600">${m.userName||''}</div>`:''}
+        <div style="background:${isMe?'var(--gold-dim)':'var(--surface2)'};border-radius:${isMe?'10px 10px 2px 10px':'10px 10px 10px 2px'};padding:.38rem .65rem">
+          <div style="font-size:.8rem;color:var(--text);line-height:1.4;word-break:break-word">${escHtml(m.message||'')}</div>
+        </div>
+        <div style="font-size:.6rem;color:var(--muted);margin-top:.1rem;text-align:${isMe?'right':'left'}">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+  if (scrollBottom) el.scrollTop = el.scrollHeight;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+async function sendTeamChat() {
+  const input = document.getElementById('teamChatInput');
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const entry = {
+    userId: currentUser.id,
+    userName: currentUser.name,
+    message: msg,
+    timestamp: new Date().toISOString()
+  };
+  _teamChatCache.push(entry);
+  renderTeamChat(true);
+  try {
+    await gasCall('saveChatMessage', {
+      projectId: TEAM_CHAT_PROJECT_ID,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      message: msg
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+// ANKETE
+// ══════════════════════════════════════════
+let _pollCache = [];
+
+function openPollModal() {
+  document.getElementById('pollModal').style.display = 'flex';
+  document.getElementById('pollQuestionInput').value = '';
+  document.getElementById('pollModalErr').textContent = '';
+  document.querySelectorAll('.poll-opt-inp').forEach(i => i.value = '');
+  setTimeout(() => document.getElementById('pollQuestionInput')?.focus(), 50);
+}
+function closePollModal() {
+  document.getElementById('pollModal').style.display = 'none';
+}
+async function submitPoll() {
+  const q = document.getElementById('pollQuestionInput').value.trim();
+  const errEl = document.getElementById('pollModalErr');
+  if (!q) { errEl.textContent = 'Pitanje je obavezno.'; return; }
+  const opts = [...document.querySelectorAll('.poll-opt-inp')]
+    .map(i => i.value.trim()).filter(Boolean);
+  if (opts.length < 2) { errEl.textContent = 'Potrebno je barem 2 opcije.'; return; }
+  errEl.textContent = '';
+  const poll = {
+    id: 'poll_' + Date.now(),
+    question: q,
+    options: JSON.stringify(opts),
+    votes: '{}',
+    authorId: currentUser.id,
+    authorName: currentUser.name,
+    createdAt: new Date().toISOString(),
+    active: 'true'
+  };
+  try {
+    await gasCall('savePoll', { data: poll });
+    _pollCache.unshift({ ...poll, options: opts, votes: {} });
+    closePollModal();
+    renderPollList();
+  } catch(e) { errEl.textContent = 'Greška pri spremanju.'; }
+}
+async function voteOnPoll(pollId, optIdx) {
+  const poll = _pollCache.find(p => p.id === pollId);
+  if (!poll) return;
+  // Lokalno ažuriraj odmah
+  if (!poll.votes) poll.votes = {};
+  poll.votes[currentUser.id] = optIdx;
+  renderPollList();
+  try {
+    await gasCall('votePoll', { pollId, userId: currentUser.id, optionIndex: optIdx });
+  } catch(e) {}
+}
+async function deletePoll(id) {
+  if (!confirm('Obrisati anketu?')) return;
+  await gasCall('deletePoll', { id });
+  _pollCache = _pollCache.filter(p => p.id !== id);
+  renderPollList();
+}
+async function loadPolls() {
+  try {
+    const data = await gasCall('getPolls');
+    _pollCache = Array.isArray(data) ? data.map(p => ({
+      ...p,
+      options: typeof p.options === 'string' ? JSON.parse(p.options||'[]') : (p.options||[]),
+      votes: typeof p.votes === 'string' ? JSON.parse(p.votes||'{}') : (p.votes||{})
+    })) : [];
+  } catch(e) { _pollCache = []; }
+  renderPollList();
+  const isAdmin = currentUser?.isAdmin === true || currentUser?.isAdmin === 'true';
+  const btn = document.getElementById('pollNewBtn');
+  if (btn) btn.style.display = isAdmin ? 'block' : 'none';
+}
+function renderPollList() {
+  const el = document.getElementById('pollList');
+  if (!el) return;
+  const active = _pollCache.filter(p => p.active !== 'false');
+  if (!active.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:.8rem">Nema aktivnih anketa.</div>';
+    return;
+  }
+  const isAdmin = currentUser?.isAdmin === true || currentUser?.isAdmin === 'true';
+  el.innerHTML = active.map(poll => {
+    const opts = Array.isArray(poll.options) ? poll.options : [];
+    const votes = poll.votes || {};
+    const myVote = votes[currentUser?.id];
+    const hasVoted = myVote !== undefined && myVote !== null && myVote !== '';
+    const totalVotes = Object.keys(votes).length;
+    return `<div style="background:var(--surface2);border-radius:var(--radius);padding:.8rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.7rem">
+        <div style="font-size:.88rem;font-weight:700;color:var(--text);line-height:1.3">${poll.question}</div>
+        ${isAdmin?`<button onclick="deletePoll('${poll.id}')" title="Obriši" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0;flex-shrink:0">✕</button>`:''}
+      </div>
+      ${opts.map((opt, i) => {
+        const cnt = Object.values(votes).filter(v => String(v) === String(i)).length;
+        const pct = totalVotes ? Math.round(cnt/totalVotes*100) : 0;
+        const isWinner = hasVoted && cnt === Math.max(...opts.map((_,j) => Object.values(votes).filter(v=>String(v)===String(j)).length));
+        const isMyVote = hasVoted && String(myVote) === String(i);
+        return `<div onclick="${hasVoted?'':'voteOnPoll(\''+poll.id+'\','+i+')'}"
+          style="display:flex;align-items:center;gap:.5rem;padding:.38rem .55rem;border-radius:var(--radius);border:1px solid ${isMyVote?'var(--gold)':'var(--border)'};margin-bottom:.3rem;position:relative;overflow:hidden;cursor:${hasVoted?'default':'pointer'};transition:border-color .15s">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:${hasVoted?pct:0}%;background:${isMyVote?'rgba(201,162,39,.2)':'var(--surface3)'};z-index:0;transition:width .4s ease"></div>
+          <span style="font-size:.8rem;color:var(--text);z-index:1;flex:1">${isMyVote?'✓ ':''}${opt}</span>
+          ${hasVoted?`<span style="font-size:.72rem;color:var(--muted);z-index:1;font-weight:600">${pct}%</span>`:''}
+        </div>`;
+      }).join('')}
+      <div style="font-size:.65rem;color:var(--muted);margin-top:.4rem;display:flex;justify-content:space-between">
+        <span>${poll.authorName||''}</span>
+        <span>${totalVotes} glas${totalVotes===1?'':'a'}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function startClock(){
@@ -6183,6 +6392,9 @@ async function initHomeTab() {
   await renderHomeQuizSection();
   loadKonzumItems();
   renderQuoteOfDay();
+  loadAnnouncements();
+  loadTeamChat();
+  loadPolls();
 }
 
 async function renderHomeStats() {
