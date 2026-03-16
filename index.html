@@ -2817,6 +2817,21 @@ button[onclick^="apprSubmitRequest"]:hover {
   </div>
 </div>
 
+<!-- ══ MODAL: Što si propustio ══ -->
+<div id="catchUpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:7000;align-items:center;justify-content:center">
+  <div style="background:var(--surface2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:1.6rem;width:min(420px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text)">👋 Dok si bio odsutan…</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem" id="catchUpSubtitle"></div>
+      </div>
+      <button onclick="closeCatchUp()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:.2rem;line-height:1">✕</button>
+    </div>
+    <div id="catchUpItems" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem"></div>
+    <button onclick="closeCatchUp()" style="width:100%;background:var(--gold);color:#000;border:none;border-radius:var(--radius);padding:.55rem;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Razumio, hvala! 👍</button>
+  </div>
+</div>
+
 <!-- Registration overlay -->
 <div id="regOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:10000;align-items:center;justify-content:center">
   <div class="login-box">
@@ -3209,7 +3224,7 @@ async function doLogin(){
       currentUser = user;
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='flex';
-      initData().then(() => { initApp(); setTimeout(renderDashboard, 300); });
+      initData().then(() => { initApp(); setTimeout(renderDashboard, 300); setTimeout(checkCatchUp, 1500); });
     } else {
       err.textContent = result && result.error ? result.error : 'Pogrešna lozinka. Pokušajte ponovo.';
     }
@@ -3569,6 +3584,121 @@ function renderPollList() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════
+// "ŠTO SI PROPUSTIO" POPUP
+// ══════════════════════════════════════════
+function closeCatchUp() {
+  const modal = document.getElementById('catchUpModal');
+  if (modal) modal.style.display = 'none';
+  // Spremi trenutni timestamp kao zadnju posjetu
+  localStorage.setItem('hgr_last_visit_' + currentUser.id, new Date().toISOString());
+}
+
+async function checkCatchUp() {
+  // Dohvati zadnju posjetu ovog korisnika
+  const lastVisitKey = 'hgr_last_visit_' + currentUser.id;
+  const lastVisit = localStorage.getItem(lastVisitKey);
+
+  // Ako nema zadnje posjete (prvi put) — spremi i izađi bez popupa
+  if (!lastVisit) {
+    localStorage.setItem(lastVisitKey, new Date().toISOString());
+    return;
+  }
+
+  const lastVisitDate = new Date(lastVisit);
+  const items = [];
+
+  // Provjeri nove objave
+  try {
+    if (!_annCache || !_annCache.length) {
+      const data = await gasCall('getAnnouncements');
+      if (Array.isArray(data)) _annCache = data;
+    }
+    const newAnns = (_annCache || []).filter(a => {
+      if (!a.createdAt) return false;
+      return new Date(a.createdAt) > lastVisitDate;
+    });
+    if (newAnns.length) {
+      items.push({
+        icon: '📢',
+        type: 'Oglasna ploča',
+        count: newAnns.length,
+        label: newAnns.length === 1
+          ? `Nova objava: <strong>"${newAnns[0].title || ''}"</strong>`
+          : `${newAnns.length} novih objava`
+      });
+    }
+  } catch(e) {}
+
+  // Provjeri nove ankete
+  try {
+    if (!_pollCache || !_pollCache.length) {
+      const data = await gasCall('getPolls');
+      if (Array.isArray(data)) {
+        _pollCache = data.map(p => ({
+          ...p,
+          options: typeof p.options === 'string' ? JSON.parse(p.options||'[]') : (p.options||[]),
+          votes: typeof p.votes === 'string' ? JSON.parse(p.votes||'{}') : (p.votes||{})
+        }));
+      }
+    }
+    const newPolls = (_pollCache || []).filter(p => {
+      if (!p.createdAt || p.active === 'false') return false;
+      return new Date(p.createdAt) > lastVisitDate;
+    });
+    if (newPolls.length) {
+      items.push({
+        icon: '🗳️',
+        type: 'Ankete',
+        count: newPolls.length,
+        label: newPolls.length === 1
+          ? `Nova anketa: <strong>"${newPolls[0].question || ''}"</strong>`
+          : `${newPolls.length} novih anketa`
+      });
+    }
+  } catch(e) {}
+
+  // Prikaži popup samo ako ima nečeg novog
+  if (!items.length) {
+    localStorage.setItem(lastVisitKey, new Date().toISOString());
+    return;
+  }
+
+  // Popuni i prikaži modal
+  const modal = document.getElementById('catchUpModal');
+  const itemsEl = document.getElementById('catchUpItems');
+  const subtitle = document.getElementById('catchUpSubtitle');
+  if (!modal || !itemsEl) return;
+
+  // Subtitle s datumom zadnje posjete
+  const opts = { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+  subtitle.textContent = `od zadnje posjete (${lastVisitDate.toLocaleDateString('hr-HR', opts)})`;
+
+  // Renderaj stavke
+  itemsEl.innerHTML = items.map(item => `
+    <div style="display:flex;align-items:flex-start;gap:.75rem;background:var(--surface3);border-radius:var(--radius);padding:.7rem .9rem">
+      <span style="font-size:1.4rem;line-height:1;flex-shrink:0">${item.icon}</span>
+      <div>
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.2rem">${item.type}</div>
+        <div style="font-size:.85rem;color:var(--text);line-height:1.4">${item.label}</div>
+      </div>
+    </div>
+  `).join('');
+
+  modal.style.display = 'flex';
+  // Animacija
+  const box = modal.querySelector('div');
+  if (box) {
+    box.style.transform = 'scale(.92) translateY(12px)';
+    box.style.opacity = '0';
+    box.style.transition = 'transform .25s ease, opacity .25s ease';
+    requestAnimationFrame(() => {
+      box.style.transform = 'scale(1) translateY(0)';
+      box.style.opacity = '1';
+    });
+  }
 }
 
 function startClock(){
@@ -8618,7 +8748,7 @@ checkRegistrationToken();
       sessionStorage.setItem('hgr_uid', uid);
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='flex';
-      initData().then(() => { initApp(); setTimeout(renderDashboard, 300); });
+      initData().then(() => { initApp(); setTimeout(renderDashboard, 300); setTimeout(checkCatchUp, 1500); });
     } else {
       localStorage.removeItem('hgr_token');
       localStorage.removeItem('hgr_uid');
@@ -8632,7 +8762,7 @@ checkRegistrationToken();
 })();
 
 // ── Premjesti modale na body razinu (fix za display:none parent) ──
-['annModal','pollModal','confirmDialog','themePicker'].forEach(id => {
+['annModal','pollModal','confirmDialog','themePicker','catchUpModal'].forEach(id => {
   const el = document.getElementById(id);
   if(el && el.parentElement !== document.body) document.body.appendChild(el);
 });
