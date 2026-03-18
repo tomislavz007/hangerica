@@ -1953,6 +1953,12 @@ button[onclick^="apprSubmitRequest"]:hover {
         <span id="lastUpdatedTxt">—</span>
         <button onclick="manualRefresh()" title="Osvježi" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:.1rem .2rem;line-height:1;font-family:'Inter',sans-serif" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">↻</button>
       </div>
+      <!-- Quick Task gumb — uvijek vidljiv u topBaru -->
+      <button onclick="openQuickTask()" id="quickTaskBtn" title="Brzi task (Q)"
+        style="display:none;align-items:center;gap:.35rem;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Task
+      </button>
     </div>
     <div id="seasonalBanner"></div>
     <!-- Sub tabs (Moji dani) -->
@@ -2853,6 +2859,49 @@ button[onclick^="apprSubmitRequest"]:hover {
     <div style="display:flex;gap:.8rem;justify-content:center">
       <button id="confirmCancelBtn" style="padding:.6rem 1.4rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem">Odustani</button>
       <button id="confirmOkBtn" style="padding:.6rem 1.4rem;background:#ef4444;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.9rem;font-weight:600">Obriši</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Quick Task ══ -->
+<div id="quickTaskModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:7500;align-items:flex-start;justify-content:center;padding-top:80px">
+  <div id="quickTaskBox" style="background:var(--surface2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:1.4rem;width:min(520px,92vw);box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem">
+      ✅ Brzi task
+      <span style="font-size:.65rem;color:var(--muted);font-weight:400;margin-left:auto">ESC za zatvaranje</span>
+    </div>
+    <!-- Naziv -->
+    <input id="qtName" type="text" placeholder="Naziv taska..." maxlength="200"
+      style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.55rem .75rem;color:var(--text);font-size:.92rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:.7rem;box-sizing:border-box"
+      onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+      onkeydown="if(event.key==='Enter')saveQuickTask();if(event.key==='Escape')closeQuickTask()">
+    <!-- Meta row -->
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.7rem">
+      <select id="qtProject" onchange="qtUpdateAssignees()" style="flex:1;min-width:140px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .6rem;color:var(--text-secondary);font-size:.8rem;font-family:'Inter',sans-serif;outline:none">
+        <option value="">— Projekt (opcionalno) —</option>
+      </select>
+      <select id="qtAssignee" style="flex:1;min-width:120px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .6rem;color:var(--text-secondary);font-size:.8rem;font-family:'Inter',sans-serif;outline:none">
+        <option value="">— Osoba —</option>
+      </select>
+      <select id="qtPriority" style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .6rem;color:var(--text-secondary);font-size:.8rem;font-family:'Inter',sans-serif;outline:none">
+        <option value="">Prioritet</option>
+        <option value="high">🔴 Visok</option>
+        <option value="medium">🟡 Srednji</option>
+        <option value="low">🔵 Nizak</option>
+      </select>
+      <input id="qtDue" type="date" style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .6rem;color:var(--text-secondary);font-size:.8rem;font-family:'Inter',sans-serif;outline:none">
+    </div>
+    <!-- Napomena -->
+    <textarea id="qtNote" placeholder="Napomena (opcionalno)..." rows="2" maxlength="500"
+      style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.42rem .65rem;color:var(--text);font-size:.8rem;font-family:'Inter',sans-serif;outline:none;resize:none;margin-bottom:.8rem;box-sizing:border-box"
+      onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    <!-- Greška + akcije -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+      <div id="qtErr" style="font-size:.75rem;color:var(--red)"></div>
+      <div style="display:flex;gap:.5rem">
+        <button onclick="closeQuickTask()" style="background:none;border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .9rem;color:var(--muted);cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif">Odustani</button>
+        <button onclick="saveQuickTask()" style="background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.4rem 1rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Spremi task</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3885,6 +3934,116 @@ function checkNewAssignedTasks(lastVisitDate) {
     return new Date(dateStr) > lastVisitDate;
   });
 }
+
+// ══════════════════════════════════════════
+// QUICK TASK — brzi unos taska iz bilo kojeg taba
+// ══════════════════════════════════════════
+function openQuickTask() {
+  const modal = document.getElementById('quickTaskModal');
+  if (!modal) return;
+  // Popuni projekte
+  const projSel = document.getElementById('qtProject');
+  if (projSel) {
+    const projs = getProjects ? getProjects() : (_projCache || []);
+    projSel.innerHTML = '<option value="">— Projekt (opcionalno) —</option>' +
+      projs.map(p => `<option value="${p.id}">${p.name||p.naziv||''}</option>`).join('');
+  }
+  // Popuni assignee — svi PROJECT_PERSONS
+  qtUpdateAssignees();
+  // Reset forme
+  ['qtName','qtNote'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['qtPriority','qtDue'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('qtErr').textContent = '';
+  modal.style.display = 'flex';
+  // Animacija
+  const box = document.getElementById('quickTaskBox');
+  if (box) {
+    box.style.transform = 'scale(.96) translateY(-10px)';
+    box.style.opacity = '0';
+    box.style.transition = 'transform .2s ease, opacity .2s ease';
+    requestAnimationFrame(() => {
+      box.style.transform = 'scale(1) translateY(0)';
+      box.style.opacity = '1';
+    });
+  }
+  setTimeout(() => document.getElementById('qtName')?.focus(), 50);
+}
+
+function closeQuickTask() {
+  const modal = document.getElementById('quickTaskModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function qtUpdateAssignees() {
+  const projId = document.getElementById('qtProject')?.value;
+  const asel = document.getElementById('qtAssignee');
+  if (!asel) return;
+  // Svi project persons kao opcije
+  const people = typeof PROJECT_PERSONS !== 'undefined' ? PROJECT_PERSONS : [];
+  asel.innerHTML = '<option value="">— Osoba —</option>' +
+    people.map(p => `<option value="${p}">${p}</option>`).join('');
+  // Ako je odabran projekt, filtriraj po projektu
+  if (projId && typeof getProjects === 'function') {
+    const proj = getProjects().find(p => String(p.id) === String(projId));
+    if (proj && proj.assignees) {
+      const assignees = typeof proj.assignees === 'string'
+        ? proj.assignees.split(',').map(s=>s.trim()).filter(Boolean)
+        : (proj.assignees||[]);
+      if (assignees.length) {
+        asel.innerHTML = '<option value="">— Osoba —</option>' +
+          assignees.map(p => `<option value="${p}">${p}</option>`).join('');
+      }
+    }
+  }
+}
+
+async function saveQuickTask() {
+  const name = document.getElementById('qtName')?.value.trim();
+  const projectId = document.getElementById('qtProject')?.value || '';
+  const assignee = document.getElementById('qtAssignee')?.value || '';
+  const priority = document.getElementById('qtPriority')?.value || '';
+  const due = document.getElementById('qtDue')?.value || '';
+  const note = document.getElementById('qtNote')?.value.trim() || '';
+  const errEl = document.getElementById('qtErr');
+
+  if (!name) { errEl.textContent = 'Naziv taska je obavezan.'; return; }
+  errEl.textContent = '';
+
+  const task = {
+    id: 'task_' + Date.now(),
+    projectId: projectId || 'none',
+    name, assignee, priority, due, note,
+    status: 'todo', done: 'false',
+    createdBy: currentUser.name,
+    createdAt: new Date().toISOString()
+  };
+
+  if (!_taskCache) _taskCache = [];
+  _taskCache.unshift(task);
+  closeQuickTask();
+  toast('✅ Task dodan!');
+  renderLeaderboard();
+  renderHomeStats();
+  // Spremi na GAS
+  try {
+    await gasCall('saveTask', { data: task });
+  } catch(e) {}
+  // Ako smo na Tasks tabu, osvježi prikaz
+  if (document.getElementById('main-tasks')?.style.display !== 'none') {
+    renderTasks();
+  }
+}
+
+// Keyboard shortcut: Q otvara quick task (kad nije u inputu)
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeQuickTask(); return; }
+  if (e.key === 'q' || e.key === 'Q') {
+    const tag = document.activeElement?.tagName?.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (document.getElementById('quickTaskModal')?.style.display === 'flex') return;
+    if (typeof currentUser !== 'undefined' && currentUser) openQuickTask();
+  }
+});
 
 function startClock(){
   if(_clockInterval) clearInterval(_clockInterval);
@@ -8950,10 +9109,13 @@ checkRegistrationToken();
 })();
 
 // ── Premjesti modale na body razinu (fix za display:none parent) ──
-['annModal','pollModal','confirmDialog','themePicker','catchUpModal'].forEach(id => {
+['annModal','pollModal','confirmDialog','themePicker','catchUpModal','quickTaskModal'].forEach(id => {
   const el = document.getElementById(id);
   if(el && el.parentElement !== document.body) document.body.appendChild(el);
 });
+// Pokaži Quick Task gumb
+const qtb = document.getElementById('quickTaskBtn');
+if (qtb) qtb.style.display = 'flex';
 
 // ── PWA Service Worker ──────────────────────────────────
 if('serviceWorker' in navigator){
