@@ -286,7 +286,11 @@ body::after {
   border-radius:8px;padding:.65rem .9rem;color:var(--text);font-family:'Inter',sans-serif;
   font-size:.9rem;outline:none;transition:border-color .2s;}
 .lf select:focus,.lf input:focus{border-color:var(--gold);}
-select option{background:var(--surface2);}
+select option{background:var(--surface2);color:var(--text);}
+[data-theme="vivid"] select option { background: #1a2f52; color: #f0f6ff; }
+[data-theme="vivid"] .lf select,
+[data-theme="vivid"] .lf input { background: #1a3050; border-color: #2a4570; color: #f0f6ff; }
+[data-theme="vivid"] select { color: #f0f6ff; }
 .btn-login{width:100%;padding:.72rem;background:var(--gold);color:#0d0f18;border:none;
   border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;
   cursor:pointer;transition:opacity .2s,transform .1s;margin-top:.5rem;}
