@@ -81,8 +81,84 @@
   --gold:#e8521a; --gold-light:#ff7040; --gold-dim:rgba(232,82,26,0.12);
   --text:#f0ede8; --text-secondary:#9898a6; --muted:#5c5c6e; --border:#2a2a2a; --border-strong:#333333;
 }
+/* Theme: Vivid — šarene vješalice */
+[data-theme="vivid"] {
+  --bg:#0d1b2e; --surface:#112240; --surface2:#1a3050; --surface3:#213a63;
+  --sidebar:#091628; --sidebar-border:#1a3050;
+  --gold:#ffd93d; --gold-light:#ffe566; --gold-dim:rgba(255,217,61,0.15);
+  --text:#f0f6ff; --text-secondary:#a8c0e0; --muted:#6080a8;
+  --border:#1a3050; --border-strong:#2a4570;
+  --green:#6bcb77; --amber:#ffd93d; --red:#ff6b6b; --blue:#4d96ff; --purple:#c77dff;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 html { font-size: 15.4px; }
+
+/* ── VIVID TEMA — animirane vješalice ── */
+[data-theme="vivid"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cg opacity='0.13' stroke-width='2.2' fill='none' stroke-linecap='round'%3E%3Cpath d='M80 180 L30 240 L130 240 Z M80 180 Q80 155 100 150 Q120 145 120 165 Q120 175 108 178' stroke='%23ff6b6b'/%3E%3Cpath d='M220 80 L170 140 L270 140 Z M220 80 Q220 55 240 50 Q260 45 260 65 Q260 75 248 78' stroke='%23ffd93d' transform='rotate(-25 220 90)'/%3E%3Cpath d='M380 200 L330 260 L430 260 Z M380 200 Q380 175 400 170 Q420 165 420 185 Q420 195 408 198' stroke='%236bcb77' transform='rotate(15 380 210)'/%3E%3Cpath d='M500 100 L450 160 L550 160 Z M500 100 Q500 75 520 70 Q540 65 540 85 Q540 95 528 98' stroke='%234d96ff' transform='rotate(-10 500 110)'/%3E%3Cpath d='M150 350 L100 410 L200 410 Z M150 350 Q150 325 170 320 Q190 315 190 335 Q190 345 178 348' stroke='%23c77dff' transform='rotate(20 150 360)'/%3E%3Cpath d='M320 420 L270 480 L370 480 Z M320 420 Q320 395 340 390 Q360 385 360 405 Q360 415 348 418' stroke='%23ff6b6b' transform='rotate(-15 320 430)'/%3E%3Cpath d='M480 350 L430 410 L530 410 Z M480 350 Q480 325 500 320 Q520 315 520 335 Q520 345 508 348' stroke='%23ffd93d' transform='rotate(30 480 360)'/%3E%3Cpath d='M60 480 L10 540 L110 540 Z M60 480 Q60 455 80 450 Q100 445 100 465 Q100 475 88 478' stroke='%236bcb77' transform='rotate(-20 60 490)'/%3E%3Cpath d='M270 280 L220 340 L320 340 Z M270 280 Q270 255 290 250 Q310 245 310 265 Q310 275 298 278' stroke='%234d96ff' transform='rotate(8 270 290)'/%3E%3Cpath d='M430 480 L380 540 L480 540 Z M430 480 Q430 455 450 450 Q470 445 470 465 Q470 475 458 478' stroke='%23c77dff' transform='rotate(-30 430 490)'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 600px 600px;
+  animation: hangersFloat 25s linear infinite;
+}
+[data-theme="vivid"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cg opacity='0.08' stroke-width='1.8' fill='none' stroke-linecap='round'%3E%3Cpath d='M120 300 L70 360 L170 360 Z M120 300 Q120 275 140 270 Q160 265 160 285 Q160 295 148 298' stroke='%23ffd93d' transform='rotate(40 120 310)'/%3E%3Cpath d='M350 150 L300 210 L400 210 Z M350 150 Q350 125 370 120 Q390 115 390 135 Q390 145 378 148' stroke='%23ff6b6b' transform='rotate(-35 350 160)'/%3E%3Cpath d='M540 280 L490 340 L590 340 Z M540 280 Q540 255 560 250 Q580 245 580 265 Q580 275 568 278' stroke='%236bcb77' transform='rotate(12 540 290)'/%3E%3Cpath d='M200 500 L150 560 L250 560 Z M200 500 Q200 475 220 470 Q240 465 240 485 Q240 495 228 498' stroke='%234d96ff' transform='rotate(-22 200 510)'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 600px 600px;
+  animation: hangersFloat 35s linear infinite reverse;
+}
+@keyframes hangersFloat {
+  from { background-position: 0 0; }
+  to   { background-position: 600px 600px; }
+}
+/* Vivid — sidebar gradient i kartice */
+[data-theme="vivid"] #appSidebar {
+  background: linear-gradient(180deg, #091628 0%, #0d1f38 100%);
+  border-right: 1px solid #1a3050;
+}
+[data-theme="vivid"] .sidebar-item.active {
+  background: linear-gradient(90deg, rgba(77,150,255,.15), rgba(199,125,255,.08));
+  border-left: 3px solid var(--gold);
+}
+[data-theme="vivid"] .list-card {
+  background: rgba(17,34,64,.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(77,150,255,.15);
+}
+[data-theme="vivid"] #topBar {
+  background: rgba(9,22,40,.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(77,150,255,.2);
+}
+[data-theme="vivid"] #appShell,
+[data-theme="vivid"] #appLayout,
+[data-theme="vivid"] #mainContentWrap {
+  background: transparent;
+}
+[data-theme="vivid"] .lnr-col {
+  background: rgba(17,34,64,.7);
+  border: 1px solid rgba(77,150,255,.12);
+}
+[data-theme="vivid"] .lnr-task-card {
+  background: rgba(26,48,80,.8);
+  border: 1px solid rgba(77,150,255,.15);
+}
+[data-theme="vivid"] .sidebar-clock {
+  background: rgba(255,217,61,.08);
+  border: 1px solid rgba(255,217,61,.2);
+}
+[data-theme="vivid"] .sidebar-clock-time { color: #ffd93d; }
+/* Vivid — accent boje za priority badge */
+[data-theme="vivid"] .lnr-priority-high { background: rgba(255,107,107,.2); color: #ff6b6b; }
+[data-theme="vivid"] .lnr-priority-medium { background: rgba(255,217,61,.2); color: #ffd93d; }
+[data-theme="vivid"] .lnr-priority-low { background: rgba(107,203,119,.2); color: #6bcb77; }
 
 /* ── SMOOTH THEME TRANSITION ── */
 /* Smooth theme transition - only on non-interactive elements */
@@ -2850,6 +2926,10 @@ button[onclick^="apprSubmitRequest"]:hover {
       <div style="width:20px;height:20px;border-radius:50%;background:#e8521a;flex-shrink:0"></div>
       <span style="color:#f0ede8;font-size:.85rem">Hanger</span>
     </button>
+    <button onclick="setTheme('vivid')" id="themeOpt_vivid" style="display:flex;align-items:center;gap:.7rem;padding:.5rem .7rem;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#0d1b2e,#213a63);width:100%;text-align:left">
+      <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);flex-shrink:0"></div>
+      <span style="color:#f0f6ff;font-size:.85rem">Vivid 🎨</span>
+    </button>
   </div>
 </div>
 
@@ -2957,6 +3037,10 @@ button[onclick^="apprSubmitRequest"]:hover {
         <div onclick="setTheme('hanger')" id="themeBtn_hanger" class="theme-card" style="border:2px solid var(--border);background:#0f0f0f">
           <div style="width:28px;height:28px;border-radius:50%;background:#e8521a;flex-shrink:0"></div>
           <div><div style="color:#f0ede8;font-size:.88rem;font-weight:600">Hanger</div><div style="color:#888880;font-size:.75rem">Brand narančasta</div></div>
+        </div>
+        <div onclick="setTheme('vivid')" id="themeBtn_vivid" class="theme-card" style="border:2px solid var(--border);background:linear-gradient(135deg,#0d1b2e,#213a63)">
+          <div style="width:28px;height:28px;border-radius:50%;background:conic-gradient(#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#c77dff,#ff6b6b);flex-shrink:0"></div>
+          <div><div style="color:#f0f6ff;font-size:.88rem;font-weight:600">Vivid 🎨</div><div style="color:#6080a8;font-size:.75rem">Šarene vješalice</div></div>
         </div>
       </div>
     </div>
@@ -8795,25 +8879,11 @@ document.addEventListener('click', function(e){
 });
 
 function setTheme(theme){
-  document.documentElement.setAttribute('data-theme', theme === 'dark' ? '' : theme);
-  localStorage.setItem('hgr_theme', theme);
-  // Update active indicator on theme options
-  ['dark','light','hanger'].forEach(t => {
-    const btn = document.getElementById('themeOpt_'+t);
-    if(btn) btn.style.outline = t===theme ? '2px solid var(--gold)' : 'none';
-    const adminBtn = document.getElementById('themeBtn_'+t);
-    if(adminBtn) adminBtn.style.borderColor = t===theme ? 'var(--gold)' : 'var(--border)';
-  });
-  document.getElementById('themePicker').style.display = 'none';
-  toast('Tema promijenjena!');
-}
-
-function setTheme(theme){
   // Add transitioning class to prevent flash
   document.documentElement.classList.add('theme-transitioning');
   document.documentElement.setAttribute('data-theme', theme === 'dark' ? '' : theme);
   localStorage.setItem('hgr_theme', theme);
-  ['dark','light','hanger'].forEach(t => {
+  ['dark','light','hanger','vivid'].forEach(t => {
     const btn = document.getElementById('themeOpt_'+t);
     if(btn) btn.style.outline = t===theme ? '2px solid var(--gold)' : 'none';
     const adminBtn = document.getElementById('themeBtn_'+t);
