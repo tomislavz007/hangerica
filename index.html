@@ -3416,7 +3416,7 @@ async function doLogin(){
       currentUser = user;
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='flex';
-      initData().then(() => { initApp(); setTimeout(renderDashboard, 300); setTimeout(checkCatchUp, 1500); });
+      initData().then(() => { initApp(); setTimeout(initHomeTab, 300); setTimeout(checkCatchUp, 1500); });
     } else {
       err.textContent = result && result.error ? result.error : 'Pogrešna lozinka. Pokušajte ponovo.';
     }
@@ -4153,6 +4153,14 @@ function startClock(){
   const DAYS_HR = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
   const MONTHS_HR = ['siječnja','veljače','ožujka','travnja','svibnja','lipnja',
                      'srpnja','kolovoza','rujna','listopada','studenoga','prosinca'];
+  function tick(){
+    const now = new Date();
+    const timeEl = document.getElementById('sidebarClockTime');
+    const dateEl = document.getElementById('sidebarClockDate');
+    if(timeEl) timeEl.textContent = now.toLocaleTimeString('hr-HR');
+    if(dateEl) dateEl.textContent = DAYS_HR[now.getDay()] + ', ' +
+      now.getDate() + '. ' + MONTHS_HR[now.getMonth()] + ' ' + now.getFullYear() + '.';
+  }
   tick();
   _clockInterval = setInterval(tick, 1000);
 }
@@ -8339,7 +8347,7 @@ checkRegistrationToken();
       sessionStorage.setItem('hgr_uid', uid);
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='flex';
-      initData().then(() => { initApp(); setTimeout(renderDashboard, 300); setTimeout(checkCatchUp, 1500); });
+      initData().then(() => { initApp(); setTimeout(initHomeTab, 300); setTimeout(checkCatchUp, 1500); });
     } else {
       localStorage.removeItem('hgr_token');
       localStorage.removeItem('hgr_uid');
