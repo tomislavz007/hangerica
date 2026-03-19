@@ -4457,7 +4457,7 @@ function switchMainTab(mainId, btn){
     const sw=document.getElementById('projStatsWrap');
     if(sw) sw.style.display='block';
     window.scrollTo({top:0, behavior:'instant'});
-    requestAnimationFrame(()=>{ setTimeout(()=>renderProjects(), 10); });
+    requestAnimationFrame(()=>{ setTimeout(()=>{ initProjFilters(); renderProjects(); }, 10); });
   } else if(mainId==='tasks'){
     subWrap.classList.remove('visible');
     document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
@@ -5214,7 +5214,7 @@ function initProjFilters(){
 function renderProjects(){
   const projEl = document.getElementById('main-project');
   if(!projEl) return;
-  initProjFilters();
+  // initProjFilters se poziva samo pri otvaranju taba, ne ovdje
   const monthF=document.getElementById('projFilterMonth')?.value||'';
   const personF=document.getElementById('projFilterPerson')?.value||'';
   let projs=getProjects();
