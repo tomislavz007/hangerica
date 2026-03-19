@@ -5180,13 +5180,10 @@ function projMonthLabel(ym){
 function initProjFilters(){
   const sel=document.getElementById('projFilterMonth');
   if(!sel) return;
-
-  // Save current selection
   const savedMonth = sel.value;
-
-  // Build month list from ALL projects
-  const allProjs = currentUser.role==='approver' ? getProjects() : getProjects().filter(p=>p.person===currentUser.name);
-  const months=[...new Set(allProjs.map(p=>p.date).filter(Boolean))].sort().reverse();
+  // Uzmi sve projekte i izvuci YYYY-MM iz p.date (koji može biti YYYY-MM ili YYYY-MM-DD)
+  const allProjs = currentUser.role==='approver' ? getProjects() : getProjects().filter(p=>personIncludes(p,currentUser.name)||p.person===currentUser.name);
+  const months=[...new Set(allProjs.map(p=>String(p.date||'').substring(0,7)).filter(m=>m&&m.length===7))].sort().reverse();
   sel.innerHTML='<option value="">Svi mjeseci</option>';
   months.forEach(m=>{
     const o=document.createElement('option');
@@ -5194,8 +5191,7 @@ function initProjFilters(){
     if(m===savedMonth) o.selected=true;
     sel.appendChild(o);
   });
-
-  // Person filter — only for approvers
+  // Person filter — samo za approvere
   const psel=document.getElementById('projFilterPerson');
   if(psel){
     if(currentUser.role==='approver'){
@@ -5218,46 +5214,41 @@ function initProjFilters(){
 function renderProjects(){
   const projEl = document.getElementById('main-project');
   if(!projEl) return;
-  // Don't bail out based on display — it may have just been set to block
   initProjFilters();
-
   const monthF=document.getElementById('projFilterMonth')?.value||'';
   const personF=document.getElementById('projFilterPerson')?.value||'';
-
   let projs=getProjects();
-  // Employees see only their own projects; approvers see everything
+  // Employees vide samo svoje projekte
   if(currentUser.role==='employee'){
-    projs=projs.filter(function(p){ return personIncludes(p, currentUser.name); });
+    projs=projs.filter(p=>personIncludes(p,currentUser.name)||p.person===currentUser.name);
   }
-  // approvers: no filter — see all
-  if(monthF) projs=projs.filter(p=>p.date===monthF);
-  if(personF) projs=projs.filter(p=>personIncludes(p,personF) || p.person===personF);
-
-  // Sort by date desc
+  // Filter po mjesecu — usporedi prvih 7 znakova p.date s YYYY-MM
+  if(monthF) projs=projs.filter(p=>String(p.date||'').substring(0,7)===monthF);
+  // Filter po osobi
+  if(personF) projs=projs.filter(p=>personIncludes(p,personF)||p.person===personF);
+  // Sortiraj po datumu desc
   projs.sort((a,b)=>{ const d=(b.date||'').localeCompare(a.date||''); return d!==0?d:Number(b.id||0)-Number(a.id||0); });
-
   // Stats
   const statsWrap=document.getElementById('projStatsWrap');
   if(statsWrap) statsWrap.style.display='block';
   renderProjStats(getProjects());
-
   const el=document.getElementById('projList');
-  // Update header columns based on finance visibility
-  const head = document.getElementById('projListHead');
-  if(head) {
-    if(isFinanceBlind()) {
-      head.style.gridTemplateColumns = '2fr 1.5fr 1fr 1fr';
-      head.innerHTML = '<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span></span>';
+  // Update header
+  const head=document.getElementById('projListHead');
+  if(head){
+    if(isFinanceBlind()){
+      head.style.gridTemplateColumns='2fr 1.5fr 1fr 1fr';
+      head.innerHTML='<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span></span>';
     } else {
-      head.style.gridTemplateColumns = '2fr 1.2fr 1fr 1fr 1fr 1fr 1fr';
-      head.innerHTML = '<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>';
+      head.style.gridTemplateColumns='2fr 1.2fr 1fr 1fr 1fr 1fr 1fr';
+      head.innerHTML='<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>';
     }
   }
   if(!projs.length){
     el.innerHTML='<div class="empty-state"><div class="es-icon">📊</div><div class="es-title">Nema projekata</div><div class="es-sub">Dodajte prvi projekt klikom na gumb ispod.</div></div>';
     return;
   }
-
+  const blind=isFinanceBlind();
   el.innerHTML=projs.map(p=>{
     const costs=parseCosts(p.costs);
     const totalCost=costs.reduce((a,c)=>a+c.amount,0);
@@ -5267,7 +5258,6 @@ function renderProjects(){
     const mCls=margin>=50?'high':margin>=25?'mid':'low';
     const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
     const isFakt=p.fakturirano==='true'||p.fakturirano===true;
-    const blind=isFinanceBlind();
     return`<div class="proj-row proj-row-mobile" style="grid-template-columns:${blind?'2fr 1.5fr 1fr 1fr':'2fr 1.2fr 1fr 1fr 1fr 1fr 1fr'}" onclick="openProjDetail('${p.id}')">
       <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
       <div class="proj-col-person">${p.persons||p.person||'—'}</div>
@@ -6080,142 +6070,6 @@ function projMonthLabel(ym){
   var m = parseInt(parts[1]);
   if(!m || m<1 || m>12) return str;
   return HR_MONTHS[m-1]+' '+y;
-}
-
-// ── Init project filters ──
-function initProjFilters(){
-  const sel=document.getElementById('projFilterMonth');
-  if(!sel) return;
-
-  // Save current selection
-  const savedMonth = sel.value;
-
-  // Build month list from ALL projects
-  const allProjs = currentUser.role==='approver' ? getProjects() : getProjects().filter(p=>p.person===currentUser.name);
-  const months=[...new Set(allProjs.map(p=>p.date).filter(Boolean))].sort().reverse();
-  sel.innerHTML='<option value="">Svi mjeseci</option>';
-  months.forEach(m=>{
-    const o=document.createElement('option');
-    o.value=m; o.textContent=projMonthLabel(m);
-    if(m===savedMonth) o.selected=true;
-    sel.appendChild(o);
-  });
-
-  // Person filter — only for approvers
-  const psel=document.getElementById('projFilterPerson');
-  if(psel){
-    if(currentUser.role==='approver'){
-      const savedPerson=psel.value;
-      psel.style.display='block';
-      psel.innerHTML='<option value="">Sve osobe</option>';
-      PROJECT_PERSONS.forEach(p=>{
-        const o=document.createElement('option');
-        o.value=p; o.textContent=p;
-        if(p===savedPerson) o.selected=true;
-        psel.appendChild(o);
-      });
-    } else {
-      psel.style.display='none';
-    }
-  }
-}
-
-// ── Render project list ──
-function renderProjects(){
-  const projEl = document.getElementById('main-project');
-  if(!projEl) return;
-  // Don't bail out based on display — it may have just been set to block
-  initProjFilters();
-
-  const monthF=document.getElementById('projFilterMonth')?.value||'';
-  const personF=document.getElementById('projFilterPerson')?.value||'';
-
-  let projs=getProjects();
-  // Employees see only their own projects; approvers see everything
-  if(currentUser.role==='employee'){
-    projs=projs.filter(function(p){ return personIncludes(p, currentUser.name); });
-  }
-  // approvers: no filter — see all
-  if(monthF) projs=projs.filter(p=>p.date===monthF);
-  if(personF) projs=projs.filter(p=>personIncludes(p,personF) || p.person===personF);
-
-  // Sort by date desc
-  projs.sort((a,b)=>{ const d=(b.date||'').localeCompare(a.date||''); return d!==0?d:Number(b.id||0)-Number(a.id||0); });
-
-  // Stats
-  const statsWrap=document.getElementById('projStatsWrap');
-  if(statsWrap) statsWrap.style.display='block';
-  renderProjStats(getProjects());
-
-  const el=document.getElementById('projList');
-  if(!projs.length){
-    el.innerHTML='<div class="empty-state"><div class="es-icon">📊</div><div class="es-title">Nema projekata</div><div class="es-sub">Dodajte prvi projekt klikom na gumb ispod.</div></div>';
-    return;
-  }
-
-  el.innerHTML=projs.map(p=>{
-    const costs=parseCosts(p.costs);
-    const totalCost=costs.reduce((a,c)=>a+c.amount,0);
-    const invoiced=parseFloat(p.invoiced)||0;
-    const profit=invoiced-totalCost;
-    const margin=invoiced>0?Math.round(profit/invoiced*100):0;
-    const mCls=margin>=50?'high':margin>=25?'mid':'low';
-    const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
-    const isFakt=p.fakturirano==='true'||p.fakturirano===true;
-    return`<div class="proj-row proj-row-mobile" onclick="openProjDetail('${p.id}')">
-      <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
-      <div class="proj-col-person">${p.persons||p.person||'—'}</div>
-      <div class="proj-col-date">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
-      <div class="proj-eur proj-col-fin">${fmtEur(invoiced)}</div>
-      <div class="proj-eur red proj-col-fin">${fmtEur(totalCost)}</div>
-      <div class="proj-eur green proj-col-fin">${fmtEur(profit)}</div>
-      <div class="proj-col-actions" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-        <span class="margin-badge ${mCls}">${margin}%</span>
-        ${canEdit?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
-          <input type="checkbox" ${isFakt?'checked':''} onchange="toggleFakturirano('${p.id}',this.checked)" style="accent-color:var(--green);width:13px;height:13px;cursor:pointer">
-          ${isFakt?'✓ Fakt.':'Fakt.'}
-        </label>`:''}
-        ${canEdit?`<button class="btn-del" onclick="event.stopPropagation();deleteProj('${p.id}')" title="Obriši">✕</button>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-
-
-function renderProjStats(projs){
-  // Employees see only their own; approvers see all
-  var rawProjs = getProjects();
-  var allProjs = currentUser.role==='approver'
-    ? rawProjs
-    : rawProjs.filter(function(p){ return personIncludes(p, currentUser.name); });
-
-  // KPI — current year
-  const yearProjs = allProjs.filter(p=>(p.date||'').startsWith(String(_selectedYear)));
-  const totalInv  = yearProjs.reduce((a,p)=>a+(parseFloat(p.invoiced)||0),0);
-  const totalCost = yearProjs.reduce((a,p)=>a+parseCosts(p.costs).reduce((b,c)=>b+c.amount,0),0);
-  const totalProfit = totalInv - totalCost;
-  const avgMargin = totalInv>0 ? Math.round(totalProfit/totalInv*100) : 0;
-
-  document.getElementById('projStats').innerHTML=`
-    <div class="stat-box"><div class="lbl">Projekata ${_selectedYear}</div><div class="val blue">${yearProjs.length}</div></div>
-    <div class="stat-box"><div class="lbl">Fakturirano ${_selectedYear}</div><div class="val" style="font-size:1.3rem;color:var(--text)">${fmtEur(totalInv)}</div></div>
-    <div class="stat-box"><div class="lbl">Zarada ${_selectedYear}</div><div class="val green" style="font-size:1.3rem">${fmtEur(totalProfit)}</div></div>
-    <div class="stat-box"><div class="lbl">Avg. profitabilnost</div><div class="val" style="color:var(--gold)">${avgMargin}%</div></div>`;
-
-  // Year tabs — build from available years in data
-  const years = [...new Set(allProjs.map(p=>String(p.date||'').substring(0,4)).filter(y=>y&&y.length===4&&!isNaN(y)))].sort().reverse();
-  if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
-  const ytEl = document.getElementById('yearTabs');
-  ytEl.innerHTML = years.map(y=>`
-    <button class="year-tab${y==_selectedYear?' active':''}" onclick="selectYear(${y})">${y}</button>`).join('');
-
-  // Monthly table — approvers see ALL projects, employees see only their own
-  const monthlyTableEl = document.getElementById('monthlyTable');
-  const monthlyCard = monthlyTableEl ? monthlyTableEl.closest('.list-card') : null;
-  if(monthlyCard) monthlyCard.style.display = 'block';
-  const monthlyProjs = currentUser.role==='approver' ? rawProjs : allProjs;
-  renderMonthlyTable(monthlyProjs, _selectedYear);
 }
 
 function selectYear(y){
