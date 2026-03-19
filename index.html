@@ -607,9 +607,17 @@ select option{background:var(--surface2);}
   color: var(--text-secondary);
   flex: 1;
   letter-spacing: -.01em;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 #topBarTitle span {
   color: var(--text);
+}
+#lastUpdatedWrap {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Fixed company logo — bottom right */
@@ -2024,17 +2032,20 @@ button[onclick^="apprSubmitRequest"]:hover {
       </div>
       <div id="topBarDivider"></div>
       <div id="topBarTitle"><span id="topBarPageName">Home</span></div>
-      <div id="lastUpdatedWrap" style="display:none">
-        <span id="freshDot" style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span>
-        <span id="lastUpdatedTxt">—</span>
-        <button onclick="manualRefresh()" title="Osvježi" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:.1rem .2rem;line-height:1;font-family:'Inter',sans-serif" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">↻</button>
+      <!-- Desna strana topBara -->
+      <div style="display:flex;align-items:center;gap:.6rem;margin-left:auto;flex-shrink:0">
+        <div id="lastUpdatedWrap" style="display:none;align-items:center;gap:.35rem;font-size:.75rem;color:var(--muted)">
+          <span id="freshDot" style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span>
+          <span id="lastUpdatedTxt">—</span>
+          <button onclick="manualRefresh()" title="Osvježi" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:.1rem .2rem;line-height:1;font-family:'Inter',sans-serif" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">↻</button>
+        </div>
+        <!-- Quick Task gumb -->
+        <button onclick="openQuickTask()" id="quickTaskBtn" title="Brzi task (Q)"
+          style="display:none;align-items:center;gap:.35rem;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Task
+        </button>
       </div>
-      <!-- Quick Task gumb — uvijek vidljiv u topBaru -->
-      <button onclick="openQuickTask()" id="quickTaskBtn" title="Brzi task (Q)"
-        style="display:none;align-items:center;gap:.35rem;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        Task
-      </button>
     </div>
     <div id="seasonalBanner"></div>
     <!-- Sub tabs (Moji dani) -->
