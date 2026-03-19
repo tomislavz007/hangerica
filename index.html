@@ -5154,8 +5154,6 @@ function personIncludes(p, name){
   }
   // Fallback to person field
   if(p.person && String(p.person).trim()===nm) return true;
-  // Also check createdBy via currentUser
-  if(p.createdBy && currentUser && p.createdBy===currentUser.id) return true;
   return false;
 }
 
@@ -6040,36 +6038,7 @@ function toast(msg,type=''){
 function getProjects(){ return _projectCache || []; }
 
 // Check if a person is in project's persons list (supports multi-person)
-function personIncludes(p, name){
-  if(!name) return false;
-  var nm = String(name).trim();
-  // Check persons field (comma-separated list)
-  if(p.persons && String(p.persons).trim()){
-    var list = String(p.persons).split(',').map(function(s){ return s.trim(); });
-    for(var i=0;i<list.length;i++){ if(list[i]===nm) return true; }
-  }
-  // Fallback to person field
-  if(p.person && String(p.person).trim()===nm) return true;
-  // Also check createdBy via currentUser
-  if(p.createdBy && currentUser && p.createdBy===currentUser.id) return true;
-  return false;
-}
 
-function fmtEur(n){
-  const num = Number(n);
-  if(isNaN(num)) return '€0.00';
-  return '€' + num.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-
-function projMonthLabel(ym){
-  if(!ym || ym==='undefined' || ym==='null') return '—';
-  var str = String(ym).trim().substring(0,7); // YYYY-MM
-  var parts = str.split('-');
-  if(parts.length < 2) return str;
-  var y = parts[0];
-  var m = parseInt(parts[1]);
-  if(!m || m<1 || m>12) return str;
-  return HR_MONTHS[m-1]+' '+y;
 }
 
 function selectYear(y){
