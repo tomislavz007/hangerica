@@ -578,10 +578,11 @@ select option{background:var(--surface2);}
   display: flex;
   align-items: center;
   padding: 0 1.4rem;
-  gap: .8rem;
+  gap: .6rem;
   position: sticky;
   top: 0;
   z-index: 200;
+  overflow: hidden;
 }
 #topBarBrand {
   display: flex;
@@ -1205,12 +1206,14 @@ button[onclick^="apprSubmitRequest"]:hover {
   #topBar { padding: 0 .75rem !important; height: 44px !important; }
   #topBarPageName {
     font-size: .78rem !important;
-    max-width: 55vw !important;
+    max-width: 40vw !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
   }
   #lastUpdatedWrap { display: none !important; }
+  #topBarBrandName { display: none !important; }
+  #topBarDivider { display: none !important; }
 
   /* ── SIDEBAR → BOTTOM TAB BAR ── */
   #appSidebar {
@@ -2033,16 +2036,16 @@ button[onclick^="apprSubmitRequest"]:hover {
       <div id="topBarDivider"></div>
       <div id="topBarTitle"><span id="topBarPageName">Home</span></div>
       <!-- Desna strana topBara -->
-      <div style="display:flex;align-items:center;gap:.6rem;margin-left:auto;flex-shrink:0">
-        <div id="lastUpdatedWrap" style="display:none;align-items:center;gap:.35rem;font-size:.75rem;color:var(--muted)">
-          <span id="freshDot" style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span>
-          <span id="lastUpdatedTxt">—</span>
-          <button onclick="manualRefresh()" title="Osvježi" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:.1rem .2rem;line-height:1;font-family:'Inter',sans-serif" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">↻</button>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-left:auto;flex-shrink:0">
+        <div id="lastUpdatedWrap" style="display:none;align-items:center;gap:.3rem;font-size:.72rem;color:var(--muted);white-space:nowrap;max-width:180px;overflow:hidden">
+          <span id="freshDot" style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0"></span>
+          <span id="lastUpdatedTxt" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span>
+          <button onclick="manualRefresh()" title="Osvježi" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:.1rem .2rem;line-height:1;font-family:'Inter',sans-serif;flex-shrink:0" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">↻</button>
         </div>
         <!-- Quick Task gumb -->
         <button onclick="openQuickTask()" id="quickTaskBtn" title="Brzi task (Q)"
-          style="display:none;align-items:center;gap:.35rem;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.3rem .75rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          style="display:none;align-items:center;gap:.3rem;background:var(--gold);color:#0d0f18;border:none;border-radius:var(--radius);padding:.28rem .65rem;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0;white-space:nowrap">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           Task
         </button>
       </div>
@@ -3275,12 +3278,13 @@ function updateLastUpdated(){
     const secs = Math.floor((new Date() - _lastRefreshTime) / 1000);
     const mins = Math.floor(secs / 60);
     let label, fresh;
-    if(secs < 60)       { label = 'Upravo ažurirano';    fresh = true; }
-    else if(mins < 5)   { label = `Ažurirano prije ${mins}min`; fresh = true; }
-    else if(mins < 15)  { label = `Ažurirano prije ${mins}min`; fresh = false; }
-    else                { label = `Ažurirano prije ${mins}min — osvježi?`; fresh = false; }
+    if(secs < 60)       { label = '● Upravo';          fresh = true; }
+    else if(mins < 5)   { label = `↻ ${mins}min`;      fresh = true; }
+    else if(mins < 15)  { label = `↻ ${mins}min`;      fresh = false; }
+    else                { label = `↻ ${mins}min`;       fresh = false; }
     if(txt) txt.textContent = label;
-    if(dot) dot.style.background = fresh ? 'var(--green)' : 'var(--amber)';
+    if(dot) dot.style.display = 'none'; // dot je sada u tekstu
+    if(wrap) wrap.title = fresh ? 'Podatci su svježi' : 'Preporučujemo osvježavanje';
   }
   tick();
   _lastUpdatedInterval = setInterval(tick, 30000);
