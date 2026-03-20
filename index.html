@@ -4155,8 +4155,8 @@ function startClock(){
                      'srpnja','kolovoza','rujna','listopada','studenoga','prosinca'];
   function tick(){
     const now = new Date();
-    const timeEl = document.getElementById('sidebarClockTime');
-    const dateEl = document.getElementById('sidebarClockDate');
+    const timeEl = document.getElementById('sidebarClock');
+    const dateEl = document.getElementById('sidebarDate');
     if(timeEl) timeEl.textContent = now.toLocaleTimeString('hr-HR');
     if(dateEl) dateEl.textContent = DAYS_HR[now.getDay()] + ', ' +
       now.getDate() + '. ' + MONTHS_HR[now.getMonth()] + ' ' + now.getFullYear() + '.';
