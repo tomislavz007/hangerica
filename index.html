@@ -2562,6 +2562,47 @@ button[onclick^="apprSubmitRequest"]:hover {
   </div>
 </div>
 
+  <!-- TAB: Insights -->
+  <div class="main-content" id="main-insights" style="display:none">
+    <div class="page" style="padding-top:1.2rem;max-width:1200px">
+      <div style="margin-bottom:1.4rem">
+        <div style="font-size:1.3rem;font-weight:700;color:var(--text)">📊 Insights</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem">Financijski pregled i analitika</div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div id="insQuickStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem;margin-bottom:1.4rem"></div>
+
+      <!-- Row 1: Bar chart + Top klijenti -->
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div class="list-card" style="padding:1.3rem">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between">
+            💶 Prihodi po mjesecu
+            <select id="insYearSelect" onchange="renderInsights()" style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.25rem .5rem;color:var(--text);font-size:.75rem;font-family:'Inter',sans-serif;outline:none"></select>
+          </div>
+          <div id="insBarChart" style="height:180px;display:flex;align-items:flex-end;gap:4px;padding-bottom:1.6rem;position:relative"></div>
+        </div>
+        <div class="list-card" style="padding:1.3rem">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:1rem">🏆 Top klijenti</div>
+          <div id="insTopClients"></div>
+        </div>
+      </div>
+
+      <!-- Row 2: Profitabilnost po osobi + Nefakturirani -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div class="list-card" style="padding:1.3rem">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:1rem">👥 Profitabilnost po osobi</div>
+          <div id="insByPerson"></div>
+        </div>
+        <div class="list-card" style="padding:1.3rem">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.4rem">⚠️ Nefakturirani projekti</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:.8rem">Projekti s prihodima ali bez oznake "Fakturirano"</div>
+          <div id="insUnbilled"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- TAB: Tasks -->
   <div class="main-content" id="main-tasks" style="display:none">
     <!-- Linear-style task header bar -->
@@ -4230,6 +4271,180 @@ function projUpdateSelectionBar() {
   bar.style.display = 'flex';
 }
 
+// ══════════════════════════════════════════
+// INSIGHTS TAB
+// ══════════════════════════════════════════
+function renderInsights() {
+  const projs = getProjects();
+  if (!projs.length) {
+    document.getElementById('insQuickStats').innerHTML = '<div style="color:var(--muted);font-size:.85rem">Nema podataka.</div>';
+    return;
+  }
+
+  const now = new Date();
+  const thisYM  = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const lastDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastYM   = lastDate.getFullYear() + '-' + String(lastDate.getMonth()+1).padStart(2,'0');
+
+  // Helper: troškovi projekta
+  const getCost = p => parseCosts(p.costs||'').reduce((a,c)=>a+c.amount,0);
+  const getInv  = p => parseFloat(p.invoiced)||0;
+  const getDate = p => String(p.date||'').substring(0,7);
+
+  // ── Quick Stats ──
+  const thisMonthProjs = projs.filter(p => getDate(p) === thisYM);
+  const lastMonthProjs = projs.filter(p => getDate(p) === lastYM);
+  const thisInv  = thisMonthProjs.reduce((a,p)=>a+getInv(p),0);
+  const lastInv  = lastMonthProjs.reduce((a,p)=>a+getInv(p),0);
+  const pctChange = lastInv > 0 ? ((thisInv - lastInv) / lastInv * 100).toFixed(1) : null;
+  const pctHtml = pctChange !== null
+    ? `<span style="font-size:.78rem;color:${parseFloat(pctChange)>=0?'var(--green)':'var(--red)'}">
+        ${parseFloat(pctChange)>=0?'▲':'▼'} ${Math.abs(pctChange)}% vs prošli mj.
+       </span>`
+    : '<span style="font-size:.78rem;color:var(--muted)">prvi podatak</span>';
+
+  // Projekti ovaj tjedan
+  const weekStart = new Date(); weekStart.setDate(now.getDate() - now.getDay() + (now.getDay()===0?-6:1)); weekStart.setHours(0,0,0,0);
+  const newThisWeek = projs.filter(p => p.createdAt && new Date(p.createdAt) >= weekStart).length;
+
+  // Prosječna marža kroz godinu
+  const yearStr = String(now.getFullYear());
+  const yearProjs = projs.filter(p => getDate(p).startsWith(yearStr));
+  const totalYearInv  = yearProjs.reduce((a,p)=>a+getInv(p),0);
+  const totalYearCost = yearProjs.reduce((a,p)=>a+getCost(p),0);
+  const avgMargin = totalYearInv > 0 ? Math.round((totalYearInv-totalYearCost)/totalYearInv*100) : 0;
+  const marginColor = avgMargin >= 60 ? 'var(--green)' : avgMargin >= 30 ? 'var(--amber)' : 'var(--red)';
+
+  document.getElementById('insQuickStats').innerHTML = `
+    <div class="list-card" style="padding:1.1rem 1.3rem">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">Prihod ovaj mjesec</div>
+      <div style="font-size:1.6rem;font-weight:700;color:var(--text)">${fmtEur(thisInv)}</div>
+      <div style="margin-top:.3rem">${pctHtml}</div>
+    </div>
+    <div class="list-card" style="padding:1.1rem 1.3rem">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">Novi projekti ovaj tjedan</div>
+      <div style="font-size:1.6rem;font-weight:700;color:var(--text)">${newThisWeek}</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.3rem">${thisMonthProjs.length} ukupno ovaj mj.</div>
+    </div>
+    <div class="list-card" style="padding:1.1rem 1.3rem">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">Prosječna marža ${yearStr}.</div>
+      <div style="font-size:1.6rem;font-weight:700;color:${marginColor}">${avgMargin}%</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.3rem">${yearProjs.length} proj. · ${fmtEur(totalYearInv)} prihoda</div>
+    </div>
+    <div class="list-card" style="padding:1.1rem 1.3rem">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">Zarada ${yearStr}.</div>
+      <div style="font-size:1.6rem;font-weight:700;color:var(--green)">${fmtEur(totalYearInv-totalYearCost)}</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.3rem">od ${fmtEur(totalYearInv)} fakturiranog</div>
+    </div>`;
+
+  // ── Bar chart — prihodi po mjesecu ──
+  const yearSel = document.getElementById('insYearSelect');
+  const years = [...new Set(projs.map(p=>getDate(p).substring(0,4)).filter(y=>y&&y.length===4))].sort().reverse();
+  if (!years.length) years.push(yearStr);
+  if (yearSel && !yearSel.options.length) {
+    years.forEach(y => { const o=document.createElement('option'); o.value=y; o.textContent=y+'.'; yearSel.appendChild(o); });
+  }
+  const selYear = yearSel?.value || yearStr;
+  renderInsBarChart(projs, selYear);
+
+  // ── Top 5 klijenata ──
+  const byClient = {};
+  projs.forEach(p => {
+    const cl = (p.client||'Ostalo').trim();
+    if(!byClient[cl]) byClient[cl] = {inv:0, cnt:0};
+    byClient[cl].inv += getInv(p);
+    byClient[cl].cnt++;
+  });
+  const topClients = Object.entries(byClient).sort((a,b)=>b[1].inv-a[1].inv).slice(0,5);
+  const maxCI = topClients[0]?.[1].inv || 1;
+  document.getElementById('insTopClients').innerHTML = topClients.map(([name,d],i)=>`
+    <div style="margin-bottom:.7rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.25rem">
+        <span style="font-size:.8rem;color:var(--text);font-weight:${i===0?'700':'400'}">${name}</span>
+        <span style="font-size:.8rem;color:var(--text);font-weight:700">${fmtEur(d.inv)}</span>
+      </div>
+      <div style="height:5px;background:var(--surface3);border-radius:3px">
+        <div style="width:${Math.round(d.inv/maxCI*100)}%;height:100%;background:${i===0?'var(--gold)':'var(--blue)'};border-radius:3px;transition:width .5s"></div>
+      </div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">${d.cnt} projekt${d.cnt===1?'':'a'}</div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:.8rem">Nema podataka</div>';
+
+  // ── Profitabilnost po osobi ──
+  const byPerson = {};
+  projs.forEach(p => {
+    const persons = (p.persons||p.person||'').split(',').map(s=>s.trim()).filter(Boolean);
+    persons.forEach(name => {
+      if(!byPerson[name]) byPerson[name] = {inv:0, cost:0, cnt:0};
+      byPerson[name].inv  += getInv(p);
+      byPerson[name].cost += getCost(p);
+      byPerson[name].cnt++;
+    });
+  });
+  const sortedPersons = Object.entries(byPerson).sort((a,b)=>b[1].inv-a[1].inv);
+  const maxPI = sortedPersons[0]?.[1].inv || 1;
+  document.getElementById('insByPerson').innerHTML = sortedPersons.map(([name,d])=>{
+    const profit = d.inv - d.cost;
+    const margin = d.inv > 0 ? Math.round(profit/d.inv*100) : 0;
+    const mc = margin>=60?'var(--green)':margin>=30?'var(--amber)':'var(--red)';
+    return `<div style="margin-bottom:.8rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
+        <span style="font-size:.8rem;color:var(--text)">${name}</span>
+        <div style="display:flex;gap:.6rem;align-items:center">
+          <span style="font-size:.72rem;color:${mc};font-weight:700">${margin}%</span>
+          <span style="font-size:.8rem;color:var(--text)">${fmtEur(d.inv)}</span>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--surface3);border-radius:3px">
+        <div style="width:${Math.round(d.inv/maxPI*100)}%;height:100%;background:${mc};border-radius:3px"></div>
+      </div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">${d.cnt} proj. · zarada: ${fmtEur(profit)}</div>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:.8rem">Nema podataka</div>';
+
+  // ── Nefakturirani projekti ──
+  const unbilled = projs.filter(p => getInv(p) > 0 && p.fakturirano !== 'true' && p.fakturirano !== true)
+    .sort((a,b)=>getInv(b)-getInv(a)).slice(0,8);
+  document.getElementById('insUnbilled').innerHTML = unbilled.length
+    ? unbilled.map(p=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:500">${p.name||'—'}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${p.client||''} · ${projMonthLabel(getDate(p))}</div>
+        </div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--amber)">${fmtEur(getInv(p))}</div>
+      </div>`).join('')
+    : '<div style="color:var(--green);font-size:.8rem;padding:.5rem 0">✓ Svi projekti su fakturirani!</div>';
+}
+
+function renderInsBarChart(projs, year) {
+  const el = document.getElementById('insBarChart');
+  if (!el) return;
+  const HR_MONTHS_SHORT = ['Sij','Velj','Ožu','Tra','Svi','Lip','Srp','Kol','Ruj','Lis','Stu','Pro'];
+  const getInv  = p => parseFloat(p.invoiced)||0;
+  const getDate = p => String(p.date||'').substring(0,7);
+
+  const monthly = Array(12).fill(0);
+  projs.filter(p=>getDate(p).startsWith(year)).forEach(p => {
+    const m = parseInt(getDate(p).split('-')[1]) - 1;
+    if (m>=0 && m<12) monthly[m] += getInv(p);
+  });
+  const maxVal = Math.max(...monthly, 1);
+  const nowMonth = new Date().getMonth();
+
+  el.innerHTML = monthly.map((val, i) => {
+    const h = Math.round(val / maxVal * 140);
+    const isThis = i === nowMonth && year === String(new Date().getFullYear());
+    const color = isThis ? 'var(--gold)' : val > 0 ? 'var(--blue)' : 'var(--surface3)';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default" title="${HR_MONTHS_SHORT[i]}: ${fmtEur(val)}">
+      <div style="font-size:.6rem;color:var(--muted);white-space:nowrap">${val>0?'€'+Math.round(val/1000)+'k':''}</div>
+      <div style="width:100%;background:${color};border-radius:3px 3px 0 0;height:${h}px;min-height:${val>0?4:0}px;transition:height .4s ease;position:relative">
+        ${isThis?'<div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:var(--gold)"></div>':''}
+      </div>
+      <div style="font-size:.62rem;color:${isThis?'var(--gold)':'var(--muted)'};font-weight:${isThis?'700':'400'}">${HR_MONTHS_SHORT[i]}</div>
+    </div>`;
+  }).join('');
+}
+
 function startClock(){
   if(_clockInterval) clearInterval(_clockInterval);
   const DAYS_HR = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
@@ -4287,11 +4502,14 @@ function initApp(){
   mainTabsEl.innerHTML='';
 
   const canAccessProjects = PROJECT_PERSONS.includes(currentUser.name);
+  const INSIGHTS_USERS = ['Dario Oxenham', 'Tomislav Zeljko'];
+  const canAccessInsights = INSIGHTS_USERS.includes(currentUser.name);
   const MAIN_TABS=[
     { id:'home', label:'🏠 Home' },
     { id:'moji-dani', label:'📋 Moji dani' },
     ...(canAccessProjects ? [{ id:'project', label:'📊 Projekti' }] : []),
     { id:'tasks', label:'✅ Tasks' },
+    ...(canAccessInsights ? [{ id:'insights', label:'📈 Insights' }] : []),
     ...(isAdmin ? [{ id:'admin', label:'⚙️ Admin' }] : []),
   ];
 
@@ -4316,6 +4534,7 @@ function initApp(){
     'moji-dani': '◷',
     'project': '◈',
     'tasks': '☑',
+    'insights': '📈',
     'admin': '⚙',
   };
   const TAB_LABELS = {
@@ -4323,6 +4542,7 @@ function initApp(){
     'moji-dani': 'Moji dani',
     'project': 'Projekti',
     'tasks': 'Tasks',
+    'insights': 'Insights',
     'admin': 'Admin',
   };
 
@@ -4454,7 +4674,7 @@ function switchSubTab(subId, btn){
 }
 
 const PAGE_NAMES = {
-  'home':'Home','moji-dani':'Moji dani','project':'Projekti','tasks':'Tasks','admin':'Admin'
+  'home':'Home','moji-dani':'Moji dani','project':'Projekti','tasks':'Tasks','insights':'Insights','admin':'Admin'
 };
 function switchMainTab(mainId, btn){
   document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -4544,6 +4764,16 @@ function switchMainTab(mainId, btn){
     if(sidebarSub3) sidebarSub3.classList.remove('open');
     if(tasksEl2){ tasksEl2.style.display='block'; initTasksTab(); }
     window.scrollTo({top:0, behavior:'instant'});
+  } else if(mainId==='insights'){
+    subWrap.classList.remove('visible');
+    document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
+    document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+    const sidebarSubI = document.getElementById('sidebarSubMojiDani');
+    if(sidebarSubI) sidebarSubI.classList.remove('open');
+    const insEl = document.getElementById('main-insights');
+    if(insEl) insEl.style.display='block';
+    window.scrollTo({top:0, behavior:'instant'});
+    setTimeout(()=>renderInsights(), 50);
   }
 }
 
