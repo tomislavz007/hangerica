@@ -2703,13 +2703,30 @@ button[onclick^="apprSubmitRequest"]:hover {
         <button class="btn-primary btn-new-proj" onclick="openProjForm()">+ Novi projekt</button>
       </div>
 
+      <!-- Agregatni summary bar (vidljiv kad su projekti odabrani) -->
+      <div id="projSelectionBar" style="display:none;background:var(--gold-dim);border:1px solid var(--gold);border-radius:var(--radius);padding:.6rem 1.2rem;margin-bottom:.8rem;display:none;align-items:center;gap:1.2rem;flex-wrap:wrap">
+        <span id="projSelCount" style="font-size:.8rem;font-weight:700;color:var(--gold)">0 odabrano</span>
+        <div style="height:14px;width:1px;background:var(--border-strong)"></div>
+        <div style="display:flex;gap:1.2rem;flex-wrap:wrap;flex:1">
+          <span style="font-size:.78rem;color:var(--muted)">Fakturirano: <strong id="selTotalInv" style="color:var(--text)">€0</strong></span>
+          <span style="font-size:.78rem;color:var(--muted)">Troškovi: <strong id="selTotalCost" style="color:var(--red)">€0</strong></span>
+          <span style="font-size:.78rem;color:var(--muted)">Zarada: <strong id="selTotalProfit" style="color:var(--green)">€0</strong></span>
+          <span style="font-size:.78rem;color:var(--muted)">Avg. marža: <strong id="selAvgMargin" style="color:var(--gold)">0%</strong></span>
+        </div>
+        <button onclick="projDeselectAll()" style="background:none;border:1px solid var(--border-strong);border-radius:var(--radius);padding:.25rem .6rem;font-size:.75rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">✕ Poništi</button>
+      </div>
+
       <!-- Main area: list + side chat panel -->
       <div class="proj-main-layout">
 
         <!-- Project list -->
         <div style="flex:1;min-width:0">
           <div class="list-card" id="projListCard">
-            <div class="list-head" id="projListHead" style="grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr 1fr">
+            <div class="list-head" id="projListHead" style="grid-template-columns:2.2rem 2fr 1.2fr 1fr 1fr 1fr 1fr 1fr">
+              <span style="display:flex;align-items:center;justify-content:center">
+                <input type="checkbox" id="projSelectAll" onclick="projToggleAll(this.checked)"
+                  style="width:14px;height:14px;accent-color:var(--gold);cursor:pointer">
+              </span>
               <span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span>
               <span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>
             </div>
@@ -4148,6 +4165,71 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ══════════════════════════════════════════
+// PROJECT SELECTION & AGGREGATION
+// ══════════════════════════════════════════
+function projRowCheck(cb) {
+  const row = cb.closest('.proj-row');
+  if (row) row.style.background = cb.checked ? 'var(--gold-dim)' : '';
+  projUpdateSelectionBar();
+}
+
+function projToggleAll(checked) {
+  document.querySelectorAll('.proj-row-cb').forEach(cb => {
+    cb.checked = checked;
+    const row = cb.closest('.proj-row');
+    if (row) row.style.background = checked ? 'var(--gold-dim)' : '';
+  });
+  projUpdateSelectionBar();
+}
+
+function projDeselectAll() {
+  projToggleAll(false);
+  const selectAll = document.getElementById('projSelectAll');
+  if (selectAll) selectAll.checked = false;
+}
+
+function projUpdateSelectionBar() {
+  const checked = [...document.querySelectorAll('.proj-row-cb:checked')];
+  const bar = document.getElementById('projSelectionBar');
+  const selectAllCb = document.getElementById('projSelectAll');
+  const total = document.querySelectorAll('.proj-row-cb').length;
+
+  // Ažuriraj select all checkbox stanje
+  if (selectAllCb) {
+    selectAllCb.checked = checked.length > 0 && checked.length === total;
+    selectAllCb.indeterminate = checked.length > 0 && checked.length < total;
+  }
+
+  if (!bar) return;
+
+  if (checked.length === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+
+  // Zbroji podatke iz data atributa redova
+  let totalInv = 0, totalCost = 0, totalProfit = 0;
+  checked.forEach(cb => {
+    const row = cb.closest('.proj-row');
+    if (row) {
+      totalInv    += parseFloat(row.dataset.invoiced) || 0;
+      totalCost   += parseFloat(row.dataset.cost)     || 0;
+      totalProfit += parseFloat(row.dataset.profit)   || 0;
+    }
+  });
+  const avgMargin = totalInv > 0 ? Math.round(totalProfit / totalInv * 100) : 0;
+
+  document.getElementById('projSelCount').textContent  = checked.length + ' odabrano';
+  document.getElementById('selTotalInv').textContent   = fmtEur(totalInv);
+  document.getElementById('selTotalCost').textContent  = fmtEur(totalCost);
+  document.getElementById('selTotalProfit').textContent = fmtEur(totalProfit);
+  document.getElementById('selAvgMargin').textContent  = avgMargin + '%';
+  document.getElementById('selAvgMargin').style.color  = avgMargin >= 50 ? 'var(--green)' : avgMargin >= 25 ? 'var(--amber)' : 'var(--red)';
+
+  bar.style.display = 'flex';
+}
+
 function startClock(){
   if(_clockInterval) clearInterval(_clockInterval);
   const DAYS_HR = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
@@ -5231,11 +5313,11 @@ function renderProjects(){
   const head=document.getElementById('projListHead');
   if(head){
     if(isFinanceBlind()){
-      head.style.gridTemplateColumns='2fr 1.5fr 1fr 1fr';
-      head.innerHTML='<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span></span>';
+      head.style.gridTemplateColumns='2.2rem 2fr 1.5fr 1fr 1fr';
+      head.innerHTML='<span style="display:flex;align-items:center;justify-content:center"><input type="checkbox" id="projSelectAll" onclick="projToggleAll(this.checked)" style="width:14px;height:14px;accent-color:var(--gold);cursor:pointer"></span><span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span></span>';
     } else {
-      head.style.gridTemplateColumns='2fr 1.2fr 1fr 1fr 1fr 1fr 1fr';
-      head.innerHTML='<span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>';
+      head.style.gridTemplateColumns='2.2rem 2fr 1.2fr 1fr 1fr 1fr 1fr 1fr';
+      head.innerHTML='<span style="display:flex;align-items:center;justify-content:center"><input type="checkbox" id="projSelectAll" onclick="projToggleAll(this.checked)" style="width:14px;height:14px;accent-color:var(--gold);cursor:pointer"></span><span>Projekt / Klijent</span><span>Odgovorna osoba</span><span>Datum</span><span>Fakturirano</span><span>Troškovi</span><span>Zarada</span><span></span>';
     }
   }
   if(!projs.length){
@@ -5252,13 +5334,18 @@ function renderProjects(){
     const mCls=margin>=50?'high':margin>=25?'mid':'low';
     const canEdit=currentUser.role==='approver'||p.person===currentUser.name||personIncludes(p,currentUser.name);
     const isFakt=p.fakturirano==='true'||p.fakturirano===true;
-    return`<div class="proj-row proj-row-mobile" style="grid-template-columns:${blind?'2fr 1.5fr 1fr 1fr':'2fr 1.2fr 1fr 1fr 1fr 1fr 1fr'}" onclick="openProjDetail('${p.id}')">
-      <div><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
-      <div class="proj-col-person">${p.persons||p.person||'—'}</div>
-      <div class="proj-col-date">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
-      ${blind?'':`<div class="proj-eur proj-col-fin">${fmtEur(invoiced)}</div>`}
-      ${blind?'':`<div class="proj-eur red proj-col-fin">${fmtEur(totalCost)}</div>`}
-      ${blind?'':`<div class="proj-eur green proj-col-fin">${fmtEur(profit)}</div>`}
+    return`<div class="proj-row proj-row-mobile" data-projid="${p.id}" data-invoiced="${invoiced}" data-cost="${totalCost}" data-profit="${profit}" style="grid-template-columns:${blind?'2.2rem 2fr 1.5fr 1fr 1fr':'2.2rem 2fr 1.2fr 1fr 1fr 1fr 1fr 1fr'}">
+      <div style="display:flex;align-items:center;justify-content:center" onclick="event.stopPropagation()">
+        <input type="checkbox" class="proj-row-cb" data-id="${p.id}"
+          onchange="projRowCheck(this)"
+          style="width:14px;height:14px;accent-color:var(--gold);cursor:pointer">
+      </div>
+      <div onclick="openProjDetail('${p.id}');event.stopPropagation()"><div class="proj-name">${p.name||'—'}</div><div class="proj-client">${p.client||'—'}</div></div>
+      <div class="proj-col-person" onclick="openProjDetail('${p.id}')">${p.persons||p.person||'—'}</div>
+      <div class="proj-col-date" onclick="openProjDetail('${p.id}')">${projMonthLabel(String(p.date||'').substring(0,7))}</div>
+      ${blind?'':`<div class="proj-eur proj-col-fin" onclick="openProjDetail('${p.id}')">${fmtEur(invoiced)}</div>`}
+      ${blind?'':`<div class="proj-eur red proj-col-fin" onclick="openProjDetail('${p.id}')">${fmtEur(totalCost)}</div>`}
+      ${blind?'':`<div class="proj-eur green proj-col-fin" onclick="openProjDetail('${p.id}')">${fmtEur(profit)}</div>`}
       <div class="proj-col-actions" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
         ${blind?'':`<span class="margin-badge ${mCls}">${margin}%</span>`}
         ${(canEdit&&!blind)?`<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.74rem;color:${isFakt?'var(--green)':'var(--muted)'};white-space:nowrap">
