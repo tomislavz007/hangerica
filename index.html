@@ -2767,6 +2767,9 @@ button[onclick^="apprSubmitRequest"]:hover {
           <select id="projFilterPerson" onchange="renderProjects()" class="proj-filter-select" style="display:none">
             <option value="">Sve osobe</option>
           </select>
+          <select id="projFilterClient" onchange="renderProjects()" class="proj-filter-select">
+            <option value="">Svi klijenti</option>
+          </select>
         </div>
         <button class="btn-primary btn-new-proj" onclick="openProjForm()">+ Novi projekt</button>
       </div>
@@ -5684,6 +5687,19 @@ function initProjFilters(){
       psel.style.display='none';
     }
   }
+  // Client filter — svi korisnici
+  const csel=document.getElementById('projFilterClient');
+  if(csel){
+    const savedClient=csel.value;
+    const clients=[...new Set(allProjs.map(p=>(p.client||'').trim()).filter(c=>c))].sort();
+    csel.innerHTML='<option value="">Svi klijenti</option>';
+    clients.forEach(c=>{
+      const o=document.createElement('option');
+      o.value=c; o.textContent=c;
+      if(c===savedClient) o.selected=true;
+      csel.appendChild(o);
+    });
+  }
 }
 
 // ── Render project list ──
@@ -5693,6 +5709,7 @@ function renderProjects(){
   // initProjFilters se poziva samo pri otvaranju taba, ne ovdje
   const monthF=document.getElementById('projFilterMonth')?.value||'';
   const personF=document.getElementById('projFilterPerson')?.value||'';
+  const clientF=document.getElementById('projFilterClient')?.value||'';
   let projs=getProjects();
   // Employees vide samo svoje projekte
   if(currentUser.role==='employee'){
@@ -5702,6 +5719,8 @@ function renderProjects(){
   if(monthF) projs=projs.filter(p=>String(p.date||'').substring(0,7)===monthF);
   // Filter po osobi
   if(personF) projs=projs.filter(p=>personIncludes(p,personF)||p.person===personF);
+  // Filter po klijentu
+  if(clientF) projs=projs.filter(p=>(p.client||'').trim()===clientF);
   // Sortiraj po datumu desc
   projs.sort((a,b)=>{ const d=(b.date||'').localeCompare(a.date||''); return d!==0?d:Number(b.id||0)-Number(a.id||0); });
   // Stats
