@@ -2116,6 +2116,33 @@ button[onclick^="apprSubmitRequest"]:hover {
           </button>
         </div>
 
+        <!-- ══ TKO RADI OD KUDA ══ -->
+        <div class="list-card" style="padding:1.4rem" id="whereWorkCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+            <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text)">
+              📍 Tko radi od kuda
+            </div>
+            <div style="font-size:.68rem;color:var(--muted)" id="whereWorkDate"></div>
+          </div>
+          <!-- Moj status -->
+          <div style="display:flex;gap:.4rem;margin-bottom:.9rem" id="whereWorkMyBtns">
+            <button onclick="setWhereWork('office')" class="where-btn" data-status="office"
+              style="flex:1;padding:.4rem .3rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface3);color:var(--muted);font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s">
+              🏢 Ured
+            </button>
+            <button onclick="setWhereWork('remote')" class="where-btn" data-status="remote"
+              style="flex:1;padding:.4rem .3rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface3);color:var(--muted);font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s">
+              🏠 Remote
+            </button>
+            <button onclick="setWhereWork('field')" class="where-btn" data-status="field"
+              style="flex:1;padding:.4rem .3rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface3);color:var(--muted);font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s">
+              📍 Teren
+            </button>
+          </div>
+          <!-- Tim status -->
+          <div id="whereWorkList" style="display:flex;flex-direction:column;gap:.35rem"></div>
+        </div>
+
       <!-- Middle row: news + quiz -->
       <div class="home-main-grid">
 
@@ -3474,7 +3501,7 @@ async function doLogin(){
       currentUser = user;
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='flex';
-      initData().then(() => { initApp(); setTimeout(initHomeTab, 300); setTimeout(checkCatchUp, 1500); });
+      initData().then(() => { initApp(); setTimeout(initHomeTab, 300); setTimeout(checkCatchUp, 1500); setTimeout(checkUnreadBadges, 2000); });
     } else {
       err.textContent = result && result.error ? result.error : 'Pogrešna lozinka. Pokušajte ponovo.';
     }
@@ -4445,6 +4472,148 @@ function renderInsBarChart(projs, year) {
   }).join('');
 }
 
+// ══════════════════════════════════════════
+// TKO RADI OD KUDA
+// ══════════════════════════════════════════
+const WHERE_ICONS = { office:'🏢', remote:'🏠', field:'📍' };
+const WHERE_LABELS = { office:'Ured', remote:'Remote', field:'Teren' };
+const WHERE_COLORS = { office:'var(--blue)', remote:'var(--green)', field:'var(--amber)' };
+
+function getWhereWorkKey() {
+  return 'hgr_wherework_' + new Date().toISOString().substring(0,10);
+}
+
+function setWhereWork(status) {
+  if (!currentUser) return;
+  // Spremi lokalno za danas
+  const key = getWhereWorkKey();
+  const data = JSON.parse(localStorage.getItem(key) || '{}');
+  data[currentUser.name] = status;
+  localStorage.setItem(key, JSON.stringify(data));
+  // Ažuriraj UI
+  renderWhereWork();
+  // Snimi u GAS (async, ne blokira)
+  gasCall('saveWhereWork', { data: JSON.stringify({
+    date: new Date().toISOString().substring(0,10),
+    name: currentUser.name,
+    status
+  }) }).catch(()=>{});
+  toast(WHERE_ICONS[status] + ' ' + WHERE_LABELS[status]);
+}
+
+async function loadWhereWork() {
+  const today = new Date().toISOString().substring(0,10);
+  const key = 'hgr_wherework_' + today;
+  // Pokušaj dohvatiti s GAS-a
+  try {
+    const r = await gasCall('getWhereWork', { date: today });
+    if (r && typeof r === 'object') {
+      localStorage.setItem(key, JSON.stringify(r));
+    }
+  } catch(e) {}
+  renderWhereWork();
+}
+
+function renderWhereWork() {
+  const today = new Date().toISOString().substring(0,10);
+  const key = 'hgr_wherework_' + today;
+  const data = JSON.parse(localStorage.getItem(key) || '{}');
+
+  // Datum label
+  const dateEl = document.getElementById('whereWorkDate');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('hr-HR', {weekday:'long', day:'numeric', month:'numeric'});
+
+  // Ažuriraj moje gumbe
+  document.querySelectorAll('.where-btn').forEach(btn => {
+    const s = btn.dataset.status;
+    const myStatus = currentUser ? data[currentUser.name] : null;
+    const isActive = s === myStatus;
+    btn.style.background = isActive ? WHERE_COLORS[s] : 'var(--surface3)';
+    btn.style.color = isActive ? '#fff' : 'var(--muted)';
+    btn.style.borderColor = isActive ? WHERE_COLORS[s] : 'var(--border)';
+    btn.style.fontWeight = isActive ? '700' : '400';
+  });
+
+  // Tim lista
+  const listEl = document.getElementById('whereWorkList');
+  if (!listEl) return;
+
+  const allPeople = USERS.map(u => u.name);
+  const rows = allPeople.map(name => {
+    const s = data[name];
+    const isMe = name === currentUser?.name;
+    return `<div style="display:flex;align-items:center;gap:.5rem;padding:.28rem 0">
+      <span style="font-size:1rem;width:1.4rem;text-align:center">${s ? WHERE_ICONS[s] : '⬜'}</span>
+      <span style="font-size:.8rem;color:${isMe?'var(--gold)':'var(--text)'};font-weight:${isMe?'700':'400'};flex:1">${name}${isMe?' (ti)':''}</span>
+      <span style="font-size:.72rem;color:${s?WHERE_COLORS[s]:'var(--muted)'}">${s?WHERE_LABELS[s]:'—'}</span>
+    </div>`;
+  }).join('');
+  listEl.innerHTML = rows;
+}
+
+// ══════════════════════════════════════════
+// BADGE NOTIFIKACIJE
+// ══════════════════════════════════════════
+function setBadge(tabId, count) {
+  const badge = document.getElementById('badge-' + tabId);
+  if (!badge) return;
+  if (!count || count <= 0) {
+    badge.style.display = 'none';
+    badge.textContent = '';
+  } else {
+    badge.style.display = 'inline-block';
+    badge.textContent = count > 99 ? '99+' : String(count);
+  }
+}
+
+async function checkUnreadBadges() {
+  if (!currentUser) return;
+  const lastVisitKey = 'hgr_last_visit_' + currentUser.id;
+  const lastVisit = localStorage.getItem(lastVisitKey);
+  if (!lastVisit) return;
+  const lastVisitDate = new Date(lastVisit);
+
+  // ── Badge za Tasks — novi taskovi dodijeljeni meni ──
+  const tasks = _taskCache || [];
+  const newMyTasks = tasks.filter(t => {
+    if (t.assignee !== currentUser.name) return false;
+    if (t.status === 'done' || t.done === 'true') return false;
+    if (!t.createdAt) return false;
+    return new Date(t.createdAt) > lastVisitDate;
+  });
+  setBadge('tasks', newMyTasks.length);
+
+  // ── Badge za Moji dani — novi zahtjevi na čekanju (samo approver) ──
+  if (currentUser.role === 'approver') {
+    try {
+      const reqs = _reqCache || [];
+      const newReqs = reqs.filter(r => {
+        if (r.status !== 'pending') return false;
+        if (!r.createdAt) return false;
+        return new Date(r.createdAt) > lastVisitDate;
+      });
+      setBadge('moji-dani', newReqs.length);
+    } catch(e) {}
+  } else {
+    // Zaposlenik vidi badge ako mu je zahtjev odobren/odbijen
+    try {
+      const reqs = (_reqCache||[]).filter(r => {
+        if (r.name !== currentUser.name) return false;
+        if (r.status === 'pending') return false;
+        if (!r.updatedAt && !r.createdAt) return false;
+        const d = new Date(r.updatedAt || r.createdAt);
+        return d > lastVisitDate;
+      });
+      setBadge('moji-dani', reqs.length);
+    } catch(e) {}
+  }
+}
+
+// Pozovi clearBadge kad korisnik uđe u tab
+function clearBadge(tabId) {
+  setBadge(tabId, 0);
+}
+
 function startClock(){
   if(_clockInterval) clearInterval(_clockInterval);
   const DAYS_HR = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
@@ -4556,7 +4725,7 @@ function initApp(){
     const b=document.createElement('button');
     b.className='sidebar-item'+(t.id==='home'?' active':'');
     b.dataset.id=t.id;
-    b.innerHTML = `<span class="si-icon">${TAB_ICONS[t.id]||'·'}</span><span>${TAB_LABELS[t.id]||t.id}</span>`;
+    b.innerHTML = `<span class="si-icon">${TAB_ICONS[t.id]||'·'}</span><span>${TAB_LABELS[t.id]||t.id}</span><span class="sidebar-badge" id="badge-${t.id}" style="display:none;margin-left:auto;background:var(--red);color:#fff;border-radius:99px;font-size:.6rem;font-weight:700;padding:.1rem .38rem;min-width:1.1rem;text-align:center;line-height:1.4"></span>`;
     b.onclick=()=>switchMainTab(t.id,b);
     mainTabsEl.appendChild(b);
 
@@ -4713,13 +4882,13 @@ function switchMainTab(mainId, btn){
     initHomeTab();
   } else if(mainId==='moji-dani'){
     subWrap.classList.add('visible');
-    // Open sidebar sub-items
     const sidebarSub = document.getElementById('sidebarSubMojiDani');
     if(sidebarSub) sidebarSub.classList.add('open');
     const firstSub=subWrap.querySelector('.sub-tab.active');
     if(firstSub) showSubTab(firstSub.dataset.id);
     else showSubTab(subWrap.querySelector('.sub-tab').dataset.id);
     renderDashboard();
+    clearBadge('moji-dani');
     window.scrollTo({top:0, behavior:'instant'});
   } else if(mainId==='admin'){
     subWrap.classList.remove('visible');
@@ -4763,6 +4932,7 @@ function switchMainTab(mainId, btn){
     const sidebarSub3 = document.getElementById('sidebarSubMojiDani');
     if(sidebarSub3) sidebarSub3.classList.remove('open');
     if(tasksEl2){ tasksEl2.style.display='block'; initTasksTab(); }
+    clearBadge('tasks');
     window.scrollTo({top:0, behavior:'instant'});
   } else if(mainId==='insights'){
     subWrap.classList.remove('visible');
@@ -6478,6 +6648,7 @@ async function initHomeTab() {
   loadTeamChat();
   loadPolls();
   renderLeaderboard();
+  loadWhereWork();
 }
 
 async function renderHomeStats() {
@@ -8664,7 +8835,7 @@ checkRegistrationToken();
       sessionStorage.setItem('hgr_uid', uid);
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appShell').style.display='flex';
-      initData().then(() => { initApp(); setTimeout(initHomeTab, 300); setTimeout(checkCatchUp, 1500); });
+      initData().then(() => { initApp(); setTimeout(initHomeTab, 300); setTimeout(checkCatchUp, 1500); setTimeout(checkUnreadBadges, 2000); });
     } else {
       localStorage.removeItem('hgr_token');
       localStorage.removeItem('hgr_uid');
