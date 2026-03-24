@@ -2591,32 +2591,36 @@ button[onclick^="apprSubmitRequest"]:hover {
 
   <!-- TAB: Master Projekcija -->
   <div class="main-content" id="main-master" style="display:none">
-    <div style="padding:0 1.2rem 1.2rem">
+    <div style="padding:0">
       <!-- Pod-tabovi -->
-      <div style="display:flex;gap:.3rem;border-bottom:1px solid var(--border);margin-bottom:1.2rem;padding-top:.8rem;overflow-x:auto">
+      <div style="display:flex;gap:.3rem;border-bottom:1px solid var(--border);padding:.7rem 1.2rem 0;overflow-x:auto;background:var(--bg);position:sticky;top:46px;z-index:10">
         <button class="master-tab-btn active" data-master-tab="overview" onclick="switchMasterTab('overview',this)"
-          style="padding:.45rem 1rem;border:none;background:none;color:var(--gold);font-size:.82rem;font-weight:700;cursor:pointer;border-bottom:2px solid var(--gold);font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--gold);font-size:.8rem;font-weight:700;cursor:pointer;border-bottom:2px solid var(--gold);font-family:'Inter',sans-serif;white-space:nowrap">
           📊 Overview
         </button>
         <button class="master-tab-btn" data-master-tab="income" onclick="switchMasterTab('income',this)"
-          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           💶 Income (Stvarni)
         </button>
         <button class="master-tab-btn" data-master-tab="projIncome" onclick="switchMasterTab('projIncome',this)"
-          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           📈 Proj. Income
         </button>
         <button class="master-tab-btn" data-master-tab="cost" onclick="switchMasterTab('cost',this)"
-          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           💸 Troškovi (Stvarni)
         </button>
         <button class="master-tab-btn" data-master-tab="projCost" onclick="switchMasterTab('projCost',this)"
-          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           📉 Proj. Troškovi
+        </button>
+        <button onclick="masterResetState()" title="Resetiraj na originalne vrijednosti"
+          style="margin-left:auto;padding:.3rem .7rem;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:.72rem;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">
+          ↺ Reset
         </button>
       </div>
       <!-- Sadržaj pod-tabova -->
-      <div id="masterTabContent"></div>
+      <div id="masterTabContent" style="padding-top:.8rem"></div>
     </div>
   </div>
 
@@ -4340,6 +4344,52 @@ const MASTER_DATA = {"stanjeRacuna":211000.0,"income":{"bzgBat":[{"name":"ATP UM
 const MASTER_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 let _masterCurrentTab = 'overview';
+// _masterState drži live editabilne podatke (deep copy MASTER_DATA)
+let _masterState = null;
+
+function masterGetState() {
+  if (!_masterState) {
+    _masterState = JSON.parse(JSON.stringify(MASTER_DATA));
+  }
+  return _masterState;
+}
+
+function masterRecalcSubtotals(section) {
+  // Ponovo izračunaj subtotal red (zadnji red u sekciji)
+  const items = section.filter(i => !i.isSubtotal);
+  const sub = section.find(i => i.isSubtotal);
+  if (!sub) return;
+  for (let m = 0; m < 12; m++) {
+    sub.vals[m] = items.reduce((a, i) => a + (i.vals[m] || 0), 0);
+  }
+  sub.total = sub.vals.reduce((a, b) => a + b, 0);
+}
+
+function masterRecalcMonthlyTotal(dataset) {
+  // Pronađi sve subtotal retke i zbroji ih
+  const subtotals = [];
+  Object.keys(dataset).forEach(k => {
+    if (k === 'monthlyTotal') return;
+    const sub = dataset[k].find(i => i.isSubtotal);
+    if (sub) subtotals.push(sub);
+  });
+  for (let m = 0; m < 12; m++) {
+    dataset.monthlyTotal[m] = subtotals.reduce((a, s) => a + (s.vals[m] || 0), 0);
+  }
+}
+
+function masterSaveToStorage() {
+  try {
+    localStorage.setItem('hgr_master_state', JSON.stringify(_masterState));
+  } catch(e) {}
+}
+
+function masterLoadFromStorage() {
+  try {
+    const saved = localStorage.getItem('hgr_master_state');
+    if (saved) _masterState = JSON.parse(saved);
+  } catch(e) {}
+}
 
 function switchMasterTab(tabId, btn) {
   _masterCurrentTab = tabId;
@@ -4357,39 +4407,139 @@ function switchMasterTab(tabId, btn) {
 }
 
 function fmtE(n) {
-  if (!n || n === 0) return '—';
+  if (!n || n === 0) return '';
   return '€' + Number(n).toLocaleString('hr-HR', {minimumFractionDigits:0, maximumFractionDigits:0});
 }
 function fmtEAlways(n) {
   return '€' + Number(n||0).toLocaleString('hr-HR', {minimumFractionDigits:0, maximumFractionDigits:0});
 }
 
-function masterTable(sections, sectionLabels) {
+function masterCellInput(datasetKey, sectionKey, rowIdx, colIdx, currentVal) {
+  return `<input type="number" min="0" value="${currentVal||''}"
+    style="width:72px;background:var(--surface);border:1px solid var(--gold);border-radius:3px;color:var(--text);font-size:.73rem;text-align:right;padding:.15rem .3rem;font-family:'Inter',sans-serif;outline:none"
+    onblur="masterUpdateCell('${datasetKey}','${sectionKey}',${rowIdx},${colIdx},this.value)"
+    onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();this.blur()}"
+    onclick="event.stopPropagation()">`;
+}
+
+function masterUpdateCell(datasetKey, sectionKey, rowIdx, colIdx, val) {
+  const state = masterGetState();
+  const section = state[datasetKey][sectionKey];
+  if (!section || !section[rowIdx]) return;
+  section[rowIdx].vals[colIdx] = parseFloat(val) || 0;
+  section[rowIdx].total = section[rowIdx].vals.reduce((a,b)=>a+b,0);
+  // Recalc subtotal i monthly total
+  masterRecalcSubtotals(section);
+  masterRecalcMonthlyTotal(state[datasetKey]);
+  masterSaveToStorage();
+  // Re-render samo tablica bez gubljenja fokusa
+  renderMasterTab(_masterCurrentTab);
+}
+
+function masterUpdateName(datasetKey, sectionKey, rowIdx, val) {
+  const state = masterGetState();
+  state[datasetKey][sectionKey][rowIdx].name = val;
+  masterSaveToStorage();
+}
+
+function masterAddRow(datasetKey, sectionKey) {
+  const state = masterGetState();
+  const section = state[datasetKey][sectionKey];
+  const subIdx = section.findIndex(i => i.isSubtotal);
+  const newRow = { name: 'Novi projekt', vals: Array(12).fill(0), total: 0 };
+  if (subIdx >= 0) {
+    section.splice(subIdx, 0, newRow);
+  } else {
+    section.push(newRow);
+  }
+  masterSaveToStorage();
+  renderMasterTab(_masterCurrentTab);
+}
+
+function masterDeleteRow(datasetKey, sectionKey, rowIdx) {
+  const state = masterGetState();
+  const section = state[datasetKey][sectionKey];
+  section.splice(rowIdx, 1);
+  masterRecalcSubtotals(section);
+  masterRecalcMonthlyTotal(state[datasetKey]);
+  masterSaveToStorage();
+  renderMasterTab(_masterCurrentTab);
+}
+
+function masterTable(datasetKey, dataset, sections, sectionLabels) {
   const months = MASTER_MONTHS;
-  let html = `<div style="overflow-x:auto">
-  <table style="width:100%;border-collapse:collapse;font-size:.75rem;font-family:'Inter',sans-serif">
+  const thStyle = 'padding:.4rem .45rem;color:var(--muted);font-weight:600;min-width:78px;text-align:right;white-space:nowrap;font-size:.72rem';
+  const stickyNameTh = 'padding:.4rem .7rem;color:var(--muted);font-weight:600;min-width:180px;max-width:200px;text-align:left;position:sticky;left:0;z-index:3;white-space:nowrap;font-size:.72rem;background:var(--surface3)';
+  const stickyTotalTh = 'padding:.4rem .7rem;color:var(--muted);font-weight:600;min-width:90px;text-align:right;position:sticky;right:0;z-index:3;white-space:nowrap;font-size:.72rem;background:var(--surface3)';
+
+  let html = `<div style="overflow-x:auto;width:100%">
+  <table style="border-collapse:collapse;font-size:.73rem;font-family:'Inter',sans-serif;width:100%;min-width:max-content">
   <thead>
     <tr style="background:var(--surface3)">
-      <th style="text-align:left;padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:180px;position:sticky;left:0;background:var(--surface3);z-index:2">Stavka</th>
-      ${months.map(m=>`<th style="padding:.5rem .4rem;color:var(--muted);font-weight:600;min-width:72px;text-align:right">${m}</th>`).join('')}
-      <th style="padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:80px;text-align:right">UKUPNO</th>
+      <th style="${stickyNameTh}">Stavka</th>
+      ${months.map(m=>`<th style="${thStyle}">${m}</th>`).join('')}
+      <th style="${stickyTotalTh}">UKUPNO</th>
+      <th style="width:30px;position:sticky;right:82px;z-index:3;background:var(--surface3)"></th>
     </tr>
   </thead>
   <tbody>`;
 
-  sections.forEach((section, si) => {
+  sections.forEach((sectionKey, si) => {
     const label = sectionLabels[si];
-    html += `<tr><td colspan="14" style="padding:.6rem .6rem .3rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">${label}</td></tr>`;
+    const section = dataset[sectionKey];
+    if (!section) return;
 
-    section.forEach(item => {
+    // Sekcija header s "+ Dodaj" gumbom
+    html += `<tr>
+      <td colspan="15" style="padding:.5rem .7rem .3rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">
+        ${label}
+        <button onclick="masterAddRow('${datasetKey}','${sectionKey}')"
+          style="margin-left:.6rem;background:var(--gold);color:#000;border:none;border-radius:3px;padding:.1rem .45rem;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
+          + Dodaj
+        </button>
+      </td>
+    </tr>`;
+
+    section.forEach((item, rowIdx) => {
       const isSub = item.isSubtotal;
-      const bg = isSub ? 'background:var(--surface2)' : '';
+      const bg = isSub ? 'background:var(--surface2)' : 'background:var(--bg)';
       const fw = isSub ? 'font-weight:700' : 'font-weight:400';
-      const tc = isSub ? 'color:var(--text)' : 'color:var(--text-secondary)';
-      html += `<tr style="border-bottom:1px solid var(--border);${isSub?'border-top:2px solid var(--border-strong)':''}">
-        <td style="padding:.42rem .6rem;${tc};${fw};${bg};position:sticky;left:0;z-index:1">${item.name}</td>
-        ${item.vals.map(v=>`<td style="padding:.42rem .4rem;text-align:right;${bg};${fw};color:${v>0?(isSub?'var(--gold)':'var(--text)'):'var(--muted)'}">${v>0?fmtE(v):'—'}</td>`).join('')}
-        <td style="padding:.42rem .6rem;text-align:right;${bg};font-weight:700;color:${item.total>0?'var(--gold)':'var(--muted)'}">${item.total>0?fmtEAlways(item.total):'—'}</td>
+
+      const nameCell = isSub
+        ? `<td style="padding:.38rem .7rem;color:var(--gold);${fw};${bg};position:sticky;left:0;z-index:1;white-space:nowrap">${item.name}</td>`
+        : `<td style="padding:.1rem .4rem;${bg};position:sticky;left:0;z-index:1;min-width:180px">
+            <input type="text" value="${item.name.replace(/"/g,'&quot;')}"
+              style="background:transparent;border:none;color:var(--text);font-size:.73rem;font-family:'Inter',sans-serif;outline:none;width:170px;padding:.25rem .3rem;border-radius:3px"
+              onfocus="this.style.background='var(--surface2)';this.style.border='1px solid var(--border)'"
+              onblur="this.style.background='transparent';this.style.border='none';masterUpdateName('${datasetKey}','${sectionKey}',${rowIdx},this.value)"
+              onclick="event.stopPropagation()">
+          </td>`;
+
+      const valCells = item.vals.map((v, colIdx) => {
+        if (isSub) {
+          return `<td style="padding:.38rem .45rem;text-align:right;${fw};${bg};color:${v>0?'var(--gold)':'var(--muted)'};white-space:nowrap">${v>0?fmtEAlways(v):'—'}</td>`;
+        }
+        return `<td style="padding:.1rem .2rem;text-align:right;${bg}" onclick="this.querySelector('input').focus()">
+          <input type="number" min="0" value="${v||''}" placeholder="—"
+            style="width:72px;background:transparent;border:none;color:${v>0?'var(--text)':'var(--muted)'};font-size:.73rem;text-align:right;padding:.25rem .3rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer"
+            onfocus="this.style.background='var(--surface2)';this.style.border='1px solid var(--gold)';this.style.borderRadius='3px';this.style.color='var(--text)'"
+            onblur="this.style.background='transparent';this.style.border='none';masterUpdateCell('${datasetKey}','${sectionKey}',${rowIdx},${colIdx},this.value)"
+            onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();this.blur()}"
+            onclick="event.stopPropagation()">
+        </td>`;
+      }).join('');
+
+      const totalCell = `<td style="padding:.38rem .7rem;text-align:right;${fw};${bg};color:${item.total>0?(isSub?'var(--gold)':'var(--text)'):'var(--muted)'};position:sticky;right:30px;z-index:1;white-space:nowrap">${item.total>0?fmtEAlways(item.total):'—'}</td>`;
+
+      const delCell = isSub ? `<td style="width:30px;${bg};position:sticky;right:0;z-index:1"></td>`
+        : `<td style="width:30px;${bg};position:sticky;right:0;z-index:1;text-align:center">
+            <button onclick="masterDeleteRow('${datasetKey}','${sectionKey}',${rowIdx})"
+              style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:.2rem;line-height:1"
+              title="Obriši red" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+          </td>`;
+
+      html += `<tr style="border-bottom:1px solid var(--border)${isSub?';border-top:2px solid var(--border-strong)':''}">
+        ${nameCell}${valCells}${totalCell}${delCell}
       </tr>`;
     });
   });
@@ -4399,12 +4549,12 @@ function masterTable(sections, sectionLabels) {
 }
 
 function renderMasterTab(tabId) {
+  masterLoadFromStorage();
   const el = document.getElementById('masterTabContent');
   if (!el) return;
-  const d = MASTER_DATA;
+  const d = masterGetState();
 
   if (tabId === 'overview') {
-    // OVERVIEW — Income vs Cost vs EBIT vs Cumulative
     const inc = d.income.monthlyTotal;
     const cost = d.cost.monthlyTotal;
     const projInc = d.projIncome.monthlyTotal;
@@ -4417,16 +4567,13 @@ function renderMasterTab(tabId) {
     const totalProjCost = projCost.reduce((a,b)=>a+b,0);
     const totalProjEbit = totalProjInc - totalProjCost;
 
-    // Cumulative EBIT
     let cumEbit = [], cumProjEbit = [], cum = 0, cumP = 0;
     for (let i=0; i<12; i++) {
       cum += inc[i]-cost[i]; cumEbit.push(cum);
       cumP += projInc[i]-projCost[i]; cumProjEbit.push(cumP);
     }
-    // Stanje računa
     const stanje = d.stanjeRacuna;
 
-    // KPI kartice
     const kpis = [
       { label:'Stanje računa 01.01.', val: fmtEAlways(stanje), color:'var(--text)', sub:'Početno stanje' },
       { label:'Income (Stvarni) YTD', val: fmtEAlways(totalInc), color:'var(--green)', sub: `Proj: ${fmtEAlways(totalProjInc)}` },
@@ -4435,121 +4582,100 @@ function renderMasterTab(tabId) {
       { label:'Stanje računa (proj.)', val: fmtEAlways(stanje + cumProjEbit[11]), color:'var(--gold)', sub:'Kraj 2026.' },
     ];
 
-    let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem;margin-bottom:1.3rem">
-      ${kpis.map(k=>`<div class="list-card" style="padding:1rem">
-        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">${k.label}</div>
-        <div style="font-size:1.3rem;font-weight:700;color:${k.color}">${k.val}</div>
-        <div style="font-size:.7rem;color:var(--muted);margin-top:.25rem">${k.sub}</div>
+    const thS = 'padding:.4rem .45rem;color:var(--muted);font-weight:600;min-width:78px;text-align:right;white-space:nowrap;font-size:.72rem';
+
+    let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.7rem;margin-bottom:1rem;padding:0 1.2rem">
+      ${kpis.map(k=>`<div class="list-card" style="padding:.9rem 1rem">
+        <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.35rem">${k.label}</div>
+        <div style="font-size:1.25rem;font-weight:700;color:${k.color}">${k.val}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">${k.sub}</div>
       </div>`).join('')}
     </div>`;
 
-    // Glavna tablica
-    html += `<div class="list-card" style="padding:1.2rem;overflow-x:auto">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">📊 OVERVIEW 2026 — Stvarni vs Projekcija</div>
-      <table style="width:100%;border-collapse:collapse;font-size:.75rem;font-family:'Inter',sans-serif">
+    html += `<div style="overflow-x:auto;width:100%">
+      <table style="border-collapse:collapse;font-size:.73rem;font-family:'Inter',sans-serif;width:100%;min-width:max-content">
       <thead>
         <tr style="background:var(--surface3)">
-          <th style="text-align:left;padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:160px;position:sticky;left:0;background:var(--surface3)"></th>
-          ${MASTER_MONTHS.map(m=>`<th style="padding:.5rem .4rem;color:var(--muted);font-weight:600;min-width:70px;text-align:right">${m}</th>`).join('')}
-          <th style="padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:80px;text-align:right">TOTAL</th>
+          <th style="text-align:left;padding:.4rem .7rem;color:var(--muted);font-weight:600;min-width:200px;position:sticky;left:0;background:var(--surface3);z-index:3;font-size:.72rem">Stavka</th>
+          ${MASTER_MONTHS.map(m=>`<th style="${thS}">${m}</th>`).join('')}
+          <th style="${thS};position:sticky;right:0;z-index:3;background:var(--surface3)">TOTAL</th>
         </tr>
       </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:.45rem .6rem;color:var(--green);font-weight:700;position:sticky;left:0;background:var(--bg)">INCOME (Stvarni)</td>
-          ${inc.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--green);font-weight:600">${fmtEAlways(v)}</td>`).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;color:var(--green);font-weight:700">${fmtEAlways(totalInc)}</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);opacity:.7">
-          <td style="padding:.45rem .6rem;color:var(--green);position:sticky;left:0;background:var(--bg)">INCOME (Projekcija)</td>
-          ${projInc.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--green)">${fmtEAlways(v)}</td>`).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;color:var(--green)">${fmtEAlways(totalProjInc)}</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:.45rem .6rem;color:var(--red);font-weight:700;position:sticky;left:0;background:var(--bg)">COST (Stvarni)</td>
-          ${cost.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--red);font-weight:600">${fmtEAlways(v)}</td>`).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;color:var(--red);font-weight:700">${fmtEAlways(totalCost)}</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);opacity:.7">
-          <td style="padding:.45rem .6rem;color:var(--red);position:sticky;left:0;background:var(--bg)">COST (Projekcija)</td>
-          ${projCost.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--red)">${fmtEAlways(v)}</td>`).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;color:var(--red)">${fmtEAlways(totalProjCost)}</td>
-        </tr>
-        <tr style="border-bottom:2px solid var(--border-strong);background:var(--surface2)">
-          <td style="padding:.45rem .6rem;color:var(--gold);font-weight:700;position:sticky;left:0;background:var(--surface2)">EBIT (Stvarni)</td>
-          ${inc.map((v,i)=>{const e=v-cost[i];return`<td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:${e>=0?'var(--green)':'var(--red)'}">${fmtEAlways(e)}</td>`}).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:${totalEbit>=0?'var(--green)':'var(--red)'}">${fmtEAlways(totalEbit)}</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);background:var(--surface2);opacity:.8">
-          <td style="padding:.45rem .6rem;color:var(--gold);position:sticky;left:0;background:var(--surface2)">EBIT (Projekcija)</td>
-          ${projInc.map((v,i)=>{const e=v-projCost[i];return`<td style="padding:.45rem .4rem;text-align:right;color:${e>=0?'var(--green)':'var(--red)'}">${fmtEAlways(e)}</td>`}).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;color:${totalProjEbit>=0?'var(--green)':'var(--red)'}">${fmtEAlways(totalProjEbit)}</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:.45rem .6rem;color:var(--blue);font-weight:700;position:sticky;left:0;background:var(--bg)">CUMULATIVE (Stvarni)</td>
-          ${cumEbit.map(v=>`<td style="padding:.45rem .4rem;text-align:right;font-weight:600;color:${v>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(v)}</td>`).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:${cumEbit[11]>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(cumEbit[11])}</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:.45rem .6rem;color:var(--blue);position:sticky;left:0;background:var(--bg)">CUMULATIVE (Proj.)</td>
-          ${cumProjEbit.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:${v>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(v)}</td>`).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;color:${cumProjEbit[11]>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(cumProjEbit[11])}</td>
-        </tr>
-        <tr style="background:var(--gold-dim)">
-          <td style="padding:.45rem .6rem;color:var(--gold);font-weight:700;position:sticky;left:0;background:var(--gold-dim)">Stanje računa (Proj.)</td>
-          ${cumProjEbit.map(v=>`<td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:var(--gold)">${fmtEAlways(stanje+v)}</td>`).join('')}
-          <td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:var(--gold)">${fmtEAlways(stanje+cumProjEbit[11])}</td>
-        </tr>
-      </tbody>
-      </table>
-    </div>`;
+      <tbody>`;
 
+    const rows = [
+      { label:'INCOME (Stvarni)', vals:inc, total:totalInc, color:'var(--green)', fw:'700' },
+      { label:'INCOME (Projekcija)', vals:projInc, total:totalProjInc, color:'var(--green)', fw:'400', opacity:'.75' },
+      { label:'COST (Stvarni)', vals:cost, total:totalCost, color:'var(--red)', fw:'700' },
+      { label:'COST (Projekcija)', vals:projCost, total:totalProjCost, color:'var(--red)', fw:'400', opacity:'.75' },
+    ];
+    rows.forEach(r => {
+      html += `<tr style="border-bottom:1px solid var(--border);opacity:${r.opacity||1}">
+        <td style="padding:.4rem .7rem;color:${r.color};font-weight:${r.fw};position:sticky;left:0;background:var(--bg);z-index:1">${r.label}</td>
+        ${r.vals.map(v=>`<td style="padding:.4rem .45rem;text-align:right;color:${r.color};font-weight:${r.fw}">${fmtEAlways(v)}</td>`).join('')}
+        <td style="padding:.4rem .7rem;text-align:right;color:${r.color};font-weight:700;position:sticky;right:0;background:var(--bg);z-index:1">${fmtEAlways(r.total)}</td>
+      </tr>`;
+    });
+
+    // EBIT
+    html += `<tr style="border-bottom:2px solid var(--border-strong);background:var(--surface2)">
+      <td style="padding:.4rem .7rem;color:var(--gold);font-weight:700;position:sticky;left:0;background:var(--surface2);z-index:1">EBIT (Stvarni)</td>
+      ${inc.map((v,i)=>{const e=v-cost[i];return`<td style="padding:.4rem .45rem;text-align:right;font-weight:700;color:${e>=0?'var(--green)':'var(--red)'}">${fmtEAlways(e)}</td>`}).join('')}
+      <td style="padding:.4rem .7rem;text-align:right;font-weight:700;color:${totalEbit>=0?'var(--green)':'var(--red)'};position:sticky;right:0;background:var(--surface2);z-index:1">${fmtEAlways(totalEbit)}</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);background:var(--surface2);opacity:.75">
+      <td style="padding:.4rem .7rem;color:var(--gold);position:sticky;left:0;background:var(--surface2);z-index:1">EBIT (Projekcija)</td>
+      ${projInc.map((v,i)=>{const e=v-projCost[i];return`<td style="padding:.4rem .45rem;text-align:right;color:${e>=0?'var(--green)':'var(--red)'}">${fmtEAlways(e)}</td>`}).join('')}
+      <td style="padding:.4rem .7rem;text-align:right;color:${totalProjEbit>=0?'var(--green)':'var(--red)'};position:sticky;right:0;background:var(--surface2);z-index:1">${fmtEAlways(totalProjEbit)}</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:.4rem .7rem;color:var(--blue);font-weight:700;position:sticky;left:0;background:var(--bg);z-index:1">CUMULATIVE (Stvarni)</td>
+      ${cumEbit.map(v=>`<td style="padding:.4rem .45rem;text-align:right;font-weight:600;color:${v>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(v)}</td>`).join('')}
+      <td style="padding:.4rem .7rem;text-align:right;font-weight:700;color:${cumEbit[11]>=0?'var(--blue)':'var(--red)'};position:sticky;right:0;background:var(--bg);z-index:1">${fmtEAlways(cumEbit[11])}</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);opacity:.75">
+      <td style="padding:.4rem .7rem;color:var(--blue);position:sticky;left:0;background:var(--bg);z-index:1">CUMULATIVE (Proj.)</td>
+      ${cumProjEbit.map(v=>`<td style="padding:.4rem .45rem;text-align:right;color:${v>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(v)}</td>`).join('')}
+      <td style="padding:.4rem .7rem;text-align:right;color:${cumProjEbit[11]>=0?'var(--blue)':'var(--red)'};position:sticky;right:0;background:var(--bg);z-index:1">${fmtEAlways(cumProjEbit[11])}</td>
+    </tr>
+    <tr style="background:var(--gold-dim)">
+      <td style="padding:.4rem .7rem;color:var(--gold);font-weight:700;position:sticky;left:0;background:var(--gold-dim);z-index:1">Stanje računa (Proj.)</td>
+      ${cumProjEbit.map(v=>`<td style="padding:.4rem .45rem;text-align:right;font-weight:700;color:var(--gold)">${fmtEAlways(stanje+v)}</td>`).join('')}
+      <td style="padding:.4rem .7rem;text-align:right;font-weight:700;color:var(--gold);position:sticky;right:0;background:var(--gold-dim);z-index:1">${fmtEAlways(stanje+cumProjEbit[11])}</td>
+    </tr>`;
+
+    html += '</tbody></table></div>';
     el.innerHTML = html;
 
   } else if (tabId === 'income') {
-    const inc = d.income;
-    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">💶 Income — Stvarni 2026</div>
-      ${masterTable(
-        [inc.bzgBat, inc.bzgBatBosna, inc.bzgOstali, inc.atlanticHr, inc.atlanticBarcaffe, inc.ledo, inc.grawe, inc.ostalo,
-         [{name:'STVARNI TOTAL', vals:inc.monthlyTotal, total:inc.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
-        ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo','UKUPNO']
-      )}
-    </div>`;
+    el.innerHTML = masterTable('income', d.income,
+      ['bzgBat','bzgBatBosna','bzgOstali','atlanticHr','atlanticBarcaffe','ledo','grawe','ostalo'],
+      ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo']);
 
   } else if (tabId === 'projIncome') {
-    const inc = d.projIncome;
-    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">📈 Projekcija Income 2026</div>
-      ${masterTable(
-        [inc.bzgBat, inc.bzgBatBosna, inc.bzgOstali, inc.atlanticHr, inc.atlanticBarcaffe, inc.ledo, inc.grawe, inc.ostalo,
-         [{name:'PROJEKCIJA TOTAL', vals:inc.monthlyTotal, total:inc.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
-        ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo','UKUPNO']
-      )}
-    </div>`;
+    el.innerHTML = masterTable('projIncome', d.projIncome,
+      ['bzgBat','bzgBatBosna','bzgOstali','atlanticHr','atlanticBarcaffe','ledo','grawe','ostalo'],
+      ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo']);
 
   } else if (tabId === 'cost') {
-    const c = d.cost;
-    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">💸 Troškovi — Stvarni 2026</div>
-      ${masterTable(
-        [c.zaposlenici, c.office, c.poslovanje, c.edukacija,
-         [{name:'MONTHLY TOTAL', vals:c.monthlyTotal, total:c.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
-        ['Zaposlenici','Office Costs','Poslovanje','Edukacije','UKUPNO']
-      )}
-    </div>`;
+    el.innerHTML = masterTable('cost', d.cost,
+      ['zaposlenici','office','poslovanje','edukacija'],
+      ['Zaposlenici','Office Costs','Poslovanje','Edukacije']);
 
   } else if (tabId === 'projCost') {
-    const c = d.projCost;
-    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">📉 Projekcija Troškova 2026</div>
-      ${masterTable(
-        [c.zaposlenici, c.office, c.poslovanje, c.edukacija,
-         [{name:'MONTHLY TOTAL', vals:c.monthlyTotal, total:c.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
-        ['Zaposlenici','Office Costs','Poslovanje','Edukacije','UKUPNO']
-      )}
-    </div>`;
+    el.innerHTML = masterTable('projCost', d.projCost,
+      ['zaposlenici','office','poslovanje','edukacija'],
+      ['Zaposlenici','Office Costs','Poslovanje','Edukacije']);
   }
+}
+
+
+function masterResetState() {
+  if (!confirm('Resetirati sve promjene na originalne vrijednosti iz Excela?')) return;
+  localStorage.removeItem('hgr_master_state');
+  _masterState = null;
+  renderMasterTab(_masterCurrentTab);
+  toast('↺ Resetirano na originalne vrijednosti');
 }
 
 function renderInsights() {
