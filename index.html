@@ -4473,11 +4473,9 @@ function masterUpdateCell(datasetKey, sectionKey, rowIdx, colIdx, val) {
   if (!section || !section[rowIdx]) return;
   section[rowIdx].vals[colIdx] = parseFloat(val) || 0;
   section[rowIdx].total = section[rowIdx].vals.reduce((a,b)=>a+b,0);
-  // Recalc subtotal i monthly total
   masterRecalcSubtotals(section);
   masterRecalcMonthlyTotal(state[datasetKey]);
   masterSaveToStorage();
-  // Re-render samo tablica bez gubljenja fokusa
   renderMasterTab(_masterCurrentTab);
 }
 
@@ -4487,11 +4485,107 @@ function masterUpdateName(datasetKey, sectionKey, rowIdx, val) {
   masterSaveToStorage();
 }
 
+function masterUpdateComment(datasetKey, sectionKey, rowIdx, colIdx, val) {
+  const state = masterGetState();
+  const item = state[datasetKey][sectionKey][rowIdx];
+  if (!item) return;
+  if (!item.comments) item.comments = {};
+  if (val.trim()) {
+    item.comments[colIdx] = val.trim();
+  } else {
+    delete item.comments[colIdx];
+  }
+  masterSaveToStorage();
+  renderMasterTab(_masterCurrentTab);
+}
+
+function masterOpenComment(datasetKey, sectionKey, rowIdx, colIdx, existing) {
+  document.getElementById('masterCommentPopup')?.remove();
+
+  const state = masterGetState();
+  const item = state[datasetKey]?.[sectionKey]?.[rowIdx];
+  if (!item) return;
+  const comments = item.comments || {};
+
+  // Ako colIdx=null, prikaži overview svih komentara za taj red
+  if (colIdx === null) {
+    const allComments = Object.entries(comments);
+    let listHtml = allComments.length
+      ? allComments.map(([ci, txt]) => `
+          <div style="display:flex;align-items:flex-start;gap:.4rem;padding:.3rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.65rem;color:var(--gold);font-weight:700;min-width:28px">${MASTER_MONTHS[ci]}</span>
+            <span style="font-size:.73rem;color:var(--text);flex:1">${txt}</span>
+            <button onclick="masterUpdateComment('${datasetKey}','${sectionKey}',${rowIdx},${ci},'');document.getElementById('masterCommentPopup').remove()"
+              style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0" title="Obriši">✕</button>
+          </div>`).join('')
+      : `<div style="color:var(--muted);font-size:.75rem;padding:.3rem 0">Nema komentara za ovaj red.</div>`;
+
+    const monthOptions = MASTER_MONTHS.map((m,i) => `<option value="${i}">${m}</option>`).join('');
+
+    const popup = document.createElement('div');
+    popup.id = 'masterCommentPopup';
+    popup.innerHTML = `
+      <div style="position:fixed;inset:0;z-index:9998" onclick="document.getElementById('masterCommentPopup').remove()"></div>
+      <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:var(--surface);border:1px solid var(--gold);border-radius:10px;padding:1.2rem;width:300px;box-shadow:0 12px 32px rgba(0,0,0,.5)">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:.7rem">💬 Komentari — ${item.name}</div>
+        <div style="max-height:160px;overflow-y:auto;margin-bottom:.8rem">${listHtml}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:.3rem;font-weight:600">Dodaj novi komentar:</div>
+        <div style="display:flex;gap:.3rem;margin-bottom:.4rem">
+          <select id="masterCommentMonth" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:.73rem;padding:.3rem .4rem;outline:none;font-family:'Inter',sans-serif">${monthOptions}</select>
+          <input id="masterCommentNewTxt" type="text" placeholder="Napomena..."
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:.73rem;padding:.3rem .5rem;outline:none;font-family:'Inter',sans-serif">
+        </div>
+        <div style="display:flex;gap:.4rem">
+          <button onclick="
+            const m=document.getElementById('masterCommentMonth').value;
+            const t=document.getElementById('masterCommentNewTxt').value;
+            if(t.trim()){masterUpdateComment('${datasetKey}','${sectionKey}',${rowIdx},m,t);}
+            document.getElementById('masterCommentPopup').remove();"
+            style="flex:1;background:var(--gold);color:#000;border:none;border-radius:5px;padding:.35rem;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
+            💾 Spremi
+          </button>
+          <button onclick="document.getElementById('masterCommentPopup').remove()"
+            style="background:var(--surface3);color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:.35rem .7rem;font-size:.75rem;cursor:pointer;font-family:'Inter',sans-serif">
+            ✕
+          </button>
+        </div>
+      </div>`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.querySelector('#masterCommentNewTxt')?.focus(), 50);
+    return;
+  }
+
+  // colIdx je broj — otvori popup za specifični mjesec
+  const popup = document.createElement('div');
+  popup.id = 'masterCommentPopup';
+  popup.innerHTML = `
+    <div style="position:fixed;inset:0;z-index:9998" onclick="document.getElementById('masterCommentPopup').remove()"></div>
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:var(--surface);border:1px solid var(--gold);border-radius:8px;padding:1rem;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+      <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:.5rem">
+        💬 ${item.name} — ${MASTER_MONTHS[colIdx]}
+      </div>
+      <textarea id="masterCommentTxt" placeholder="Upiši napomenu..."
+        style="width:100%;height:70px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:.78rem;padding:.4rem .5rem;resize:none;outline:none;font-family:'Inter',sans-serif;box-sizing:border-box">${existing||''}</textarea>
+      <div style="display:flex;gap:.4rem;margin-top:.5rem">
+        <button onclick="masterUpdateComment('${datasetKey}','${sectionKey}',${rowIdx},${colIdx},document.getElementById('masterCommentTxt').value);document.getElementById('masterCommentPopup').remove()"
+          style="flex:1;background:var(--gold);color:#000;border:none;border-radius:5px;padding:.35rem;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
+          💾 Spremi
+        </button>
+        ${existing ? `<button onclick="masterUpdateComment('${datasetKey}','${sectionKey}',${rowIdx},${colIdx},'');document.getElementById('masterCommentPopup').remove()"
+          style="background:var(--surface3);color:var(--red);border:1px solid var(--border);border-radius:5px;padding:.35rem .6rem;font-size:.75rem;cursor:pointer">🗑</button>` : ''}
+        <button onclick="document.getElementById('masterCommentPopup').remove()"
+          style="background:var(--surface3);color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:.35rem .6rem;font-size:.75rem;cursor:pointer">✕</button>
+      </div>
+    </div>`;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.querySelector('textarea')?.focus(), 50);
+}
+
 function masterAddRow(datasetKey, sectionKey) {
   const state = masterGetState();
   const section = state[datasetKey][sectionKey];
   const subIdx = section.findIndex(i => i.isSubtotal);
-  const newRow = { name: 'Novi projekt', vals: Array(12).fill(0), total: 0 };
+  const newRow = { name: 'Novi projekt', vals: Array(12).fill(0), total: 0, comments: {} };
   if (subIdx >= 0) {
     section.splice(subIdx, 0, newRow);
   } else {
@@ -4513,18 +4607,21 @@ function masterDeleteRow(datasetKey, sectionKey, rowIdx) {
 
 function masterTable(datasetKey, dataset, sections, sectionLabels) {
   const months = MASTER_MONTHS;
-  const thStyle = 'padding:.3rem .2rem;color:var(--muted);font-weight:600;min-width:58px;text-align:right;white-space:nowrap;font-size:.68rem';
-  const stickyNameTh = 'padding:.3rem .5rem;color:var(--muted);font-weight:600;min-width:150px;max-width:170px;text-align:left;position:sticky;left:0;z-index:3;white-space:nowrap;font-size:.68rem;background:var(--surface3)';
-  const stickyTotalTh = 'padding:.3rem .5rem;color:var(--muted);font-weight:600;min-width:72px;text-align:right;position:sticky;right:30px;z-index:3;white-space:nowrap;font-size:.68rem;background:var(--surface3)';
+  const thS = 'padding:.3rem .2rem;color:var(--muted);font-weight:600;min-width:74px;text-align:right;white-space:nowrap;font-size:.68rem';
+  const thName = 'padding:.3rem .6rem;color:var(--muted);font-weight:600;min-width:160px;text-align:left;position:sticky;left:0;z-index:3;white-space:nowrap;font-size:.68rem;background:var(--surface3)';
+  const thTotal = 'padding:.3rem .5rem;color:var(--muted);font-weight:600;min-width:80px;text-align:right;position:sticky;right:56px;z-index:3;white-space:nowrap;font-size:.68rem;background:var(--surface3)';
+  const thDel = 'width:26px;position:sticky;right:30px;z-index:3;background:var(--surface3)';
+  const thCom = 'width:26px;position:sticky;right:0;z-index:3;background:var(--surface3)';
 
   let html = `<div style="overflow-x:auto;width:100%">
   <table style="border-collapse:collapse;font-size:.73rem;font-family:'Inter',sans-serif;width:100%;min-width:max-content">
   <thead>
     <tr style="background:var(--surface3)">
-      <th style="${stickyNameTh}">Stavka</th>
-      ${months.map(m=>`<th style="${thStyle}">${m}</th>`).join('')}
-      <th style="${stickyTotalTh}">UKUPNO</th>
-      <th style="width:30px;position:sticky;right:82px;z-index:3;background:var(--surface3)"></th>
+      <th style="${thName}">Stavka</th>
+      ${months.map(m=>`<th style="${thS}">${m}</th>`).join('')}
+      <th style="${thTotal}">UKUPNO</th>
+      <th style="${thDel}"></th>
+      <th style="${thCom}" title="Komentari">💬</th>
     </tr>
   </thead>
   <tbody>`;
@@ -4534,57 +4631,79 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
     const section = dataset[sectionKey];
     if (!section) return;
 
-    // Sekcija header s "+ Dodaj" gumbom
     html += `<tr>
-      <td colspan="15" style="padding:.5rem .7rem .3rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">
+      <td colspan="16" style="padding:.45rem .6rem .25rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">
         ${label}
         <button onclick="masterAddRow('${datasetKey}','${sectionKey}')"
-          style="margin-left:.6rem;background:var(--gold);color:#000;border:none;border-radius:3px;padding:.1rem .45rem;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
-          + Dodaj
+          style="margin-left:.6rem;background:var(--gold);color:#000;border:none;border-radius:3px;padding:.1rem .4rem;font-size:.63rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
+          + Dodaj projekt
         </button>
       </td>
     </tr>`;
 
     section.forEach((item, rowIdx) => {
       const isSub = item.isSubtotal;
-      const bg = isSub ? 'background:var(--surface2)' : 'background:var(--bg)';
-      const fw = isSub ? 'font-weight:700' : 'font-weight:400';
+      const bg = isSub ? 'var(--surface2)' : 'var(--bg)';
+      const fw = isSub ? '700' : '400';
+      const comments = item.comments || {};
 
+      // Naziv ćelija
       const nameCell = isSub
-        ? `<td style="padding:.38rem .7rem;color:var(--gold);${fw};${bg};position:sticky;left:0;z-index:1;white-space:nowrap">${item.name}</td>`
-        : `<td style="padding:.05rem .3rem;${bg};position:sticky;left:0;z-index:1;min-width:180px">
-            <input type="text" value="${item.name.replace(/"/g,'&quot;')}"
-              style="background:transparent;border:none;color:var(--text);font-size:.73rem;font-family:'Inter',sans-serif;outline:none;width:145px;padding:.25rem .3rem;border-radius:3px"
-              onfocus="this.style.background='var(--surface2)';this.style.border='1px solid var(--border)'"
-              onblur="this.style.background='transparent';this.style.border='none';masterUpdateName('${datasetKey}','${sectionKey}',${rowIdx},this.value)"
+        ? `<td style="padding:.35rem .6rem;color:var(--gold);font-weight:${fw};background:${bg};position:sticky;left:0;z-index:1;white-space:nowrap">${item.name}</td>`
+        : `<td style="padding:.05rem .3rem;background:${bg};position:sticky;left:0;z-index:1;min-width:160px">
+            <input type="text" value="${item.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
+              style="background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:.73rem;font-family:'Inter',sans-serif;outline:none;width:148px;padding:.22rem .3rem;border-radius:3px;transition:all .1s"
+              onfocus="this.style.background='var(--surface2)';this.style.borderBottomColor='var(--gold)'"
+              onblur="this.style.background='transparent';this.style.borderBottomColor='transparent';masterUpdateName('${datasetKey}','${sectionKey}',${rowIdx},this.value)"
               onclick="event.stopPropagation()">
           </td>`;
 
+      // Vrijednost ćelije s komentarom
       const valCells = item.vals.map((v, colIdx) => {
+        const hasComment = !!comments[colIdx];
         if (isSub) {
-          return `<td style="padding:.32rem .2rem;text-align:right;${fw};${bg};color:${v>0?'var(--gold)':'var(--muted)'};white-space:nowrap">${v>0?fmtEAlways(v):'—'}</td>`;
+          return `<td style="padding:.32rem .2rem;text-align:right;font-weight:${fw};background:${bg};color:${v>0?'var(--gold)':'var(--muted)'};white-space:nowrap;position:relative">
+            ${v>0?fmtEAlways(v):'—'}
+            ${hasComment?`<span style="position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:var(--blue)" title="${(comments[colIdx]||'').replace(/"/g,'&quot;')}"></span>`:''}
+          </td>`;
         }
-        return `<td style="padding:.05rem .1rem;text-align:right;${bg}" onclick="this.querySelector('input').focus()">
-          <input type="number" min="0" value="${v||''}" placeholder="—"
-            style="width:54px;background:transparent;border:none;color:${v>0?'var(--text)':'var(--muted)'};font-size:.73rem;text-align:right;padding:.25rem .3rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer"
-            onfocus="this.style.background='var(--surface2)';this.style.border='1px solid var(--gold)';this.style.borderRadius='3px';this.style.color='var(--text)'"
-            onblur="this.style.background='transparent';this.style.border='none';masterUpdateCell('${datasetKey}','${sectionKey}',${rowIdx},${colIdx},this.value)"
-            onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();this.blur()}"
-            onclick="event.stopPropagation()">
+        return `<td style="padding:.05rem .1rem;text-align:right;background:${bg};position:relative">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:2px">
+            ${hasComment?`<span style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;cursor:pointer" onclick="masterOpenComment('${datasetKey}','${sectionKey}',${rowIdx},${colIdx},'${(comments[colIdx]||'').replace(/'/g,'\\\'')}')" title="${(comments[colIdx]||'').replace(/"/g,'&quot;')}"></span>`:''}
+            <input type="number" min="0" value="${v||''}" placeholder="—"
+              style="width:62px;background:transparent;border:none;border-bottom:1px solid transparent;color:${v>0?'var(--text)':'var(--muted)'};font-size:.73rem;text-align:right;padding:.22rem .2rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer;transition:all .1s"
+              onfocus="this.style.background='var(--surface2)';this.style.borderBottomColor='var(--gold)';this.style.color='var(--text)'"
+              onblur="this.style.background='transparent';this.style.borderBottomColor='transparent';masterUpdateCell('${datasetKey}','${sectionKey}',${rowIdx},${colIdx},this.value)"
+              onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();this.blur()}"
+              onclick="event.stopPropagation()">
+          </div>
         </td>`;
       }).join('');
 
-      const totalCell = `<td style="padding:.32rem .5rem;text-align:right;${fw};${bg};color:${item.total>0?(isSub?'var(--gold)':'var(--text)'):'var(--muted)'};position:sticky;right:30px;z-index:1;white-space:nowrap">${item.total>0?fmtEAlways(item.total):'—'}</td>`;
+      const totalCell = `<td style="padding:.32rem .5rem;text-align:right;font-weight:${fw};background:${bg};color:${item.total>0?(isSub?'var(--gold)':'var(--text)'):'var(--muted)'};position:sticky;right:56px;z-index:1;white-space:nowrap">${item.total>0?fmtEAlways(item.total):'—'}</td>`;
 
-      const delCell = isSub ? `<td style="width:30px;${bg};position:sticky;right:0;z-index:1"></td>`
-        : `<td style="width:30px;${bg};position:sticky;right:0;z-index:1;text-align:center">
+      const delCell = isSub
+        ? `<td style="width:26px;background:${bg};position:sticky;right:30px;z-index:1"></td>`
+        : `<td style="width:26px;background:${bg};position:sticky;right:30px;z-index:1;text-align:center">
             <button onclick="masterDeleteRow('${datasetKey}','${sectionKey}',${rowIdx})"
-              style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:.2rem;line-height:1"
+              style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;padding:.1rem;line-height:1"
               title="Obriši red" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">✕</button>
           </td>`;
 
-      html += `<tr style="border-bottom:1px solid var(--border)${isSub?';border-top:2px solid var(--border-strong)':''}">
-        ${nameCell}${valCells}${totalCell}${delCell}
+      // Komentar ikona (zadnji stupac)
+      const numComments = Object.keys(comments).length;
+      const commentCell = isSub
+        ? `<td style="width:26px;background:${bg};position:sticky;right:0;z-index:1"></td>`
+        : `<td style="width:26px;background:${bg};position:sticky;right:0;z-index:1;text-align:center">
+            <button onclick="masterOpenComment('${datasetKey}','${sectionKey}',${rowIdx},null,null)"
+              style="background:none;border:none;color:${numComments>0?'var(--blue)':'var(--muted)'};cursor:pointer;font-size:.78rem;padding:.1rem;line-height:1;position:relative"
+              title="${numComments>0?numComments+' komentar(a)':'Dodaj komentar'}">
+              💬${numComments>0?`<span style="position:absolute;top:-2px;right:-2px;background:var(--blue);color:#fff;border-radius:99px;font-size:.5rem;font-weight:700;min-width:10px;height:10px;display:flex;align-items:center;justify-content:center;line-height:1">${numComments}</span>`:''}
+            </button>
+          </td>`;
+
+      html += `<tr style="border-bottom:1px solid var(--border)${isSub?';border-top:2px solid var(--border)':''}">
+        ${nameCell}${valCells}${totalCell}${delCell}${commentCell}
       </tr>`;
     });
   });
