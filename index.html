@@ -574,6 +574,29 @@ select option{background:var(--surface2);color:var(--text);}
   min-height: 100vh;
 }
 
+/* Master projekcija — bez paddinga, tablica do ruba */
+#main-master {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+#main-master > div {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+#masterTabContent {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow-x: auto;
+  width: 100%;
+}
+#masterTabContent > div {
+  overflow-x: auto;
+  width: 100%;
+}
+#masterTabContent table {
+  margin: 0 !important;
+}
+
 /* Top bar (replaces old header) */
 #topBar {
   height: 46px;
@@ -2591,37 +2614,35 @@ button[onclick^="apprSubmitRequest"]:hover {
 
   <!-- TAB: Master Projekcija -->
   <div class="main-content" id="main-master" style="display:none">
-    <div style="padding:0">
-      <!-- Pod-tabovi -->
-      <div style="display:flex;gap:.3rem;border-bottom:1px solid var(--border);padding:.7rem 1.2rem 0;overflow-x:auto;background:var(--bg);position:sticky;top:46px;z-index:10">
+      <!-- Pod-tabovi sticky -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:.7rem 0 0 1rem;overflow-x:auto;background:var(--bg);position:sticky;top:46px;z-index:10;flex-shrink:0">
         <button class="master-tab-btn active" data-master-tab="overview" onclick="switchMasterTab('overview',this)"
           style="padding:.42rem 1rem;border:none;background:none;color:var(--gold);font-size:.8rem;font-weight:700;cursor:pointer;border-bottom:2px solid var(--gold);font-family:'Inter',sans-serif;white-space:nowrap">
           📊 Overview
         </button>
         <button class="master-tab-btn" data-master-tab="income" onclick="switchMasterTab('income',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           💶 Income (Stvarni)
         </button>
         <button class="master-tab-btn" data-master-tab="projIncome" onclick="switchMasterTab('projIncome',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           📈 Proj. Income
         </button>
         <button class="master-tab-btn" data-master-tab="cost" onclick="switchMasterTab('cost',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           💸 Troškovi (Stvarni)
         </button>
         <button class="master-tab-btn" data-master-tab="projCost" onclick="switchMasterTab('projCost',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
           📉 Proj. Troškovi
         </button>
-        <button onclick="masterResetState()" title="Resetiraj na originalne vrijednosti"
-          style="margin-left:auto;padding:.3rem .7rem;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:.72rem;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">
+        <button onclick="masterResetState()" title="Reset na originalne vrijednosti"
+          style="margin-left:auto;padding:.3rem .8rem;background:none;border:none;border-left:1px solid var(--border);color:var(--muted);font-size:.72rem;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">
           ↺ Reset
         </button>
       </div>
-      <!-- Sadržaj pod-tabova -->
-      <div id="masterTabContent" style="padding-top:.8rem"></div>
-    </div>
+      <!-- Sadržaj — bez ikakvog padding-a -->
+      <div id="masterTabContent"></div>
   </div>
 
   <!-- TAB: Insights -->
@@ -4648,24 +4669,28 @@ function renderMasterTab(tabId) {
     el.innerHTML = html;
 
   } else if (tabId === 'income') {
-    el.innerHTML = masterTable('income', d.income,
+    el.innerHTML = `<div style="padding:.8rem 0 0 0">` + masterTable('income', d.income,
       ['bzgBat','bzgBatBosna','bzgOstali','atlanticHr','atlanticBarcaffe','ledo','grawe','ostalo'],
-      ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo']);
+      ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo'])
+      + `</div>`;
 
   } else if (tabId === 'projIncome') {
-    el.innerHTML = masterTable('projIncome', d.projIncome,
+    el.innerHTML = `<div style="padding:.8rem 0 0 0">` + masterTable('projIncome', d.projIncome,
       ['bzgBat','bzgBatBosna','bzgOstali','atlanticHr','atlanticBarcaffe','ledo','grawe','ostalo'],
-      ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo']);
+      ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo'])
+      + `</div>`;
 
   } else if (tabId === 'cost') {
-    el.innerHTML = masterTable('cost', d.cost,
+    el.innerHTML = `<div style="padding:.8rem 0 0 0">` + masterTable('cost', d.cost,
       ['zaposlenici','office','poslovanje','edukacija'],
-      ['Zaposlenici','Office Costs','Poslovanje','Edukacije']);
+      ['Zaposlenici','Office Costs','Poslovanje','Edukacije'])
+      + `</div>`;
 
   } else if (tabId === 'projCost') {
-    el.innerHTML = masterTable('projCost', d.projCost,
+    el.innerHTML = `<div style="padding:.8rem 0 0 0">` + masterTable('projCost', d.projCost,
       ['zaposlenici','office','poslovanje','edukacija'],
-      ['Zaposlenici','Office Costs','Poslovanje','Edukacije']);
+      ['Zaposlenici','Office Costs','Poslovanje','Edukacije'])
+      + `</div>`;
   }
 }
 
@@ -5249,7 +5274,10 @@ function switchMainTab(mainId, btn){
   if(projEl) projEl.style.display='none';
   if(tasksEl2) tasksEl2.style.display='none';
   if(homeEl) homeEl.style.display='none';
-
+  const insEl2=document.getElementById('main-insights');
+  if(insEl2) insEl2.style.display='none';
+  const masterEl2=document.getElementById('main-master');
+  if(masterEl2) masterEl2.style.display='none';
   const adminEl2=document.getElementById('tabAdmin');
   if(adminEl2) adminEl2.style.display='none';
 
