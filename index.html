@@ -2589,6 +2589,37 @@ button[onclick^="apprSubmitRequest"]:hover {
   </div>
 </div>
 
+  <!-- TAB: Master Projekcija -->
+  <div class="main-content" id="main-master" style="display:none">
+    <div style="padding:0 1.2rem 1.2rem">
+      <!-- Pod-tabovi -->
+      <div style="display:flex;gap:.3rem;border-bottom:1px solid var(--border);margin-bottom:1.2rem;padding-top:.8rem;overflow-x:auto">
+        <button class="master-tab-btn active" data-master-tab="overview" onclick="switchMasterTab('overview',this)"
+          style="padding:.45rem 1rem;border:none;background:none;color:var(--gold);font-size:.82rem;font-weight:700;cursor:pointer;border-bottom:2px solid var(--gold);font-family:'Inter',sans-serif;white-space:nowrap">
+          📊 Overview
+        </button>
+        <button class="master-tab-btn" data-master-tab="income" onclick="switchMasterTab('income',this)"
+          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          💶 Income (Stvarni)
+        </button>
+        <button class="master-tab-btn" data-master-tab="projIncome" onclick="switchMasterTab('projIncome',this)"
+          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          📈 Proj. Income
+        </button>
+        <button class="master-tab-btn" data-master-tab="cost" onclick="switchMasterTab('cost',this)"
+          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          💸 Troškovi (Stvarni)
+        </button>
+        <button class="master-tab-btn" data-master-tab="projCost" onclick="switchMasterTab('projCost',this)"
+          style="padding:.45rem 1rem;border:none;background:none;color:var(--muted);font-size:.82rem;font-weight:400;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
+          📉 Proj. Troškovi
+        </button>
+      </div>
+      <!-- Sadržaj pod-tabova -->
+      <div id="masterTabContent"></div>
+    </div>
+  </div>
+
   <!-- TAB: Insights -->
   <div class="main-content" id="main-insights" style="display:none">
     <div class="page" style="padding-top:1.2rem;max-width:1200px">
@@ -4301,6 +4332,226 @@ function projUpdateSelectionBar() {
 // ══════════════════════════════════════════
 // INSIGHTS TAB
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// MASTER PROJEKCIJA 2026
+// ══════════════════════════════════════════
+const MASTER_DATA = {"stanjeRacuna":211000.0,"income":{"bzgBat":[{"name":"ATP UMAG","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Špancirfest","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"ADVENT","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Ostalo","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0,"isSubtotal":true}],"bzgBatBosna":[{"name":"Creative campaigns","vals":[0,0,8000,0,0,0,0,0,0,0,0,0],"total":8000},{"name":"POS Materials","vals":[0,5000,8000,12000,0,0,0,0,0,0,0,0],"total":25000},{"name":"Events","vals":[0,0,0,5000,0,0,0,0,0,0,0,0],"total":5000},{"name":"Skladište","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,5000,16000,17000,0,0,0,0,0,0,0,0],"total":38000,"isSubtotal":true}],"bzgOstali":[{"name":"HT","vals":[0,3800,5000,10000,5000,5000,10000,5000,5000,5000,5000,10000],"total":68800},{"name":"Rimac","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Podravka","vals":[0,0,0,0,0,0,0,0,0,0,0,5000],"total":5000},{"name":"Adris","vals":[0,0,0,0,0,0,0,0,0,0,5000,0],"total":5000},{"name":"Kent","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Imperial","vals":[0,0,18500,10000,0,0,0,0,0,0,0,0],"total":28500},{"name":"Ostalo","vals":[0,0,0,1500,0,0,0,0,0,1500,0,0],"total":3000},{"name":"Subtotal","vals":[0,3800,23500,21500,5000,5000,10000,5000,5000,6500,10000,15000],"total":110300,"isSubtotal":true}],"atlanticHr":[{"name":"Cedevita","vals":[800,800,1000,2000,2000,2000,2000,2000,2000,2000,2000,2000],"total":20600},{"name":"Lemonish","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Cockta","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Kreativa","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Zone","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Ostali","vals":[0,200,0,0,0,0,0,0,0,0,0,0],"total":200},{"name":"Subtotal","vals":[0,0,1000,2000,2000,2000,2000,0,0,0,0,0],"total":9000,"isSubtotal":true}],"atlanticBarcaffe":[{"name":"BTL Creative fee","vals":[0,0,200,1000,1000,1000,1000,0,1000,0,1000,1000],"total":7200},{"name":"Out of scope","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Lukoil","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,200,1000,1000,1000,1000,0,1000,0,1000,1000],"total":7200,"isSubtotal":true}],"ledo":[{"name":"Dizajn","vals":[200,240,200,200,200,200,200,200,200,200,200,200],"total":2440},{"name":"Katalozi","vals":[0,0,2100,0,2500,2500,0,0,0,0,0,0],"total":7100},{"name":"Ostalo","vals":[0,0,3000,0,0,0,0,0,0,0,0,0],"total":3000},{"name":"Subtotal","vals":[200,240,5300,200,2700,2700,200,200,200,200,200,200],"total":12540,"isSubtotal":true}],"grawe":[{"name":"Grawe noćni maraton","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0,"isSubtotal":true}],"ostalo":[{"name":"NEW BIZ","vals":[0,0,0,0,10000,0,0,0,20000,0,0,0],"total":30000},{"name":"Promedia group","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Zagrebačka pivovara","vals":[0,0,0,0,0,3000,0,0,0,0,0,0],"total":3000},{"name":"LeGRand","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Hrvatska pošta","vals":[0,0,0,0,0,0,0,5000,0,0,0,0],"total":5000},{"name":"TZGZ","vals":[3800,0,0,0,0,0,0,0,0,0,0,20000],"total":23800},{"name":"TECE","vals":[0,0,0,0,0,0,0,1100,0,20000,0,0],"total":21100},{"name":"Wolt","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"FUTURA DDB","vals":[0,0,0,0,0,0,0,3500,0,0,0,0],"total":3500},{"name":"Mediacom","vals":[0,400,0,2500,0,0,0,0,0,0,0,0],"total":2900},{"name":"Ostalo","vals":[641,1300,5700,4000,0,0,0,3500,0,0,0,0],"total":15141},{"name":"Subtotal","vals":[4441,1700,5700,6500,10000,3000,0,13100,20000,20000,0,20000],"total":104441,"isSubtotal":true}],"monthlyTotal":[5441,11340,51700,45700,20700,13700,13200,11800,28200,28700,33200,38200]},"projIncome":{"bzgBat":[{"name":"ATP UMAG","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Špancirfest","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"ADVENT","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Ostalo","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0,"isSubtotal":true}],"bzgBatBosna":[{"name":"Creative campaigns","vals":[0,0,0,0,10200,0,2300,0,0,9000,0,0],"total":21500},{"name":"POS Materials","vals":[3200,0,5921,0,0,15000,16000,0,7140,18000,0,0],"total":65261},{"name":"Events","vals":[0,0,0,0,1244,13000,0,0,0,12150,0,0],"total":26394},{"name":"Skladište","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[3200,0,5921,0,11444,28000,18300,0,7140,39150,0,0],"total":113155,"isSubtotal":true}],"bzgOstali":[{"name":"HT","vals":[5000,5000,5000,10000,5000,5000,10000,5000,5000,5000,5000,10000],"total":75000},{"name":"Rimac","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Podravka","vals":[0,0,0,0,0,0,0,0,0,0,0,5000],"total":5000},{"name":"Adris","vals":[0,0,0,0,0,0,0,0,0,0,5000,0],"total":5000},{"name":"Kent","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Imperial","vals":[0,0,0,1170,0,0,0,0,0,0,0,0],"total":1170},{"name":"Ostalo","vals":[0,2000,0,1500,0,0,0,0,0,1500,0,0],"total":5000},{"name":"Subtotal","vals":[5000,7000,5000,12670,5000,5000,10000,5000,5000,6500,10000,15000],"total":91170,"isSubtotal":true}],"atlanticHr":[{"name":"Cedevita","vals":[2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000],"total":24000},{"name":"Lemonish","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Cockta","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Kreativa","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Zone","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Ostali","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,2000,2000,2000,2000,2000,0,0,0,0,0],"total":10000,"isSubtotal":true}],"atlanticBarcaffe":[{"name":"BTL Creative fee","vals":[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000],"total":12000},{"name":"Out of scope","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Lukoil","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000],"total":12000,"isSubtotal":true}],"ledo":[{"name":"Dizajn","vals":[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000],"total":12000},{"name":"Katalozi","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Ostalo","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000],"total":12000,"isSubtotal":true}],"grawe":[{"name":"Grawe noćni maraton","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0,"isSubtotal":true}],"ostalo":[{"name":"RUDAN","vals":[0,0,0,0,20000,0,0,0,20000,0,0,0],"total":40000},{"name":"Promedia group","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Zagrebačka pivovara","vals":[0,0,0,0,0,3000,0,0,0,0,0,0],"total":3000},{"name":"LeGRand","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Hrvatska pošta","vals":[0,0,0,0,0,0,0,5000,0,0,0,0],"total":5000},{"name":"TZGZ","vals":[0,0,0,0,0,0,0,0,0,0,0,20000],"total":20000},{"name":"TECE","vals":[0,0,0,0,0,0,0,0,0,20000,0,0],"total":20000},{"name":"Wolt","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"FUTURA DDB","vals":[0,0,0,0,0,0,0,3500,0,0,0,0],"total":3500},{"name":"Subtotal","vals":[0,0,0,0,20000,3000,0,8500,20000,20000,0,20000],"total":91500,"isSubtotal":true}],"monthlyTotal":[12200,11000,14921,16670,40444,40000,32300,12500,36140,69650,34000,39000]},"cost":{"zaposlenici":[{"name":"1/ Trošak plaća + knjig.","vals":[19000,23000,16000,16000,16000,16000,16000,16000,18000,18000,18000,18000],"total":210000},{"name":"2/ Trošak vanjskih","vals":[2000,500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500],"total":17500},{"name":"3/ Trošak dodatnog zaposlen.","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"3.1./ Povećanje plaća","vals":[0,0,0,1123,1123,1123,1123,1123,1123,1123,1123,1123],"total":10107},{"name":"4/ Bonusi i božićnice","vals":[0,0,0,0,0,0,0,0,0,0,0,2800],"total":2800},{"name":"Subtotal","vals":[21000,23500,17500,18623,18623,18623,18623,18623,20623,20623,20623,23423],"total":240407,"isSubtotal":true}],"office":[{"name":"5/ Troškovi najma ureda","vals":[1800,1800,1800,1800,1800,1800,1800,1800,1800,1800,1800,1800],"total":21600},{"name":"6/ Troškovi režija","vals":[556,556,556,556,556,556,556,556,556,556,556,556],"total":6672},{"name":"7/ Team building","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"8/ Trošak reprezentacije","vals":[0,0,0,0,0,0,0,0,0,1000,0,0],"total":1000},{"name":"Trošak poklona za klijente","vals":[0,0,0,0,0,0,0,0,0,0,0,600],"total":600},{"name":"Trošak opreme za ured","vals":[350,0,0,0,0,0,0,0,0,0,0,0],"total":350},{"name":"Trošak leasing OX","vals":[443,443,443,443,443,443,443,443,443,443,443,443],"total":5316},{"name":"Trošak leasing Tomo","vals":[385,385,385,385,385,385,385,385,385,385,385,385],"total":4620},{"name":"Konzum klik/namirnice","vals":[63,65,0,0,57,0,65,88,70,0,80,0],"total":488},{"name":"Trošak goriva","vals":[200,360,200,200,200,200,360,360,360,360,360,360],"total":3520},{"name":"Merch","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[3797,3609,3384,3384,3441,3384,3609,3632,3614,4544,3624,4144],"total":44166,"isSubtotal":true}],"poslovanje":[{"name":"Web održavanje","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"IT održavanje","vals":[168,168,168,168,168,168,168,168,168,168,168,168],"total":2016},{"name":"Trošak mobitela/laptopa","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Trošak knjigovođe","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Donacije","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Troškovi OX stan i ostalo","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Troškovi Tomo stan i ostalo","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[168,168,168,168,168,168,168,168,168,168,168,168],"total":2016,"isSubtotal":true}],"edukacija":[{"name":"Trošak edukacije","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Programi","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0,"isSubtotal":true}],"monthlyTotal":[24965,27277,21052,22175,22232,22175,22400,22423,24405,25335,24415,27735]},"projCost":{"zaposlenici":[{"name":"1/ Trošak plaća + knjig.","vals":[16000,19000,19000,16000,16000,16000,16000,16000,18000,18000,18000,18000],"total":206000},{"name":"2/ Trošak vanjskih","vals":[1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500],"total":18000},{"name":"3/ Trošak dodatnog zaposlen.","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"3.1./ Povećanje plaća","vals":[0,0,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500],"total":15000},{"name":"4/ Bonusi i božićnice","vals":[0,0,0,0,0,0,2000,0,0,0,0,2800],"total":4800},{"name":"Subtotal","vals":[17500,20500,22000,19000,19000,19000,21000,19000,21000,21000,21000,23800],"total":243800,"isSubtotal":true}],"office":[{"name":"5/ Troškovi najma ureda","vals":[1800,1800,1800,1800,1800,1800,1800,1800,1800,1800,1800,1800],"total":21600},{"name":"6/ Troškovi režija","vals":[556,556,556,556,556,556,556,556,556,556,556,556],"total":6672},{"name":"7/ Team building","vals":[0,0,0,0,0,0,3000,0,0,0,0,0],"total":3000},{"name":"8/ Trošak reprezentacije","vals":[0,0,0,0,0,0,0,0,0,1000,0,0],"total":1000},{"name":"Trošak poklona za klijente","vals":[0,0,0,0,0,0,0,0,0,0,0,1000],"total":1000},{"name":"Trošak opreme za ured","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Trošak leasing OX","vals":[443,443,443,443,443,443,443,443,443,443,443,443],"total":5316},{"name":"Trošak leasing Tomo","vals":[385,385,385,385,385,385,385,385,385,385,385,385],"total":4620},{"name":"Konzum klik/namirnice","vals":[81,65,0,0,57,0,65,88,70,0,80,0],"total":506},{"name":"Trošak goriva","vals":[200,360,200,200,200,200,360,360,360,360,360,360],"total":3520},{"name":"Merch","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[3465,3609,3384,3384,3441,3384,6609,3632,3614,4544,3624,4544],"total":47234,"isSubtotal":true}],"poslovanje":[{"name":"Web održavanje","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"IT održavanje","vals":[168,168,168,168,168,168,168,168,168,168,168,168],"total":2016},{"name":"Trošak mobitela/laptopa","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Trošak knjigovođe","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Donacije","vals":[0,0,0,0,0,0,3000,0,0,0,0,0],"total":3000},{"name":"Troškovi OX stan i ostalo","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Troškovi Tomo stan i ostalo","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[168,168,168,168,168,168,3168,168,168,168,168,168],"total":5016,"isSubtotal":true}],"edukacija":[{"name":"Trošak edukacije","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Programi","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0},{"name":"Subtotal","vals":[0,0,0,0,0,0,0,0,0,0,0,0],"total":0,"isSubtotal":true}],"monthlyTotal":[21133,24277,25552,22552,22609,22552,30777,22800,24782,25712,24792,28512]}};
+
+const MASTER_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+let _masterCurrentTab = 'overview';
+
+function switchMasterTab(tabId, btn) {
+  _masterCurrentTab = tabId;
+  document.querySelectorAll('.master-tab-btn').forEach(b => {
+    b.style.color = 'var(--muted)';
+    b.style.fontWeight = '400';
+    b.style.borderBottomColor = 'transparent';
+  });
+  if (btn) {
+    btn.style.color = 'var(--gold)';
+    btn.style.fontWeight = '700';
+    btn.style.borderBottomColor = 'var(--gold)';
+  }
+  renderMasterTab(tabId);
+}
+
+function fmtE(n) {
+  if (!n || n === 0) return '—';
+  return '€' + Number(n).toLocaleString('hr-HR', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+function fmtEAlways(n) {
+  return '€' + Number(n||0).toLocaleString('hr-HR', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function masterTable(sections, sectionLabels) {
+  const months = MASTER_MONTHS;
+  let html = `<div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:.75rem;font-family:'Inter',sans-serif">
+  <thead>
+    <tr style="background:var(--surface3)">
+      <th style="text-align:left;padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:180px;position:sticky;left:0;background:var(--surface3);z-index:2">Stavka</th>
+      ${months.map(m=>`<th style="padding:.5rem .4rem;color:var(--muted);font-weight:600;min-width:72px;text-align:right">${m}</th>`).join('')}
+      <th style="padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:80px;text-align:right">UKUPNO</th>
+    </tr>
+  </thead>
+  <tbody>`;
+
+  sections.forEach((section, si) => {
+    const label = sectionLabels[si];
+    html += `<tr><td colspan="14" style="padding:.6rem .6rem .3rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">${label}</td></tr>`;
+
+    section.forEach(item => {
+      const isSub = item.isSubtotal;
+      const bg = isSub ? 'background:var(--surface2)' : '';
+      const fw = isSub ? 'font-weight:700' : 'font-weight:400';
+      const tc = isSub ? 'color:var(--text)' : 'color:var(--text-secondary)';
+      html += `<tr style="border-bottom:1px solid var(--border);${isSub?'border-top:2px solid var(--border-strong)':''}">
+        <td style="padding:.42rem .6rem;${tc};${fw};${bg};position:sticky;left:0;z-index:1">${item.name}</td>
+        ${item.vals.map(v=>`<td style="padding:.42rem .4rem;text-align:right;${bg};${fw};color:${v>0?(isSub?'var(--gold)':'var(--text)'):'var(--muted)'}">${v>0?fmtE(v):'—'}</td>`).join('')}
+        <td style="padding:.42rem .6rem;text-align:right;${bg};font-weight:700;color:${item.total>0?'var(--gold)':'var(--muted)'}">${item.total>0?fmtEAlways(item.total):'—'}</td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderMasterTab(tabId) {
+  const el = document.getElementById('masterTabContent');
+  if (!el) return;
+  const d = MASTER_DATA;
+
+  if (tabId === 'overview') {
+    // OVERVIEW — Income vs Cost vs EBIT vs Cumulative
+    const inc = d.income.monthlyTotal;
+    const cost = d.cost.monthlyTotal;
+    const projInc = d.projIncome.monthlyTotal;
+    const projCost = d.projCost.monthlyTotal;
+
+    const totalInc = inc.reduce((a,b)=>a+b,0);
+    const totalCost = cost.reduce((a,b)=>a+b,0);
+    const totalEbit = totalInc - totalCost;
+    const totalProjInc = projInc.reduce((a,b)=>a+b,0);
+    const totalProjCost = projCost.reduce((a,b)=>a+b,0);
+    const totalProjEbit = totalProjInc - totalProjCost;
+
+    // Cumulative EBIT
+    let cumEbit = [], cumProjEbit = [], cum = 0, cumP = 0;
+    for (let i=0; i<12; i++) {
+      cum += inc[i]-cost[i]; cumEbit.push(cum);
+      cumP += projInc[i]-projCost[i]; cumProjEbit.push(cumP);
+    }
+    // Stanje računa
+    const stanje = d.stanjeRacuna;
+
+    // KPI kartice
+    const kpis = [
+      { label:'Stanje računa 01.01.', val: fmtEAlways(stanje), color:'var(--text)', sub:'Početno stanje' },
+      { label:'Income (Stvarni) YTD', val: fmtEAlways(totalInc), color:'var(--green)', sub: `Proj: ${fmtEAlways(totalProjInc)}` },
+      { label:'Troškovi (Stvarni) YTD', val: fmtEAlways(totalCost), color:'var(--red)', sub: `Proj: ${fmtEAlways(totalProjCost)}` },
+      { label:'EBIT (Stvarni) YTD', val: fmtEAlways(totalEbit), color: totalEbit>=0?'var(--green)':'var(--red)', sub: `Proj: ${fmtEAlways(totalProjEbit)}` },
+      { label:'Stanje računa (proj.)', val: fmtEAlways(stanje + cumProjEbit[11]), color:'var(--gold)', sub:'Kraj 2026.' },
+    ];
+
+    let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem;margin-bottom:1.3rem">
+      ${kpis.map(k=>`<div class="list-card" style="padding:1rem">
+        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">${k.label}</div>
+        <div style="font-size:1.3rem;font-weight:700;color:${k.color}">${k.val}</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:.25rem">${k.sub}</div>
+      </div>`).join('')}
+    </div>`;
+
+    // Glavna tablica
+    html += `<div class="list-card" style="padding:1.2rem;overflow-x:auto">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">📊 OVERVIEW 2026 — Stvarni vs Projekcija</div>
+      <table style="width:100%;border-collapse:collapse;font-size:.75rem;font-family:'Inter',sans-serif">
+      <thead>
+        <tr style="background:var(--surface3)">
+          <th style="text-align:left;padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:160px;position:sticky;left:0;background:var(--surface3)"></th>
+          ${MASTER_MONTHS.map(m=>`<th style="padding:.5rem .4rem;color:var(--muted);font-weight:600;min-width:70px;text-align:right">${m}</th>`).join('')}
+          <th style="padding:.5rem .6rem;color:var(--muted);font-weight:600;min-width:80px;text-align:right">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.45rem .6rem;color:var(--green);font-weight:700;position:sticky;left:0;background:var(--bg)">INCOME (Stvarni)</td>
+          ${inc.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--green);font-weight:600">${fmtEAlways(v)}</td>`).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;color:var(--green);font-weight:700">${fmtEAlways(totalInc)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);opacity:.7">
+          <td style="padding:.45rem .6rem;color:var(--green);position:sticky;left:0;background:var(--bg)">INCOME (Projekcija)</td>
+          ${projInc.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--green)">${fmtEAlways(v)}</td>`).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;color:var(--green)">${fmtEAlways(totalProjInc)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.45rem .6rem;color:var(--red);font-weight:700;position:sticky;left:0;background:var(--bg)">COST (Stvarni)</td>
+          ${cost.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--red);font-weight:600">${fmtEAlways(v)}</td>`).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;color:var(--red);font-weight:700">${fmtEAlways(totalCost)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);opacity:.7">
+          <td style="padding:.45rem .6rem;color:var(--red);position:sticky;left:0;background:var(--bg)">COST (Projekcija)</td>
+          ${projCost.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:var(--red)">${fmtEAlways(v)}</td>`).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;color:var(--red)">${fmtEAlways(totalProjCost)}</td>
+        </tr>
+        <tr style="border-bottom:2px solid var(--border-strong);background:var(--surface2)">
+          <td style="padding:.45rem .6rem;color:var(--gold);font-weight:700;position:sticky;left:0;background:var(--surface2)">EBIT (Stvarni)</td>
+          ${inc.map((v,i)=>{const e=v-cost[i];return`<td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:${e>=0?'var(--green)':'var(--red)'}">${fmtEAlways(e)}</td>`}).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:${totalEbit>=0?'var(--green)':'var(--red)'}">${fmtEAlways(totalEbit)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--surface2);opacity:.8">
+          <td style="padding:.45rem .6rem;color:var(--gold);position:sticky;left:0;background:var(--surface2)">EBIT (Projekcija)</td>
+          ${projInc.map((v,i)=>{const e=v-projCost[i];return`<td style="padding:.45rem .4rem;text-align:right;color:${e>=0?'var(--green)':'var(--red)'}">${fmtEAlways(e)}</td>`}).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;color:${totalProjEbit>=0?'var(--green)':'var(--red)'}">${fmtEAlways(totalProjEbit)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.45rem .6rem;color:var(--blue);font-weight:700;position:sticky;left:0;background:var(--bg)">CUMULATIVE (Stvarni)</td>
+          ${cumEbit.map(v=>`<td style="padding:.45rem .4rem;text-align:right;font-weight:600;color:${v>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(v)}</td>`).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:${cumEbit[11]>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(cumEbit[11])}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.45rem .6rem;color:var(--blue);position:sticky;left:0;background:var(--bg)">CUMULATIVE (Proj.)</td>
+          ${cumProjEbit.map(v=>`<td style="padding:.45rem .4rem;text-align:right;color:${v>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(v)}</td>`).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;color:${cumProjEbit[11]>=0?'var(--blue)':'var(--red)'}">${fmtEAlways(cumProjEbit[11])}</td>
+        </tr>
+        <tr style="background:var(--gold-dim)">
+          <td style="padding:.45rem .6rem;color:var(--gold);font-weight:700;position:sticky;left:0;background:var(--gold-dim)">Stanje računa (Proj.)</td>
+          ${cumProjEbit.map(v=>`<td style="padding:.45rem .4rem;text-align:right;font-weight:700;color:var(--gold)">${fmtEAlways(stanje+v)}</td>`).join('')}
+          <td style="padding:.45rem .6rem;text-align:right;font-weight:700;color:var(--gold)">${fmtEAlways(stanje+cumProjEbit[11])}</td>
+        </tr>
+      </tbody>
+      </table>
+    </div>`;
+
+    el.innerHTML = html;
+
+  } else if (tabId === 'income') {
+    const inc = d.income;
+    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">💶 Income — Stvarni 2026</div>
+      ${masterTable(
+        [inc.bzgBat, inc.bzgBatBosna, inc.bzgOstali, inc.atlanticHr, inc.atlanticBarcaffe, inc.ledo, inc.grawe, inc.ostalo,
+         [{name:'STVARNI TOTAL', vals:inc.monthlyTotal, total:inc.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
+        ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo','UKUPNO']
+      )}
+    </div>`;
+
+  } else if (tabId === 'projIncome') {
+    const inc = d.projIncome;
+    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">📈 Projekcija Income 2026</div>
+      ${masterTable(
+        [inc.bzgBat, inc.bzgBatBosna, inc.bzgOstali, inc.atlanticHr, inc.atlanticBarcaffe, inc.ledo, inc.grawe, inc.ostalo,
+         [{name:'PROJEKCIJA TOTAL', vals:inc.monthlyTotal, total:inc.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
+        ['BŽG / BAT','BŽG / BAT Bosna','BŽG / Ostali projekti','Atlantic Hrvatska','Atlantic Barcaffe','LEDO','GRAWE','Ostalo','UKUPNO']
+      )}
+    </div>`;
+
+  } else if (tabId === 'cost') {
+    const c = d.cost;
+    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">💸 Troškovi — Stvarni 2026</div>
+      ${masterTable(
+        [c.zaposlenici, c.office, c.poslovanje, c.edukacija,
+         [{name:'MONTHLY TOTAL', vals:c.monthlyTotal, total:c.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
+        ['Zaposlenici','Office Costs','Poslovanje','Edukacije','UKUPNO']
+      )}
+    </div>`;
+
+  } else if (tabId === 'projCost') {
+    const c = d.projCost;
+    el.innerHTML = `<div class="list-card" style="padding:1.2rem">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.9rem">📉 Projekcija Troškova 2026</div>
+      ${masterTable(
+        [c.zaposlenici, c.office, c.poslovanje, c.edukacija,
+         [{name:'MONTHLY TOTAL', vals:c.monthlyTotal, total:c.monthlyTotal.reduce((a,b)=>a+b,0), isSubtotal:true}]],
+        ['Zaposlenici','Office Costs','Poslovanje','Edukacije','UKUPNO']
+      )}
+    </div>`;
+  }
+}
+
 function renderInsights() {
   const projs = getProjects();
   if (!projs.length) {
@@ -4673,12 +4924,15 @@ function initApp(){
   const canAccessProjects = PROJECT_PERSONS.includes(currentUser.name);
   const INSIGHTS_USERS = ['Dario Oxenham', 'Tomislav Zeljko'];
   const canAccessInsights = INSIGHTS_USERS.includes(currentUser.name);
+  const MASTER_USERS = ['Dario Oxenham', 'Tomislav Zeljko'];
+  const canAccessMaster = MASTER_USERS.includes(currentUser.name);
   const MAIN_TABS=[
     { id:'home', label:'🏠 Home' },
     { id:'moji-dani', label:'📋 Moji dani' },
     ...(canAccessProjects ? [{ id:'project', label:'📊 Projekti' }] : []),
     { id:'tasks', label:'✅ Tasks' },
     ...(canAccessInsights ? [{ id:'insights', label:'📈 Insights' }] : []),
+    ...(canAccessMaster ? [{ id:'master', label:'📋 Master' }] : []),
     ...(isAdmin ? [{ id:'admin', label:'⚙️ Admin' }] : []),
   ];
 
@@ -4704,6 +4958,7 @@ function initApp(){
     'project': '◈',
     'tasks': '☑',
     'insights': '📈',
+    'master': '📋',
     'admin': '⚙',
   };
   const TAB_LABELS = {
@@ -4712,6 +4967,7 @@ function initApp(){
     'project': 'Projekti',
     'tasks': 'Tasks',
     'insights': 'Insights',
+    'master': 'Master',
     'admin': 'Admin',
   };
 
@@ -4843,7 +5099,7 @@ function switchSubTab(subId, btn){
 }
 
 const PAGE_NAMES = {
-  'home':'Home','moji-dani':'Moji dani','project':'Projekti','tasks':'Tasks','insights':'Insights','admin':'Admin'
+  'home':'Home','moji-dani':'Moji dani','project':'Projekti','tasks':'Tasks','insights':'Insights','master':'Master Projekcija','admin':'Admin'
 };
 function switchMainTab(mainId, btn){
   document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -4944,6 +5200,16 @@ function switchMainTab(mainId, btn){
     if(insEl) insEl.style.display='block';
     window.scrollTo({top:0, behavior:'instant'});
     setTimeout(()=>renderInsights(), 50);
+  } else if(mainId==='master'){
+    subWrap.classList.remove('visible');
+    document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
+    document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+    const sidebarSubM = document.getElementById('sidebarSubMojiDani');
+    if(sidebarSubM) sidebarSubM.classList.remove('open');
+    const masterEl = document.getElementById('main-master');
+    if(masterEl) masterEl.style.display='block';
+    window.scrollTo({top:0, behavior:'instant'});
+    setTimeout(()=>renderMasterTab('overview'), 50);
   }
 }
 
