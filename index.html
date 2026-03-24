@@ -4511,6 +4511,29 @@ function masterUpdateName(datasetKey, sectionKey, rowIdx, val) {
   masterSaveToStorage();
 }
 
+function masterShowTooltip(event, text) {
+  let tip = document.getElementById('masterTooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'masterTooltip';
+    tip.style.cssText = 'position:fixed;z-index:99999;background:#1a2f52;border:1px solid var(--gold);color:var(--text);font-size:.72rem;padding:.4rem .6rem;border-radius:6px;max-width:220px;white-space:pre-wrap;word-break:break-word;box-shadow:0 4px 16px rgba(0,0,0,.4);pointer-events:none;font-family:Inter,sans-serif;line-height:1.4';
+    document.body.appendChild(tip);
+  }
+  tip.textContent = text;
+  tip.style.display = 'block';
+  // Pozicioniraj uz kursor
+  const x = event.clientX + 10;
+  const y = event.clientY - 10;
+  const tipW = 220;
+  tip.style.left = (x + tipW > window.innerWidth ? x - tipW - 20 : x) + 'px';
+  tip.style.top = y + 'px';
+}
+
+function masterHideTooltip() {
+  const tip = document.getElementById('masterTooltip');
+  if (tip) tip.style.display = 'none';
+}
+
 function masterUpdateComment(datasetKey, sectionKey, rowIdx, colIdx, val) {
   const state = masterGetState();
   const item = state[datasetKey][sectionKey][rowIdx];
@@ -4692,7 +4715,10 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
         const hasC = !!comments[ci];
         if (isSub) return `<td style="padding:.26rem .2rem;text-align:right;font-weight:700;background:${bg};color:${v>0?'var(--gold)':'var(--muted)'};overflow:hidden;white-space:nowrap">${fmtV(v)}</td>`;
         return `<td style="padding:.02rem .08rem;text-align:right;background:${bg};overflow:hidden;position:relative">
-          ${hasC?`<span style="position:absolute;top:2px;left:2px;width:4px;height:4px;border-radius:50%;background:var(--blue)" title="${(comments[ci]||'').replace(/"/g,'&quot;')}"></span>`:''}
+          ${hasC?`<span
+            style="position:absolute;top:2px;left:2px;width:6px;height:6px;border-radius:50%;background:var(--blue);cursor:default;z-index:2"
+            onmouseenter="masterShowTooltip(event,'${(comments[ci]||'').replace(/'/g,'&#39;').replace(/\n/g,' ')}')"
+            onmouseleave="masterHideTooltip()"></span>`:''}
           <input type="number" min="0" value="${v||''}" placeholder="—"
             style="width:${W_MON-8}px;background:transparent;border:none;border-bottom:1px solid transparent;color:${v>0?'var(--text)':'var(--muted)'};font-size:${FS};text-align:right;padding:.13rem .05rem;font-family:'Inter',sans-serif;outline:none"
             onfocus="this.style.borderBottomColor='var(--gold)';this.style.color='var(--text)'"
