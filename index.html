@@ -574,46 +574,76 @@ select option{background:var(--surface2);color:var(--text);}
   min-height: 100vh;
 }
 
-/* Master projekcija — tablica do lijevog ruba, horizontalni scroll */
+/* Master projekcija — tablica do lijevog ruba */
 #main-master {
   padding: 0 !important;
   margin: 0 !important;
+  width: 100%;
 }
 #masterTabContent {
   padding: 0 !important;
   margin: 0 !important;
+  width: calc(100vw - var(--sidebar-w));
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 #masterTabContent > div {
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 #masterTabContent table {
   margin: 0 !important;
   border-collapse: collapse;
-  table-layout: auto;
+  table-layout: fixed;
+  width: calc(100vw - var(--sidebar-w));
 }
-#masterTabContent table td,
-#masterTabContent table th {
+#masterTabContent table th,
+#masterTabContent table td {
   padding: .22rem .15rem !important;
   font-size: .67rem !important;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 #masterTabContent table th:first-child,
 #masterTabContent table td:first-child {
-  padding-left: .4rem !important;
+  width: 150px !important;
   min-width: 150px !important;
-  max-width: 165px !important;
+  padding-left: .5rem !important;
+  position: sticky;
+  left: 0;
+  z-index: 2;
 }
-#masterTabContent input[type="number"],
-#masterTabContent input[type="text"] {
-  font-size: .67rem !important;
-  padding: .15rem .15rem !important;
+#masterTabContent table th:nth-child(n+2):nth-child(-n+13),
+#masterTabContent table td:nth-child(n+2):nth-child(-n+13) {
+  width: calc((100vw - var(--sidebar-w) - 150px - 72px - 30px - 30px) / 12) !important;
+  text-align: right;
+}
+#masterTabContent table th:nth-child(14),
+#masterTabContent table td:nth-child(14) {
+  width: 72px !important;
+  text-align: right;
+  font-weight: 700;
+}
+#masterTabContent table th:nth-child(15),
+#masterTabContent table td:nth-child(15) {
+  width: 30px !important;
+  text-align: center;
+}
+#masterTabContent table th:nth-child(16),
+#masterTabContent table td:nth-child(16) {
+  width: 30px !important;
+  text-align: center;
 }
 #masterTabContent input[type="number"] {
-  width: 54px !important;
+  width: 100% !important;
+  font-size: .67rem !important;
+  padding: .15rem .1rem !important;
+  text-align: right;
 }
 #masterTabContent input[type="text"] {
   width: 138px !important;
+  font-size: .67rem !important;
+  padding: .15rem .1rem !important;
 }
 
 
@@ -4605,28 +4635,39 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
   const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const fmtV = v => v > 0 ? '€' + Math.round(v).toLocaleString('hr-HR') : '—';
 
-  // Fiksne širine: naziv=150, svaki mj=62, total=72, del=24, kom=24 => ukupno 150+12*62+72+24+24=1014px
-  let html = `<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:.67rem;font-family:'Inter',sans-serif;table-layout:fixed;width:1014px">
+  // Fiksne širine po stupcu — izračunate da stanu u 1290px (1512 - 220 sidebar - 2px)
+  const W_NAME = 148; // naziv
+  const W_MON  = 72;  // svaki mjesec (12 × 72 = 864)
+  const W_TOT  = 74;  // ukupno
+  const W_DEL  = 24;  // brisanje
+  const W_COM  = 24;  // komentar
+  // Ukupno: 148 + 864 + 74 + 24 + 24 = 1134px — stane u 1290px
+
+  const FS = '.67rem';
+  const thBase = `padding:.22rem .2rem;color:var(--muted);font-weight:600;background:var(--surface3);white-space:nowrap;font-size:${FS}`;
+
+  let html = `<div style="overflow-x:auto">
+  <table style="border-collapse:collapse;table-layout:fixed;width:${W_NAME + W_MON*12 + W_TOT + W_DEL + W_COM}px">
   <colgroup>
-    <col style="width:150px">
-    ${MO.map(()=>'<col style="width:62px">').join('')}
-    <col style="width:72px">
-    <col style="width:24px">
-    <col style="width:24px">
+    <col style="width:${W_NAME}px">
+    ${MO.map(()=>`<col style="width:${W_MON}px">`).join('')}
+    <col style="width:${W_TOT}px">
+    <col style="width:${W_DEL}px">
+    <col style="width:${W_COM}px">
   </colgroup>
   <thead><tr style="background:var(--surface3)">
-    <th style="padding:.22rem .4rem;text-align:left;color:var(--muted);font-weight:600;position:sticky;left:0;z-index:3;background:var(--surface3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Stavka</th>
-    ${MO.map(m=>`<th style="padding:.22rem .1rem;text-align:right;color:var(--muted);font-weight:600;background:var(--surface3)">${m}</th>`).join('')}
-    <th style="padding:.22rem .3rem;text-align:right;color:var(--muted);font-weight:600;position:sticky;right:48px;z-index:3;background:var(--surface3)">Ukupno</th>
-    <th style="background:var(--surface3)"></th>
-    <th style="background:var(--surface3)">💬</th>
+    <th style="${thBase};text-align:left;position:sticky;left:0;z-index:3;overflow:hidden;text-overflow:ellipsis">Stavka</th>
+    ${MO.map(m=>`<th style="${thBase};text-align:right">${m}</th>`).join('')}
+    <th style="${thBase};text-align:right;position:sticky;right:${W_DEL+W_COM}px;z-index:3">Ukupno</th>
+    <th style="${thBase}"></th>
+    <th style="${thBase};text-align:center">💬</th>
   </tr></thead><tbody>`;
 
   sections.forEach((sectionKey, si) => {
     const section = dataset[sectionKey];
     if (!section) return;
 
-    html += `<tr><td colspan="16" style="padding:.4rem .4rem .2rem;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">
+    html += `<tr><td colspan="16" style="padding:.4rem .4rem .2rem;font-size:.63rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">
       ${sectionLabels[si]}
       <button onclick="masterAddRow('${datasetKey}','${sectionKey}')" style="margin-left:.5rem;background:var(--gold);color:#000;border:none;border-radius:3px;padding:.07rem .38rem;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Dodaj projekt</button>
     </td></tr>`;
@@ -4641,7 +4682,7 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
         ? `<td style="padding:.28rem .4rem;color:var(--gold);font-weight:700;background:${bg};position:sticky;left:0;z-index:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.name}">${item.name}</td>`
         : `<td style="padding:.02rem .2rem;background:${bg};position:sticky;left:0;z-index:1;overflow:hidden">
             <input type="text" value="${item.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
-              style="background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:.67rem;font-family:'Inter',sans-serif;outline:none;width:138px;padding:.13rem .15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+              style="background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:${FS};font-family:'Inter',sans-serif;outline:none;width:${W_NAME-8}px;padding:.13rem .1rem;overflow:hidden;text-overflow:ellipsis"
               onfocus="this.style.borderBottomColor='var(--gold)'"
               onblur="this.style.borderBottomColor='transparent';masterUpdateName('${datasetKey}','${sectionKey}',${rowIdx},this.value)"
               onclick="event.stopPropagation()">
@@ -4649,11 +4690,11 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
 
       const valCells = item.vals.map((v, ci) => {
         const hasC = !!comments[ci];
-        if (isSub) return `<td style="padding:.26rem .1rem;text-align:right;font-weight:700;background:${bg};color:${v>0?'var(--gold)':'var(--muted)'};overflow:hidden">${fmtV(v)}</td>`;
-        return `<td style="padding:.02rem .05rem;text-align:right;background:${bg};overflow:hidden;position:relative">
-          ${hasC?`<span style="position:absolute;top:2px;left:3px;width:4px;height:4px;border-radius:50%;background:var(--blue)" title="${(comments[ci]||'').replace(/"/g,'&quot;')}"></span>`:''}
+        if (isSub) return `<td style="padding:.26rem .2rem;text-align:right;font-weight:700;background:${bg};color:${v>0?'var(--gold)':'var(--muted)'};overflow:hidden;white-space:nowrap">${fmtV(v)}</td>`;
+        return `<td style="padding:.02rem .08rem;text-align:right;background:${bg};overflow:hidden;position:relative">
+          ${hasC?`<span style="position:absolute;top:2px;left:2px;width:4px;height:4px;border-radius:50%;background:var(--blue)" title="${(comments[ci]||'').replace(/"/g,'&quot;')}"></span>`:''}
           <input type="number" min="0" value="${v||''}" placeholder="—"
-            style="width:56px;background:transparent;border:none;border-bottom:1px solid transparent;color:${v>0?'var(--text)':'var(--muted)'};font-size:.67rem;text-align:right;padding:.13rem .08rem;font-family:'Inter',sans-serif;outline:none"
+            style="width:${W_MON-8}px;background:transparent;border:none;border-bottom:1px solid transparent;color:${v>0?'var(--text)':'var(--muted)'};font-size:${FS};text-align:right;padding:.13rem .05rem;font-family:'Inter',sans-serif;outline:none"
             onfocus="this.style.borderBottomColor='var(--gold)';this.style.color='var(--text)'"
             onblur="this.style.borderBottomColor='transparent';masterUpdateCell('${datasetKey}','${sectionKey}',${rowIdx},${ci},this.value)"
             onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();this.blur()}"
@@ -4661,13 +4702,13 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
         </td>`;
       }).join('');
 
-      const tot = `<td style="padding:.26rem .3rem;text-align:right;font-weight:${isSub?'700':'400'};background:${bg};color:${item.total>0?(isSub?'var(--gold)':'var(--text)'):'var(--muted)'};position:sticky;right:48px;z-index:1;overflow:hidden">${fmtV(item.total)}</td>`;
+      const tot = `<td style="padding:.26rem .3rem;text-align:right;font-weight:${isSub?'700':'400'};background:${bg};color:${item.total>0?(isSub?'var(--gold)':'var(--text)'):'var(--muted)'};overflow:hidden;white-space:nowrap;position:sticky;right:${W_DEL+W_COM}px;z-index:1">${fmtV(item.total)}</td>`;
       const del = isSub
         ? `<td style="background:${bg}"></td>`
-        : `<td style="background:${bg};text-align:center;overflow:hidden"><button onclick="masterDeleteRow('${datasetKey}','${sectionKey}',${rowIdx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.72rem;padding:.1rem;line-height:1" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">✕</button></td>`;
+        : `<td style="background:${bg};text-align:center"><button onclick="masterDeleteRow('${datasetKey}','${sectionKey}',${rowIdx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.72rem;padding:.1rem;line-height:1" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">✕</button></td>`;
       const com = isSub
         ? `<td style="background:${bg}"></td>`
-        : `<td style="background:${bg};text-align:center;overflow:hidden"><button onclick="masterOpenComment('${datasetKey}','${sectionKey}',${rowIdx},null,null)" style="background:none;border:none;color:${numC?'var(--blue)':'var(--muted)'};cursor:pointer;font-size:.72rem;padding:.1rem;line-height:1" title="${numC?numC+' kom.':'Dodaj komentar'}">💬</button></td>`;
+        : `<td style="background:${bg};text-align:center"><button onclick="masterOpenComment('${datasetKey}','${sectionKey}',${rowIdx},null,null)" style="background:none;border:none;color:${numC?'var(--blue)':'var(--muted)'};cursor:pointer;font-size:.72rem;padding:.1rem;line-height:1" title="${numC?numC+' kom.':'Dodaj komentar'}">💬</button></td>`;
 
       html += `<tr style="border-bottom:1px solid var(--border)">${nameCell}${valCells}${tot}${del}${com}</tr>`;
     });
