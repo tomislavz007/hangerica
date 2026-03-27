@@ -2161,19 +2161,6 @@ button[onclick^="apprSubmitRequest"]:hover {
         </div>
       </div>
 
-      <!-- ══ TJEDNI LEADERBOARD ══ -->
-        <div class="list-card" style="padding:1.4rem" id="homeLeaderboardCard">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
-            <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem">
-              🏆 Tjedni leaderboard
-            </div>
-            <div id="leaderboardWeek" style="font-size:.68rem;color:var(--muted)"></div>
-          </div>
-          <div id="leaderboardList" style="display:flex;flex-direction:column;gap:.4rem">
-            <div style="color:var(--muted);font-size:.8rem;text-align:center;padding:.5rem">Učitavanje...</div>
-          </div>
-        </div>
-
         <!-- ══ ROULETTE ZA RUČAK ══ -->
         <div class="list-card" style="padding:1.4rem" id="lunchRouletteCard">
           <div style="font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem">
@@ -2809,18 +2796,6 @@ button[onclick^="apprSubmitRequest"]:hover {
     <div style="padding:.8rem 1.2rem 1.2rem">
       <div id="tasksList">
         <div id="taskSkeletonInit"></div>
-      </div>
-      <!-- Leaderboard u Tasks tabu -->
-      <div style="margin-top:1.4rem" id="tasksLeaderboardWrap">
-        <div class="list-card" style="padding:1.2rem">
-          <div style="font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
-            <span>🏆 Tjedni leaderboard</span>
-            <span id="leaderboardWeek2" style="font-size:.65rem;color:var(--muted)"></span>
-          </div>
-          <div id="leaderboardList2" style="display:flex;flex-direction:column;gap:.35rem">
-            <div style="color:var(--muted);font-size:.78rem;text-align:center;padding:.5rem">Učitavanje...</div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -4112,56 +4087,6 @@ function getWeekStart() {
   return mon;
 }
 
-function renderLeaderboard() {
-  const weekStart = getWeekStart();
-  const tasks = _taskCache || [];
-
-  // Filtriraj taskove završene ovaj tjedan
-  const doneTasks = tasks.filter(t => {
-    if (t.status !== 'done' && t.done !== 'true') return false;
-    // Koristi updatedAt ili createdAt kao fallback
-    const dateStr = t.updatedAt || t.doneAt || t.createdAt || '';
-    if (!dateStr) return false;
-    return new Date(dateStr) >= weekStart;
-  });
-
-  // Grupiraj po osobi
-  const counts = {};
-  doneTasks.forEach(t => {
-    const name = t.assignee || 'Nedodjeljeno';
-    counts[name] = (counts[name] || 0) + 1;
-  });
-
-  // Ako nema završenih taskova ovaj tjedan, prikaži sve osobe s 0
-  const allPeople = [...new Set((tasks).map(t => t.assignee).filter(Boolean))];
-  allPeople.forEach(p => { if (!counts[p]) counts[p] = 0; });
-
-  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-
-  const medals = ['🥇','🥈','🥉'];
-  const weekStr = weekStart.toLocaleDateString('hr-HR', {day:'numeric',month:'short'});
-  const html = sorted.length ? sorted.map(([name,cnt],i) => {
-    const isMe = name === currentUser?.name;
-    const bar = sorted[0][1] > 0 ? Math.round(cnt/sorted[0][1]*100) : 0;
-    return `<div style="display:flex;align-items:center;gap:.6rem;padding:.35rem .4rem;border-radius:var(--radius);${isMe?'background:var(--gold-dim)':''}">
-      <span style="font-size:.9rem;width:1.4rem;text-align:center;flex-shrink:0">${medals[i] || (i+1)+'.'}</span>
-      <span style="font-size:.8rem;color:var(--text);flex:1;font-weight:${isMe?'700':'400'}">${name}${isMe?' ✦':''}</span>
-      <div style="flex:2;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden">
-        <div style="width:${bar}%;height:100%;background:${i===0?'var(--gold)':i===1?'#9898a6':'var(--muted)'};border-radius:3px;transition:width .5s ease"></div>
-      </div>
-      <span style="font-size:.8rem;font-weight:700;color:${cnt>0?'var(--gold)':'var(--muted)'};min-width:1.5rem;text-align:right">${cnt}</span>
-    </div>`;
-  }).join('') : '<div style="color:var(--muted);font-size:.78rem;text-align:center;padding:.5rem 0">Nema završenih taskova ovaj tjedan.</div>';
-
-  ['leaderboardList','leaderboardList2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-  });
-  ['leaderboardWeek','leaderboardWeek2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = 'tjedan od ' + weekStr + '.';
-  });
-}
 
 // ══════════════════════════════════════════
 // ROULETTE ZA RUČAK
@@ -4316,7 +4241,6 @@ async function saveQuickTask() {
   _taskCache.unshift(task);
   closeQuickTask();
   toast('✅ Task dodan!');
-  renderLeaderboard();
   renderHomeStats();
   // Spremi na GAS
   try {
@@ -7242,7 +7166,6 @@ async function initHomeTab() {
   loadAnnouncements();
   loadTeamChat();
   loadPolls();
-  renderLeaderboard();
   loadWhereWork();
 }
 
@@ -8551,8 +8474,6 @@ async function renderTasks(){
       if (firstProj) openTaskSideChat(firstProjId, firstProj.name);
     }
   }
-  // Osvježi leaderboard
-  renderLeaderboard();
 }
 
 // ══════════════════════════════════════════
