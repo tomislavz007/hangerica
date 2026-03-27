@@ -2737,10 +2737,17 @@ button[onclick^="apprSubmitRequest"]:hover {
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="1.5" rx=".75" fill="currentColor"/><rect x="1" y="6.25" width="12" height="1.5" rx=".75" fill="currentColor" opacity=".6"/><rect x="1" y="10.5" width="8" height="1.5" rx=".75" fill="currentColor" opacity=".35"/></svg>
             List
           </button>
+          <button class="lnr-view-btn" id="taskViewWeekly" onclick="setTaskView('weekly',this)" title="Tjedni kalendar">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M1 6h12" stroke="currentColor" stroke-width="1.2"/><path d="M4 1v3M10 1v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            Tjedan
+          </button>
         </div>
         <div class="lnr-task-divider"></div>
         <select id="taskFilterProject" onchange="renderTasks()" class="lnr-select">
           <option value="">Svi projekti</option>
+        </select>
+        <select id="taskFilterAssignee" onchange="renderTasks()" class="lnr-select">
+          <option value="">👤 Svi zaposlenici</option>
         </select>
         <select id="taskFilterPriority" onchange="renderTasks()" class="lnr-select">
           <option value="">Svi prioriteti</option>
@@ -2797,6 +2804,8 @@ button[onclick^="apprSubmitRequest"]:hover {
       <div id="tasksList">
         <div id="taskSkeletonInit"></div>
       </div>
+      <!-- Weekly kalendar view -->
+      <div id="tasksWeeklyWrap" style="display:none"></div>
     </div>
 
     <!-- Task detail side panel -->
@@ -4602,19 +4611,19 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
     <col style="width:${W_DEL}px">
     <col style="width:${W_COM}px">
   </colgroup>
-  <thead><tr style="background:var(--surface3)">
-    <th style="${thBase};text-align:left;position:sticky;left:0;z-index:3;overflow:hidden;text-overflow:ellipsis">Stavka</th>
-    ${MO.map(m=>`<th style="${thBase};text-align:right">${m}</th>`).join('')}
-    <th style="${thBase};text-align:right;position:sticky;right:${W_DEL+W_COM}px;z-index:3">Ukupno</th>
-    <th style="${thBase}"></th>
-    <th style="${thBase};text-align:center">💬</th>
+  <thead style="position:sticky;top:82px;z-index:4"><tr style="background:var(--surface3)">
+    <th style="${thBase};text-align:left;position:sticky;left:0;z-index:5;background:var(--surface3);overflow:hidden;text-overflow:ellipsis">Stavka</th>
+    ${MO.map(m=>`<th style="${thBase};text-align:right;background:var(--surface3)">${m}</th>`).join('')}
+    <th style="${thBase};text-align:right;position:sticky;right:${W_DEL+W_COM}px;z-index:5;background:var(--surface3)">Ukupno</th>
+    <th style="${thBase};background:var(--surface3)"></th>
+    <th style="${thBase};text-align:center;background:var(--surface3)">💬</th>
   </tr></thead><tbody>`;
 
   sections.forEach((sectionKey, si) => {
     const section = dataset[sectionKey];
     if (!section) return;
 
-    html += `<tr><td colspan="16" style="padding:.4rem .4rem .2rem;font-size:.63rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);font-weight:700;background:var(--surface2);position:sticky;left:0">
+    html += `<tr><td colspan="16" style="padding:.4rem .5rem .25rem;font-size:.63rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);font-weight:700;background:var(--surface2);white-space:nowrap">
       ${sectionLabels[si]}
       <button onclick="masterAddRow('${datasetKey}','${sectionKey}')" style="margin-left:.5rem;background:var(--gold);color:#000;border:none;border-radius:3px;padding:.07rem .38rem;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ Dodaj projekt</button>
     </td></tr>`;
@@ -8058,7 +8067,6 @@ async function getTasks(){
 }
 
 async function initTasksTab(){
-  // Populate project dropdowns
   const projs = getProjects();
   const myProjs = currentUser.role==='approver'
     ? projs
@@ -8079,7 +8087,18 @@ async function initTasksTab(){
     });
   });
 
-  // Populate assignee dropdown — will be updated when project is selected
+  // Popuni filter zaposlenika
+  const afilter = document.getElementById('taskFilterAssignee');
+  if (afilter && afilter.options.length <= 1) {
+    const people = ['Bruno Sušak','Tomislava Obrč','Magdalena Tenčić','Domagoj Bošnjak','Iva Žmirak','Dario Oxenham','Tomislav Zeljko'];
+    people.forEach(name => {
+      const o = document.createElement('option');
+      o.value = name;
+      o.textContent = name + (name === currentUser.name ? ' (ja)' : '');
+      afilter.appendChild(o);
+    });
+  }
+
   updateTaskAssignees();
 }
 
@@ -8094,10 +8113,8 @@ function updateTaskAssignees(){
 
   let persons=[];
   if(proj && proj.persons){
-    // Use persons on this specific project
     persons=proj.persons.split(',').map(s=>s.trim()).filter(Boolean);
   } else if(!projId){
-    // No project selected — show all Hanger people
     persons=['Bruno Sušak','Tomislava Obrč','Magdalena Tenčić','Domagoj Bošnjak','Iva Žmirak','Dario Oxenham','Tomislav Zeljko'];
   }
 
@@ -8113,14 +8130,156 @@ function updateTaskAssignees(){
 }
 
 // ── TASK VIEW STATE ──
-let _taskView = 'board'; // 'board' | 'list'
+let _taskView = 'board'; // 'board' | 'list' | 'weekly'
 let _openTaskId = null;
 
 function setTaskView(view, btn) {
   _taskView = view;
   document.querySelectorAll('.lnr-view-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  renderTasks();
+  const weeklyWrap = document.getElementById('tasksWeeklyWrap');
+  const tasksList = document.getElementById('tasksList');
+  if (view === 'weekly') {
+    if (tasksList) tasksList.style.display = 'none';
+    if (weeklyWrap) weeklyWrap.style.display = 'block';
+    renderWeeklyTasks();
+  } else {
+    if (tasksList) tasksList.style.display = 'block';
+    if (weeklyWrap) weeklyWrap.style.display = 'none';
+    renderTasks();
+  }
+}
+
+// ══════════════════════════════════════════
+// WEEKLY TASKS KALENDAR
+// ══════════════════════════════════════════
+function getWeekRange(offset = 0) {
+  const now = new Date();
+  const day = now.getDay(); // 0=ned
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
+  mon.setHours(0,0,0,0);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+let _weeklyOffset = 0;
+
+async function renderWeeklyTasks() {
+  const el = document.getElementById('tasksWeeklyWrap');
+  if (!el) return;
+
+  const tasks = await getTasks();
+  const projs = getProjects();
+  const projMap = {};
+  projs.forEach(p => projMap[String(p.id)] = p);
+
+  const filterAssignee = document.getElementById('taskFilterAssignee')?.value || '';
+
+  const days = getWeekRange(_weeklyOffset);
+  const DAY_NAMES = ['Pon','Uto','Sri','Čet','Pet','Sub','Ned'];
+  const now = new Date(); now.setHours(0,0,0,0);
+
+  const weekLabel = days[0].toLocaleDateString('hr-HR',{day:'numeric',month:'short'}) +
+    ' – ' + days[6].toLocaleDateString('hr-HR',{day:'numeric',month:'short',year:'numeric'});
+
+  // Sortanje taskova u dane — po due datumu ili prebacivanje
+  // Task ide u dan ako t.due === dan, ili ako nema due → u ponedjeljak tog tjedna
+  const tasksByDay = Array(7).fill(null).map(() => []);
+  const unscheduled = [];
+
+  // All relevant tasks (filter po osobi)
+  let allTasks = tasks.filter(t => {
+    if (t.done === 'true' || t.done === true || t.status === 'done') return false;
+    if (filterAssignee && t.assignee !== filterAssignee) return false;
+    return true;
+  });
+
+  // Prebaci neodraðene iz prošlih tjedana u ovaj tjedan (ponedjeljak)
+  const weekStart = days[0];
+  const weekEnd = new Date(days[6]); weekEnd.setHours(23,59,59,999);
+
+  allTasks.forEach(t => {
+    if (!t.due) {
+      unscheduled.push(t);
+      return;
+    }
+    const due = new Date(t.due + 'T12:00:00');
+    // Prebaci prošle taskove u ponedjeljak ovog tjedna
+    const effectiveDue = due < weekStart ? weekStart : due;
+    for (let i = 0; i < 7; i++) {
+      const d = days[i];
+      const nextD = new Date(d); nextD.setDate(d.getDate()+1);
+      if (effectiveDue >= d && effectiveDue < nextD) {
+        tasksByDay[i].push({ ...t, _carried: due < weekStart && _weeklyOffset === 0 });
+        return;
+      }
+    }
+    // Task je u budućem tjednu — nemoj ga prikazati
+  });
+
+  const taskCard = (t) => {
+    const proj = projMap[String(t.projectId)];
+    const isMe = t.assignee === currentUser?.name;
+    const isCarried = t._carried;
+    const priorityColor = t.priority==='high'?'var(--red)':t.priority==='medium'?'var(--amber)':'var(--blue)';
+    const initials = t.assignee ? t.assignee.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : '?';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${priorityColor};border-radius:6px;padding:.45rem .55rem;margin-bottom:.35rem;cursor:pointer${isMe?';box-shadow:0 0 0 1px var(--gold-dim)':''}"
+      onclick="openTaskDetail('${t.id}')" title="${isCarried?'Prebačen s prethodnog tjedna':''}" >
+      ${isCarried?`<div style="font-size:.55rem;color:var(--amber);margin-bottom:.2rem">↩ prebačen</div>`:''}
+      <div style="font-size:.75rem;color:var(--text);font-weight:${isMe?'600':'400'};line-height:1.3;margin-bottom:.3rem">${t.name}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.3rem">
+        <span style="font-size:.62rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${proj?.name||'—'}</span>
+        <span style="width:18px;height:18px;border-radius:50%;background:var(--surface3);color:var(--text);font-size:.58rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</span>
+      </div>
+    </div>`;
+  };
+
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+      <button onclick="_weeklyOffset--;renderWeeklyTasks()"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.3rem .7rem;color:var(--text);cursor:pointer;font-size:.8rem">← Prošli</button>
+      <span style="font-size:.82rem;font-weight:700;color:var(--text)">${weekLabel}</span>
+      <button onclick="_weeklyOffset++;renderWeeklyTasks()"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.3rem .7rem;color:var(--text);cursor:pointer;font-size:.8rem">Sljedeći →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem">`;
+
+  days.forEach((day, i) => {
+    const isToday = day.getTime() === now.getTime();
+    const isPast = day < now;
+    const hasCarried = tasksByDay[i].some(t => t._carried);
+    const dayTasks = tasksByDay[i];
+    html += `
+      <div style="background:var(--surface);border:1px solid ${isToday?'var(--gold)':'var(--border)'};border-radius:8px;padding:.5rem;min-height:120px">
+        <div style="font-size:.7rem;font-weight:700;color:${isToday?'var(--gold)':isPast?'var(--muted)':'var(--text)'};margin-bottom:.5rem;display:flex;align-items:center;gap:.3rem">
+          ${DAY_NAMES[i]}
+          <span style="font-size:.65rem;font-weight:400;color:var(--muted)">${day.getDate()}.${day.getMonth()+1}.</span>
+          ${dayTasks.length?`<span style="margin-left:auto;background:${isToday?'var(--gold)':'var(--surface3)'};color:${isToday?'#000':'var(--muted)'};border-radius:99px;font-size:.58rem;font-weight:700;padding:.05rem .35rem">${dayTasks.length}</span>`:''}
+        </div>
+        ${dayTasks.map(t => taskCard(t)).join('') || `<div style="font-size:.65rem;color:var(--muted);text-align:center;padding:.5rem 0">—</div>`}
+      </div>`;
+  });
+
+  // Neplanirani taskovi
+  if (unscheduled.length) {
+    html += `</div>
+    <div style="margin-top:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.7rem">
+      <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:.5rem">📌 Bez datuma</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem">
+        ${unscheduled.map(t => `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:.3rem .5rem;font-size:.72rem;color:var(--text);cursor:pointer" onclick="openTaskDetail('${t.id}')">${t.name}</div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
 }
 
 function openNewTaskPanel() {
@@ -8300,6 +8459,7 @@ async function renderTasks(){
   projs.forEach(p=>projMap[String(p.id)]=p);
 
   const filterProj=document.getElementById('taskFilterProject')?.value||'';
+  const filterAssignee=document.getElementById('taskFilterAssignee')?.value||'';
   const filterPriority=document.getElementById('taskFilterPriority')?.value||'';
   const filterStatusEl=document.getElementById('taskFilterStatus');
   if(filterStatusEl && !filterStatusEl.dataset.userSet && isFinanceBlind()) {
@@ -8314,6 +8474,7 @@ async function renderTasks(){
   });
 
   if(filterProj) myTasks=myTasks.filter(t=>String(t.projectId)===filterProj);
+  if(filterAssignee) myTasks=myTasks.filter(t=>t.assignee===filterAssignee);
   if(filterPriority) myTasks=myTasks.filter(t=>t.priority===filterPriority);
   if(filterStatus) myTasks=myTasks.filter(t=> filterStatus==='done'?(t.done==='true'||t.done===true):(t.done!=='true'&&t.done!==true));
 
