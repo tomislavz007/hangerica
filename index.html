@@ -2651,33 +2651,6 @@ button[onclick^="apprSubmitRequest"]:hover {
 
   <!-- TAB: Master Projekcija -->
   <div class="main-content" id="main-master" style="display:none">
-      <!-- Pod-tabovi sticky -->
-      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:.7rem 0 0 1rem;overflow-x:auto;background:var(--bg);position:sticky;top:46px;z-index:10;flex-shrink:0">
-        <button class="master-tab-btn active" data-master-tab="overview" onclick="switchMasterTab('overview',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--gold);font-size:.8rem;font-weight:700;cursor:pointer;border-bottom:2px solid var(--gold);font-family:'Inter',sans-serif;white-space:nowrap">
-          📊 Overview
-        </button>
-        <button class="master-tab-btn" data-master-tab="income" onclick="switchMasterTab('income',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
-          💶 Income (Stvarni)
-        </button>
-        <button class="master-tab-btn" data-master-tab="projIncome" onclick="switchMasterTab('projIncome',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
-          📈 Proj. Income
-        </button>
-        <button class="master-tab-btn" data-master-tab="cost" onclick="switchMasterTab('cost',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
-          💸 Troškovi (Stvarni)
-        </button>
-        <button class="master-tab-btn" data-master-tab="projCost" onclick="switchMasterTab('projCost',this)"
-          style="padding:.42rem 1rem;border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap">
-          📉 Proj. Troškovi
-        </button>
-        <button onclick="masterResetState()" title="Reset na originalne vrijednosti"
-          style="margin-left:auto;padding:.3rem .8rem;background:none;border:none;border-left:1px solid var(--border);color:var(--muted);font-size:.72rem;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">
-          ↺ Reset
-        </button>
-      </div>
       <!-- Sadržaj — bez ikakvog padding-a -->
       <div id="masterTabContent"></div>
   </div>
@@ -5259,6 +5232,42 @@ function initApp(){
       });
       mainTabsEl.appendChild(subDiv);
     }
+
+    // Sub-items za Master projekcija
+    if(t.id==='master'){
+      const masterSubs = [
+        { id:'overview',   label:'📊 Overview' },
+        { id:'income',     label:'💶 Income (Stvarni)' },
+        { id:'projIncome', label:'📈 Proj. Income' },
+        { id:'cost',       label:'💸 Troškovi (Stvarni)' },
+        { id:'projCost',   label:'📉 Proj. Troškovi' },
+      ];
+      const subDiv = document.createElement('div');
+      subDiv.className = 'sidebar-sub';
+      subDiv.id = 'sidebarSubMaster';
+      masterSubs.forEach((s, si) => {
+        const sb = document.createElement('button');
+        sb.className = 'sidebar-sub-item' + (si===0?' active':'');
+        sb.dataset.id = s.id;
+        sb.textContent = s.label;
+        sb.onclick = (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('#sidebarSubMaster .sidebar-sub-item').forEach(b=>b.classList.remove('active'));
+          sb.classList.add('active');
+          renderMasterTab(s.id);
+          _masterCurrentTab = s.id;
+        };
+        subDiv.appendChild(sb);
+      });
+      // Reset gumb na dnu
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'sidebar-sub-item';
+      resetBtn.textContent = '↺ Reset podataka';
+      resetBtn.style.cssText = 'color:var(--muted);font-size:.7rem;margin-top:.3rem;border-top:1px solid var(--border);padding-top:.4rem';
+      resetBtn.onclick = (e) => { e.stopPropagation(); masterResetState(); };
+      subDiv.appendChild(resetBtn);
+      mainTabsEl.appendChild(subDiv);
+    }
   });
 
   // Build horizontal sub tabs (also shown in topbar area when moji-dani active)
@@ -5393,6 +5402,7 @@ function switchMainTab(mainId, btn){
     subWrap.classList.remove('visible');
     const sidebarSubClose = document.getElementById('sidebarSubMojiDani');
     if(sidebarSubClose) sidebarSubClose.classList.remove('open');
+    document.getElementById('sidebarSubMaster')?.classList.remove('open');
     document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
     document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
     if(homeEl) homeEl.style.display='block';
@@ -5414,6 +5424,7 @@ function switchMainTab(mainId, btn){
     document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
     const sidebarSub4 = document.getElementById('sidebarSubMojiDani');
     if(sidebarSub4) sidebarSub4.classList.remove('open');
+    document.getElementById('sidebarSubMaster')?.classList.remove('open');
     const adminEl=document.getElementById('tabAdmin');
     if(adminEl){
       // Keep admin panel inside mainContentWrap
@@ -5438,6 +5449,7 @@ function switchMainTab(mainId, btn){
     document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
     const sidebarSub2 = document.getElementById('sidebarSubMojiDani');
     if(sidebarSub2) sidebarSub2.classList.remove('open');
+    document.getElementById('sidebarSubMaster')?.classList.remove('open');
     if(projEl) projEl.style.display='block';
     const sw=document.getElementById('projStatsWrap');
     if(sw) sw.style.display='block';
@@ -5449,6 +5461,7 @@ function switchMainTab(mainId, btn){
     document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
     const sidebarSub3 = document.getElementById('sidebarSubMojiDani');
     if(sidebarSub3) sidebarSub3.classList.remove('open');
+    document.getElementById('sidebarSubMaster')?.classList.remove('open');
     if(tasksEl2){ tasksEl2.style.display='block'; initTasksTab(); }
     clearBadge('tasks');
     window.scrollTo({top:0, behavior:'instant'});
@@ -5458,6 +5471,7 @@ function switchMainTab(mainId, btn){
     document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
     const sidebarSubI = document.getElementById('sidebarSubMojiDani');
     if(sidebarSubI) sidebarSubI.classList.remove('open');
+    document.getElementById('sidebarSubMaster')?.classList.remove('open');
     const insEl = document.getElementById('main-insights');
     if(insEl) insEl.style.display='block';
     window.scrollTo({top:0, behavior:'instant'});
@@ -5466,12 +5480,20 @@ function switchMainTab(mainId, btn){
     subWrap.classList.remove('visible');
     document.querySelectorAll('.tab-content').forEach(t=>{ t.classList.remove('active'); t.style.display='none'; });
     document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
-    const sidebarSubM = document.getElementById('sidebarSubMojiDani');
-    if(sidebarSubM) sidebarSubM.classList.remove('open');
+    // Zatvori Moji dani sub
+    const sidebarSubMD = document.getElementById('sidebarSubMojiDani');
+    if(sidebarSubMD) sidebarSubMD.classList.remove('open');
+    // Otvori Master sub
+    const sidebarSubM = document.getElementById('sidebarSubMaster');
+    if(sidebarSubM) sidebarSubM.classList.add('open');
     const masterEl = document.getElementById('main-master');
     if(masterEl) masterEl.style.display='block';
     window.scrollTo({top:0, behavior:'instant'});
-    setTimeout(()=>renderMasterTab('overview'), 50);
+    // Prikaži aktivni tab (prvi ili zadnji odabrani)
+    const activeSubBtn = sidebarSubM?.querySelector('.sidebar-sub-item.active');
+    const activeId = activeSubBtn?.dataset.id || 'overview';
+    _masterCurrentTab = activeId;
+    setTimeout(()=>renderMasterTab(activeId), 50);
   }
 }
 
