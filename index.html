@@ -4584,7 +4584,7 @@ function masterTable(datasetKey, dataset, sections, sectionLabels) {
     <col style="width:${W_DEL}px">
     <col style="width:${W_COM}px">
   </colgroup>
-  <thead style="position:sticky;top:82px;z-index:4"><tr style="background:var(--surface3)">
+  <thead style="position:sticky;top:46px;z-index:4"><tr style="background:var(--surface3)">
     <th style="${thBase};text-align:left;position:sticky;left:0;z-index:5;background:var(--surface3);overflow:hidden;text-overflow:ellipsis">Stavka</th>
     ${MO.map(m=>`<th style="${thBase};text-align:right;background:var(--surface3)">${m}</th>`).join('')}
     <th style="${thBase};text-align:right;position:sticky;right:${W_DEL+W_COM}px;z-index:5;background:var(--surface3)">Ukupno</th>
@@ -4777,11 +4777,36 @@ function renderMasterTab(tabId) {
 
 
 function masterResetState() {
-  if (!confirm('Resetirati sve promjene na originalne vrijednosti iz Excela?')) return;
-  localStorage.removeItem('hgr_master_state');
-  _masterState = null;
-  renderMasterTab(_masterCurrentTab);
-  toast('↺ Resetirano na originalne vrijednosti');
+  // Lijepi DA/NE modal umjesto browser confirm()
+  const modal = document.createElement('div');
+  modal.id = 'masterResetModal';
+  modal.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:center;justify-content:center">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.8rem 2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center">
+        <div style="font-size:2rem;margin-bottom:.7rem">↺</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.5rem">Reset podataka</div>
+        <div style="font-size:.83rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.5">
+          Jeste li sigurni da želite resetirati sve promjene na originalne vrijednosti iz Excela?<br>
+          <span style="color:var(--red);font-size:.78rem">Ova akcija se ne može poništiti.</span>
+        </div>
+        <div style="display:flex;gap:.7rem;justify-content:center">
+          <button onclick="document.getElementById('masterResetModal').remove()"
+            style="flex:1;padding:.6rem 1.2rem;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500">
+            Ne
+          </button>
+          <button onclick="
+            localStorage.removeItem('hgr_master_state');
+            _masterState = null;
+            document.getElementById('masterResetModal').remove();
+            renderMasterTab(_masterCurrentTab);
+            toast('↺ Resetirano na originalne vrijednosti');"
+            style="flex:1;padding:.6rem 1.2rem;background:var(--red);border:none;border-radius:var(--radius);color:#fff;font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700">
+            Da, resetiraj
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function renderInsights() {
