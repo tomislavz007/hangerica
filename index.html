@@ -4776,6 +4776,124 @@ function renderMasterTab(tabId) {
 }
 
 
+// ══════════════════════════════════════════
+// MASTER EXPORT U EXCEL
+// ══════════════════════════════════════════
+function exportMasterToExcel() {
+  const d = masterGetState();
+  const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtN = v => (v && v > 0) ? Math.round(v) : 0;
+
+  // Gradi CSV s više sheet-ova u jednom xlsx koristeći SpreadsheetML format
+  // Koristimo TSV (tab-separated) za Excel kompatibilnost
+  const sections = {
+    'OVERVIEW': buildOverviewSheet(d, MO),
+    'Income (Stvarni)': buildSheet(d.income, MO, 'INCOME — Stvarni 2026'),
+    'Proj. Income': buildSheet(d.projIncome, MO, 'PROJEKCIJA Income 2026'),
+    'Troškovi (Stvarni)': buildSheet(d.cost, MO, 'TROŠKOVI — Stvarni 2026'),
+    'Proj. Troškovi': buildSheet(d.projCost, MO, 'PROJEKCIJA Troškova 2026'),
+  };
+
+  // Generiraj Excel XML (SpreadsheetML) — otvara se direktno u Excelu
+  const xmlSheets = Object.entries(sections).map(([name, rows]) => {
+    const xlRows = rows.map(row =>
+      '<Row>' + row.map(cell => {
+        const isNum = typeof cell === 'number';
+        return isNum
+          ? `<Cell ss:StyleID="n"><Data ss:Type="Number">${cell}</Data></Cell>`
+          : `<Cell ss:StyleID="${cell === '' ? 'e' : 'h'}"><Data ss:Type="String">${String(cell).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</Data></Cell>`;
+      }).join('') + '</Row>'
+    ).join('');
+    return `<Worksheet ss:Name="${name.replace(/[/\\?*[\]]/g,'').slice(0,31)}"><Table>${xlRows}</Table></Worksheet>`;
+  }).join('');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:x="urn:schemas-microsoft-com:office:excel">
+  <Styles>
+    <Style ss:ID="h"><Font ss:Bold="1"/></Style>
+    <Style ss:ID="n"><NumberFormat ss:Format="#,##0"/></Style>
+    <Style ss:ID="e"></Style>
+  </Styles>
+  ${xmlSheets}
+</Workbook>`;
+
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Hangerica_Master_Projekcija_2026.xls';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('⬇ Export preuzet!');
+}
+
+function buildOverviewSheet(d, MO) {
+  const inc = d.income.monthlyTotal;
+  const cost = d.cost.monthlyTotal;
+  const projInc = d.projIncome.monthlyTotal;
+  const projCost = d.projCost.monthlyTotal;
+  const rows = [];
+  rows.push(['MASTER PROJEKCIJA 2026', '', ...MO, 'UKUPNO']);
+  rows.push(['Stanje računa 01.01.2026', d.stanjeRacuna, ...Array(12).fill(''), '']);
+  rows.push(['']);
+  rows.push(['INCOME (Stvarni)', '', ...inc, inc.reduce((a,b)=>a+b,0)]);
+  rows.push(['INCOME (Projekcija)', '', ...projInc, projInc.reduce((a,b)=>a+b,0)]);
+  rows.push(['COST (Stvarni)', '', ...cost, cost.reduce((a,b)=>a+b,0)]);
+  rows.push(['COST (Projekcija)', '', ...projCost, projCost.reduce((a,b)=>a+b,0)]);
+  rows.push(['']);
+  const ebit = inc.map((v,i) => v - cost[i]);
+  rows.push(['EBIT (Stvarni)', '', ...ebit, ebit.reduce((a,b)=>a+b,0)]);
+  const projEbit = projInc.map((v,i) => v - projCost[i]);
+  rows.push(['EBIT (Projekcija)', '', ...projEbit, projEbit.reduce((a,b)=>a+b,0)]);
+  rows.push(['']);
+  let cum = 0;
+  const cumArr = ebit.map(v => { cum += v; return cum; });
+  rows.push(['CUMULATIVE (Stvarni)', '', ...cumArr, '']);
+  rows.push(['']);
+  rows.push(['Stanje računa (Proj.)', '', ...cumArr.map(v => d.stanjeRacuna + v), '']);
+  return rows;
+}
+
+function buildSheet(dataset, MO, title) {
+  const rows = [];
+  rows.push([title, '', ...MO, 'UKUPNO', '']);
+
+  const sectionNames = {
+    bzgBat: 'BŽG / BAT', bzgBatBosna: 'BŽG / BAT Bosna',
+    bzgOstali: 'BŽG / Ostali projekti', atlanticHr: 'Atlantic Hrvatska',
+    atlanticBarcaffe: 'Atlantic Barcaffe', ledo: 'LEDO',
+    grawe: 'GRAWE', ostalo: 'Ostalo',
+    zaposlenici: 'Zaposlenici', office: 'Office Costs',
+    poslovanje: 'Poslovanje', edukacija: 'Edukacije',
+  };
+
+  Object.keys(dataset).forEach(key => {
+    if (key === 'monthlyTotal') return;
+    const section = dataset[key];
+    const label = sectionNames[key] || key;
+    rows.push(['']);
+    rows.push([label.toUpperCase(), ...Array(13).fill(''), '']);
+    section.forEach(item => {
+      rows.push([
+        item.name,
+        '',
+        ...item.vals.map(v => Math.round(v) || 0),
+        Math.round(item.total) || 0,
+        item.isSubtotal ? 'SUBTOTAL' : '',
+      ]);
+    });
+  });
+
+  rows.push(['']);
+  rows.push(['UKUPNO', '', ...dataset.monthlyTotal.map(v => Math.round(v) || 0), dataset.monthlyTotal.reduce((a,b)=>a+b,0), '']);
+  return rows;
+}
+
 function masterResetState() {
   // Lijepi DA/NE modal umjesto browser confirm()
   const modal = document.createElement('div');
@@ -5291,6 +5409,15 @@ function initApp(){
       resetBtn.style.cssText = 'color:var(--muted);font-size:.7rem;margin-top:.3rem;border-top:1px solid var(--border);padding-top:.4rem';
       resetBtn.onclick = (e) => { e.stopPropagation(); masterResetState(); };
       subDiv.appendChild(resetBtn);
+
+      // Export gumb
+      const exportBtn = document.createElement('button');
+      exportBtn.className = 'sidebar-sub-item';
+      exportBtn.textContent = '⬇ Izvezi u Excel';
+      exportBtn.style.cssText = 'color:var(--green);font-size:.7rem;margin-top:.2rem';
+      exportBtn.onclick = (e) => { e.stopPropagation(); exportMasterToExcel(); };
+      subDiv.appendChild(exportBtn);
+
       mainTabsEl.appendChild(subDiv);
     }
   });
