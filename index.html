@@ -8285,12 +8285,13 @@ function updateTaskAssignees(){
   const projs=getProjects();
   const proj=projs.find(p=>String(p.id)===String(projId));
 
+  const ALL_PEOPLE = ['Bruno Sušak','Tomislava Obrč','Magdalena Tenčić','Domagoj Bošnjak','Iva Žmirak','Dario Oxenham','Tomislav Zeljko'];
   let persons=[];
   if(proj && proj.persons){
     persons=proj.persons.split(',').map(s=>s.trim()).filter(Boolean);
-  } else if(!projId){
-    persons=['Bruno Sušak','Tomislava Obrč','Magdalena Tenčić','Domagoj Bošnjak','Iva Žmirak','Dario Oxenham','Tomislav Zeljko'];
   }
+  // Ako nema persons na projektu ili nema projekta — prikaži sve
+  if(!persons.length) persons = ALL_PEOPLE;
 
   persons.forEach(name=>{
     const o=document.createElement('option');
@@ -9123,7 +9124,7 @@ async function addTask(){
   const note=document.getElementById('newTaskNote')?.value?.trim()||'';
   const errEl=document.getElementById('taskFormErr');
 
-  if(!name||!projectId){ if(errEl) errEl.textContent='Naziv i projekt su obavezni.'; return; }
+  if(!name){ if(errEl) errEl.textContent='Naziv taska je obavezan.'; return; }
   if(errEl) errEl.textContent='';
 
   const task={
